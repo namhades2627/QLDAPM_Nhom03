@@ -1,0 +1,18 @@
+# Cấu hình riêng của máy và thông tin nhạy cảm
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+
+# Tệp hệ điều hành và trình soạn thảo
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# Log, tệp tạm và bản sao lưu
+*.log
+*.tmp
+*.bak

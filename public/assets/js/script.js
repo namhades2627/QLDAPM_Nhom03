@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ===== DANH SÁCH TOUR ===== */
 
-/* TƯƠNG TÁC TRANG TOUR — chỉ lọc/sắp xếp dữ liệu mẫu đã render, chưa gọi API/database. */
+/* Lọc/sắp xếp và phân trang trên dữ liệu database do Controller render. */
 document.addEventListener('DOMContentLoaded', () => {
     if (!document.querySelector('#catalog-grid')) return;
     const PAGE_SIZE = 12;
@@ -260,12 +260,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('#catalog-filters');
     const grid = document.querySelector('#catalog-grid');
     const cards = [...grid.querySelectorAll('.catalog-card')];
+    const schedulesByCard = new Map(cards.map(card => [card, JSON.parse(card.dataset.schedules)]));
     const keywordInput = document.querySelector('#catalog-keyword');
     const sortInput = document.querySelector('#catalog-sort');
     const pagination = document.querySelector('#catalog-pagination');
     const needsPicker = document.querySelector('.catalog-needs');
     const needsInputs = [...needsPicker.querySelectorAll('input[type="checkbox"]')];
-    let currentRegion = root.dataset.region;
     let currentPage = 1;
 
     // Bỏ dấu để có thể tìm “Da Nang” khi tên tour là “Đà Nẵng”.
@@ -273,9 +273,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function readCriteria() {
         return {
-            region: currentRegion,
+            region: form.elements.region.value,
             keyword: normalize(keywordInput.value),
-            destination: form.elements.destination.value,
             origin: form.elements.origin.value,
             date: form.elements.date.value,
             price: form.elements.price.value,
@@ -288,17 +287,31 @@ document.addEventListener('DOMContentLoaded', () => {
     function matches(card) {
         const data = card.dataset;
         if (criteria.region && data.region !== criteria.region) return false;
-        if (criteria.destination && data.destination !== criteria.destination) return false;
-        if (criteria.origin && data.origin !== criteria.origin) return false;
         if (criteria.keyword && !normalize(`${data.name} ${data.destination}`).includes(criteria.keyword)) return false;
-        if (criteria.date && !data.dates.split(',').includes(criteria.date)) return false;
-        if (criteria.price) {
-            const [minimum, maximum] = criteria.price.split('-');
-            const price = Number(data.price);
-            if (price < Number(minimum) || (maximum && price >= Number(maximum))) return false;
-        }
+        // Ngày, nơi khởi hành và mức giá phải cùng thuộc một lịch phù hợp.
+        const schedules = schedulesByCard.get(card).filter(schedule => {
+            if (criteria.origin && schedule.origin !== criteria.origin) return false;
+            if (criteria.date && schedule.date !== criteria.date) return false;
+            if (criteria.price) {
+                const [minimum, maximum] = criteria.price.split('-');
+                if (schedule.adult_price < Number(minimum) || (maximum && schedule.adult_price >= Number(maximum))) return false;
+            }
+            return true;
+        });
+        if ((criteria.origin || criteria.date || criteria.price) && schedules.length === 0) return false;
         // Chọn nhiều nhu cầu: tour phù hợp ít nhất một mục được chọn.
         if (criteria.needs.length && !criteria.needs.some((need) => data.needs.split(',').includes(need))) return false;
+        data.sortPrice = schedules.length ? String(Math.min(...schedules.map(schedule => schedule.adult_price))) : '';
+        const priceElement = card.querySelector('[data-card-price]');
+        if (data.sortPrice !== '') {
+            const amount = document.createElement('strong');
+            amount.textContent = new Intl.NumberFormat('vi-VN').format(Number(data.sortPrice));
+            const currency = document.createElement('span');
+            currency.textContent = ' ₫';
+            priceElement.replaceChildren(amount, currency);
+        } else priceElement.textContent = 'Đang cập nhật';
+        const origins = [...new Set(schedules.map(schedule => schedule.origin))];
+        card.querySelector('[data-card-origin]').textContent = origins.length ? `Khởi hành từ ${origins.join(', ')}` : 'Chưa có lịch khởi hành';
         return true;
     }
 
@@ -317,8 +330,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const filtered = cards.filter(matches);
         filtered.sort((a, b) => {
             let difference = 0;
-            if (sortInput.value === 'price-asc') difference = Number(a.dataset.price) - Number(b.dataset.price);
-            if (sortInput.value === 'price-desc') difference = Number(b.dataset.price) - Number(a.dataset.price);
+            if (sortInput.value.startsWith('price-')) {
+                if (a.dataset.sortPrice === '' && b.dataset.sortPrice !== '') return 1;
+                if (b.dataset.sortPrice === '' && a.dataset.sortPrice !== '') return -1;
+                difference = sortInput.value === 'price-asc'
+                    ? Number(a.dataset.sortPrice) - Number(b.dataset.sortPrice)
+                    : Number(b.dataset.sortPrice) - Number(a.dataset.sortPrice);
+            }
             if (sortInput.value === 'duration') difference = Number(a.dataset.days) - Number(b.dataset.days);
             return difference || Number(a.dataset.order) - Number(b.dataset.order);
         });
@@ -336,7 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const count = document.createElement('strong');
         count.textContent = String(filtered.length);
         document.querySelector('#catalog-result-description').replaceChildren(count, ` tour được tìm thấy · Trang ${currentPage}/${pageCount}`);
-        document.querySelector('#catalog-range').textContent = `Hiển thị ${filtered.length ? start + 1 : 0}–${start + shown.length} / ${filtered.length} tour`;
 
         pagination.replaceChildren();
         pagination.hidden = filtered.length === 0;
@@ -347,6 +364,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function applyFilters(event) {
         event.preventDefault();
+        const regionOption = form.elements.region.selectedOptions[0];
+        const selectedType = regionOption.dataset.regionType;
+        if (selectedType && selectedType !== root.dataset.catalogType) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('page', 'tours');
+            url.searchParams.set('type', selectedType);
+            url.searchParams.set('region', regionOption.value);
+            if (keywordInput.value.trim()) url.searchParams.set('q', keywordInput.value.trim());
+            else url.searchParams.delete('q');
+            window.location.assign(url.href);
+            return;
+        }
         criteria = readCriteria();
         currentPage = 1;
         needsPicker.open = false;
@@ -354,6 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     form.addEventListener('submit', applyFilters);
+    form.elements.region.addEventListener('change', applyFilters);
     document.querySelector('.catalog-quick-search').addEventListener('submit', applyFilters);
     keywordInput.addEventListener('search', (event) => {
         if (keywordInput.value === '') applyFilters(event);
@@ -389,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.reset();
         keywordInput.value = '';
         sortInput.value = 'default';
-        currentRegion = '';
+        form.elements.region.value = '';
         currentPage = 1;
         criteria = readCriteria();
         needsPicker.open = false;
@@ -410,8 +440,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ===== CHI TIẾT TOUR ===== */
 
-// Chỉ chuyển nhóm 3 thẻ tour liên quan. Giá/đặt tour chưa có xử lý nghiệp vụ.
+// Tạm tính theo giá lịch đi từ database; nút đặt tour chưa gửi dữ liệu.
 document.addEventListener('DOMContentLoaded', () => {
+    const preview = document.querySelector('[data-booking-preview]');
+    if (preview) {
+        let adultPrice = Number(preview.dataset.adultPrice);
+        let childPrice = Number(preview.dataset.childPrice);
+        const adultRow = preview.querySelector('[data-quantity="adult"]');
+        const childRow = preview.querySelector('[data-quantity="child"]');
+        let adults = 1;
+        let children = 0;
+        const money = value => `${new Intl.NumberFormat('vi-VN').format(value)} ₫`;
+
+        function renderEstimate() {
+            const selected = preview.querySelector('input[name="departure"]:checked');
+            if (selected) {
+                adultPrice = Number(selected.dataset.adultPrice);
+                childPrice = Number(selected.dataset.childPrice);
+                preview.querySelector('[data-schedule-origin]').textContent = selected.dataset.origin;
+            }
+            adultRow.querySelector('[data-unit-price]').textContent = money(adultPrice);
+            childRow.querySelector('[data-unit-price]').textContent = money(childPrice);
+            const adultTotal = adults * adultPrice;
+            const childTotal = children * childPrice;
+            const subtotal = adultTotal + childTotal;
+            const guests = adults + children;
+            const discountRate = guests >= 10 ? 8 : guests >= 5 ? 5 : 0;
+            const discount = Math.round(subtotal * discountRate / 100);
+
+            adultRow.querySelector('[data-count]').textContent = adults;
+            childRow.querySelector('[data-count]').textContent = children;
+            adultRow.querySelector('[data-step="-1"]').disabled = adults <= 1;
+            childRow.querySelector('[data-step="-1"]').disabled = children <= 0;
+            adultRow.querySelector('[data-step="1"]').disabled = adults >= 99;
+            childRow.querySelector('[data-step="1"]').disabled = children >= 99;
+            preview.querySelector('[data-adult-count]').textContent = adults;
+            preview.querySelector('[data-adult-total]').textContent = money(adultTotal);
+            preview.querySelector('[data-child-count]').textContent = children;
+            preview.querySelector('[data-child-total]').textContent = money(childTotal);
+            preview.querySelector('[data-child-line]').hidden = children === 0;
+            preview.querySelector('[data-subtotal]').textContent = money(subtotal);
+            preview.querySelector('[data-discount-line]').hidden = discountRate === 0;
+            preview.querySelector('[data-discount-rate]').textContent = `(${discountRate}%)`;
+            preview.querySelector('[data-discount-amount]').textContent = `−${money(discount)}`;
+            preview.querySelector('[data-total]').textContent = money(subtotal - discount);
+        }
+
+        preview.querySelectorAll('[data-step]').forEach(button => button.addEventListener('click', () => {
+            const step = Number(button.dataset.step);
+            if (button.closest('[data-quantity]').dataset.quantity === 'adult') adults = Math.max(1, Math.min(99, adults + step));
+            else children = Math.max(0, Math.min(99, children + step));
+            renderEstimate();
+        }));
+        preview.querySelectorAll('input[name="departure"]').forEach(input => input.addEventListener('change', renderEstimate));
+        renderEstimate();
+    }
+
+    // Chuyển nhóm 3 tour liên quan.
     const cards = [...document.querySelectorAll('[data-related-card]')];
     const previous = document.querySelector('[data-related-prev]');
     const next = document.querySelector('[data-related-next]');

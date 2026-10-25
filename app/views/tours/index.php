@@ -1,18 +1,24 @@
 <?php
-// Hai loại tour dùng chung View. Chỉ có dữ liệu mẫu, chưa truy vấn database.
-require __DIR__ . '/sample-data.php';
-
-$tourType = ($_GET['type'] ?? '') === 'international' ? 'international' : 'domestic';
-$typeTitle = $tourType === 'domestic' ? 'Tour trong nước' : 'Tour quốc tế';
-$regionNames = $tourType === 'domestic'
-    ? ['north' => 'Miền Bắc', 'central' => 'Miền Trung', 'south' => 'Miền Nam']
-    : ['asia' => 'Châu Á', 'europe' => 'Châu Âu', 'americas-oceania' => 'Châu Mỹ – Châu Úc'];
-$requestedRegion = $_GET['region'] ?? '';
-$tourRegion = is_string($requestedRegion) && isset($regionNames[$requestedRegion]) ? $requestedRegion : '';
-$keyword = is_string($_GET['q'] ?? null) ? trim($_GET['q']) : '';
-$escape = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-$tours = $catalogTours[$tourType];
-$initialCount = count(array_filter($tours, static fn($tour) => $tourRegion === '' || $tour['region'] === $tourRegion));
+// Dữ liệu đã được TourController chuẩn bị; View chỉ hiển thị.
+/**
+ * Các biến được TourController::index() truyền qua require.
+ * @var string $page
+ * @var string $tourType
+ * @var string $typeTitle
+ * @var string $tourRegion
+ * @var string $keyword
+ * @var array<int, array<string, mixed>> $tours
+ * @var array<string, string> $destinationRegions
+ * @var array<string, string> $destinationRegionTypes
+ * @var array<string, string> $origins
+ * @var array<string, string> $catalogNeeds
+ */
+$escape = static function ($value): string {
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+};
+$initialCount = count(array_filter($tours, static function ($tour) use ($tourRegion): bool {
+    return $tourRegion === '' || $tour['region'] === $tourRegion;
+}));
 $initialShown = 0;
 $pageSize = 12;
 ?>
@@ -58,25 +64,25 @@ $pageSize = 12;
             <div class="catalog-filter-heading"><h2 id="catalog-filter-title">Bộ lọc</h2><button type="button" class="catalog-reset" data-catalog-reset>Xóa bộ lọc <span aria-hidden="true">↺</span></button></div>
             <form id="catalog-filters" class="catalog-filter-form">
                 <label class="catalog-field"><span>ĐIỂM ĐẾN</span>
-                    <select name="destination"><option value="">Tất cả điểm đến</option>
-                        <?php foreach ($catalogDestinations[$tourType] as $destination): ?>
-                            <option value="<?= $escape($destination['name']) ?>"><?= $escape($destination['name']) ?></option>
+                    <select name="region"><option value="">Tất cả điểm đến</option>
+                        <?php foreach ($destinationRegions as $region => $label): ?>
+                            <option value="<?= $escape($region) ?>" data-region-type="<?= $escape($destinationRegionTypes[$region]) ?>" <?= $tourRegion === $region ? 'selected' : '' ?>><?= $escape($label) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </label>
-                <label class="catalog-field"><span>KHỞI HÀNH TỪ</span><select name="origin"><option value="">Tất cả nơi khởi hành</option><option>TP. Hồ Chí Minh</option><option>Hà Nội</option></select></label>
+                <label class="catalog-field"><span>KHỞI HÀNH TỪ</span><select name="origin"><option value="">Tất cả nơi khởi hành</option><?php foreach ($origins as $origin): ?><option><?= $escape($origin) ?></option><?php endforeach; ?></select></label>
                 <label class="catalog-field"><span>NGÀY KHỞI HÀNH</span><input type="date" name="date"></label>
                 <label class="catalog-field"><span>MỨC GIÁ</span><select name="price"><option value="">Tất cả mức giá</option><option value="0-5000000">Dưới 5 triệu</option><option value="5000000-10000000">5 – dưới 10 triệu</option><option value="10000000-20000000">10 – dưới 20 triệu</option><option value="20000000-50000000">20 – dưới 50 triệu</option><option value="50000000-">Từ 50 triệu</option></select></label>
                 <details class="catalog-needs">
                     <summary><span>NHU CẦU</span><span id="catalog-needs-value">Tất cả nhu cầu</span><svg class="icon chevron-down"><use href="#i-chevron"/></svg></summary>
                     <div class="catalog-needs-options" role="group" aria-label="Nhu cầu chuyến đi">
                         <?php foreach ($catalogNeeds as $value => $label): ?>
-                            <label><input type="checkbox" name="needs[]" value="<?= $value ?>"><span><?= $label ?></span></label>
+                            <label><input type="checkbox" name="needs[]" value="<?= $escape($value) ?>"><span><?= $escape($label) ?></span></label>
                         <?php endforeach; ?>
                         <p>Có thể chọn nhiều nhu cầu.</p>
                     </div>
                 </details>
-                <button class="button button-primary catalog-apply" type="submit"><svg class="icon"><use href="#i-search"/></svg>Tìm tour</button>
+                <button class="button button-primary catalog-apply" type="submit">Áp dụng</button>
             </form>
             <p class="catalog-price-note">Mức giá là giá từ cho một người lớn, chưa áp dụng ưu đãi nhóm. Giá cụ thể phụ thuộc lịch khởi hành.</p>
         </aside>
@@ -91,7 +97,7 @@ $pageSize = 12;
         <!-- 3. KẾT QUẢ — mỗi loại 24 tour, 12 tour/trang, 3 cột × 4 hàng. -->
         <section id="catalog-results" aria-labelledby="catalog-results-title">
             <div class="catalog-toolbar">
-                <div><h2 id="catalog-results-title">Danh sách hành trình</h2><p id="catalog-result-description" aria-live="polite"><strong><?= $initialCount ?></strong> tour · Hiển thị <?= min($pageSize, $initialCount) ?> tour</p></div>
+                <div><h2 id="catalog-results-title">Danh sách tour</h2><p id="catalog-result-description" aria-live="polite"><strong><?= $initialCount ?></strong> tour · Hiển thị <?= min($pageSize, $initialCount) ?> tour</p></div>
                 <label class="catalog-sort"><span>Sắp xếp theo</span><select id="catalog-sort"><option value="default">Mặc định</option><option value="price-asc">Giá tăng dần</option><option value="price-desc">Giá giảm dần</option><option value="duration">Thời lượng ngắn nhất</option></select></label>
             </div>
             <div id="catalog-grid" class="tour-grid catalog-grid">
@@ -100,28 +106,26 @@ $pageSize = 12;
                     $visible = $matchesRegion && $initialShown < $pageSize;
                     if ($visible) $initialShown++;
                 ?>
-                    <article class="tour-card catalog-card" data-name="<?= $escape($tour['name']) ?>" data-destination="<?= $escape($tour['destination']) ?>" data-region="<?= $tour['region'] ?>" data-origin="<?= $escape($tour['origin']) ?>" data-price="<?= $tour['price'] ?>" data-days="<?= $tour['days'] ?>" data-needs="<?= implode(',', $tour['needs']) ?>" data-dates="<?= implode(',', $tour['dates']) ?>" data-order="<?= $index ?>" <?= $visible ? '' : 'hidden' ?>>
+                    <article class="tour-card catalog-card" data-name="<?= $escape($tour['name']) ?>" data-destination="<?= $escape($tour['destination']) ?>" data-region="<?= $escape($tour['region']) ?>" data-price="<?= $tour['price'] ?? '' ?>" data-days="<?= $tour['days'] ?>" data-needs="<?= $escape(implode(',', $tour['needs'])) ?>" data-schedules="<?= $escape(json_encode($tour['schedules'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) ?>" data-order="<?= $index ?>" <?= $visible ? '' : 'hidden' ?>>
                         <div class="tour-image-wrap">
-                            <img src="<?= $tour['image'] ?>" alt="<?= $escape($tour['destination']) ?>" width="600" height="450" loading="lazy">
+                            <img src="<?= $escape($tour['image']) ?>" alt="<?= $escape($tour['destination']) ?>" width="600" height="450" loading="lazy">
                             <span class="tour-duration"><svg class="icon"><use href="#i-clock"/></svg><?= $tour['duration'] ?></span>
                         </div>
                         <div class="tour-body">
-                            <div class="catalog-card-top"><p class="tour-place"><?= $escape($tour['destination']) ?></p><span>OT-<?= $tourType === 'domestic' ? 'TN' : 'QT' ?><?= str_pad((string) ($index + 1), 3, '0', STR_PAD_LEFT) ?></span></div>
+                            <div class="catalog-card-top"><p class="tour-place"><?= $escape($tour['destination']) ?></p></div>
                             <h3><?= $escape($tour['name']) ?></h3>
-                            <p class="tour-meta"><svg class="icon"><use href="#i-pin"/></svg>Khởi hành từ <?= $escape($tour['origin']) ?></p>
-                            <div class="catalog-card-bottom"><div><span>Giá từ / người lớn</span><p><strong><?= number_format($tour['price'], 0, ',', '.') ?></strong> <span>₫</span></p></div><a class="catalog-detail" href="index.php?page=tour-detail&amp;type=<?= $tourType ?>&amp;id=<?= $escape($tour['id']) ?>">Xem chi tiết <svg class="icon"><use href="#i-arrow"/></svg></a></div>
+                            <p class="tour-meta"><svg class="icon"><use href="#i-pin"/></svg><span data-card-origin><?= $tour['origin'] !== '' ? 'Khởi hành từ ' . $escape($tour['origin']) : 'Chưa có lịch khởi hành' ?></span></p>
+                            <div class="catalog-card-bottom"><div><span>Giá từ / người lớn</span><p data-card-price><?= $tour['price'] !== null ? '<strong>' . number_format($tour['price'], 0, ',', '.') . '</strong> <span>₫</span>' : 'Đang cập nhật' ?></p></div><a class="catalog-detail" href="index.php?page=tour-detail&amp;type=<?= $tourType ?>&amp;id=<?= $escape($tour['id']) ?>">Xem chi tiết <svg class="icon"><use href="#i-arrow"/></svg></a></div>
                         </div>
                     </article>
                 <?php endforeach; ?>
             </div>
-            <div id="catalog-empty" class="catalog-empty" hidden>
+            <div id="catalog-empty" class="catalog-empty" <?= $initialCount ? 'hidden' : '' ?>>
                 <svg class="icon"><use href="#i-search"/></svg><h3>Chưa tìm thấy tour phù hợp</h3><p>Thử thay đổi điểm đến, ngày đi hoặc mức giá để có thêm lựa chọn.</p><button class="button button-primary" type="button" data-catalog-reset>Xóa bộ lọc</button>
             </div>
             <div class="catalog-list-footer">
                 <nav id="catalog-pagination" class="catalog-pagination" aria-label="Phân trang danh sách tour"></nav>
-                <p id="catalog-range">Hiển thị 1–<?= min($pageSize, $initialCount) ?> / <?= $initialCount ?> tour</p>
             </div>
-            <p class="catalog-demo-note">Dữ liệu tour, mức giá và lịch khởi hành đang dùng để minh họa giao diện.</p>
         </section>
         </div>
         </div>

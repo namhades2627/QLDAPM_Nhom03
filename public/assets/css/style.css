@@ -684,7 +684,6 @@ a, button, input, select { outline-offset: 5px; }
 .catalog-grid .tour-body { padding: 17px 17px 15px; }
 .catalog-card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
 .catalog-card-top .tour-place { margin: 0; }
-.catalog-card-top > span { font-size: 9px; color: #a3a39a; white-space: nowrap; }
 .catalog-grid .tour-body h3 { min-height: 72px; font-size: 15px; line-height: 1.6; margin-bottom: 12px; }
 .catalog-grid .tour-meta { font-size: 10px; }
 .catalog-card-bottom { border-top: 1px solid var(--line); margin-top: 17px; padding-top: 12px; }
@@ -701,7 +700,6 @@ a, button, input, select { outline-offset: 5px; }
 .catalog-empty p { font-size: 13px; color: var(--muted); margin: 10px 0 22px; }
 .catalog-empty .button { font-size: 12px; min-height: 42px; }
 .catalog-list-footer { display: grid; justify-items: center; gap: 12px; margin-top: 32px; padding-top: 22px; border-top: 1px solid var(--line); text-align: center; }
-.catalog-list-footer > p { color: var(--muted); font-size: 12px; }
 .catalog-pagination { display: flex; justify-content: center; gap: 6px; }
 .catalog-pagination button { min-width: 35px; height: 35px; padding: 6px 11px; border: 1px solid var(--line); background: #fff; border-radius: 4px; font-size: 12px; }
 .catalog-pagination button[aria-current="page"] { background: var(--orange); border-color: var(--orange); color: #fff; }
@@ -784,9 +782,31 @@ a, button, input, select { outline-offset: 5px; }
 .detail-booking h2 { font-size:15px; margin-bottom:13px; }
 .detail-date-list { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:13px; }
 .detail-date-list span { padding:8px; text-align:center; border:1px solid #e8e4de; border-radius:3px; font-size:12px; }
+.detail-date-option { cursor:pointer; position:relative; }
+.detail-date-option input { position:absolute; opacity:0; width:1px; height:1px; }
+.detail-date-option span { display:block; }
+.detail-date-option small { display:block; margin-top:4px; font-size:10px; font-weight:400; }
+.detail-date-option input:checked+span { border-color:var(--orange); background:#fff5ee; color:var(--orange-dark); font-weight:700; }
+.detail-date-option input:focus-visible+span { outline:2px solid var(--orange); outline-offset:2px; }
+.detail-quantity-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 0; }
+.detail-quantity-row>div:first-child { min-width:0; }
+.detail-quantity-row strong { display:block; font-size:13px; }
+.detail-quantity-row small { display:block; color:#777970; font-size:11px; }
+.detail-quantity-row em { color:#a37659; font-style:normal; }
+.detail-stepper { display:flex; align-items:center; gap:10px; flex:none; }
+.detail-stepper button { width:30px; height:30px; border:1px solid #dedbd5; border-radius:50%; background:#fff; font-size:19px; line-height:1; }
+.detail-stepper button:hover:not(:disabled) { border-color:var(--orange); color:var(--orange); }
+.detail-stepper button:disabled { opacity:.35; cursor:not-allowed; }
+.detail-stepper output { min-width:18px; text-align:center; font-size:14px; font-weight:700; }
 .detail-discount { padding:13px; background:#fff5ec; border-left:2px solid var(--orange); font-size:12px; }
 .detail-discount p { margin:5px 0; }
 .detail-discount small { color:#8c7567; }
+.detail-estimate { margin-top:18px; padding:14px; border:1px solid var(--line); border-radius:4px; background:#faf9f7; }
+.detail-estimate>div { display:flex; justify-content:space-between; gap:8px; margin:6px 0; color:#64675f; font-size:11px; }
+.detail-estimate strong { color:var(--ink); font-size:12px; white-space:nowrap; }
+.detail-estimate .detail-estimate-subtotal { padding-top:10px; border-top:1px solid var(--line); }
+.detail-estimate .detail-estimate-total { align-items:baseline; padding-top:11px; margin-top:11px; border-top:1px solid var(--line); color:var(--ink); font-size:13px; font-weight:700; }
+.detail-estimate-total strong { color:var(--orange); font-size:18px; }
 .detail-book-button { width:100%; margin-top:22px; }
 .detail-book-button:disabled { opacity:.68; cursor:not-allowed; }
 .detail-static-note { text-align:center; margin-top:10px; }

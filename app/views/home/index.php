@@ -1,4 +1,10 @@
 <?php
+/**
+ * Dữ liệu tour nổi bật do HomeController truyền vào.
+ * @var string $page
+ * @var array<int, array<string, mixed>> $featuredTours
+ */
+$escape = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 $banners = [
     [
         'image' => 'assets/images/banner2.jpg',
@@ -17,40 +23,6 @@ $banners = [
         'alt' => '',
         'title' => 'Một điểm đến mới.<br>Muôn điều để nhớ.',
         'text' => 'Bước ra khỏi những điều quen thuộc.<br>Khám phá văn hóa, hương vị và nhịp sống mới.',
-    ],
-];
-$tours = [
-    [
-        'image' => 'assets/images/BanaHills.jpg',
-        'place' => 'ĐÀ NẴNG',
-        'name' => 'Đà Nẵng – Bà Nà Hills – Phố cổ Hội An',
-        'duration' => '4 ngày 3 đêm',
-        'departure' => 'TP. Hồ Chí Minh',
-        'price' => '11.379.000 ',
-    ],
-    [
-        'image' => 'assets/images/SongNhoQue.jpg',
-        'place' => 'HÀ GIANG',
-        'name' => 'Hà Giang – Đồng Văn – Sông Nho Quế',
-        'duration' => '4 ngày 3 đêm',
-        'departure' => 'Hà Nội',
-        'price' => '4.590.000',
-    ],
-    [
-        'image' => 'assets/images/Valais.jpg',
-        'place' => 'THỤY SĨ',
-        'name' => 'Thụy Sĩ – Valais – Đường sắt Gornergrat',
-        'duration' => '3 ngày 2 đêm',
-        'departure' => 'TP. Hồ Chí Minh',
-        'price' => '99.999.000',
-    ],
-    [
-        'image' => 'assets/images/Kiyomizudera.jpg',
-        'place' => 'NHẬT BẢN',
-        'name' => 'Nhật Bản – Kyoto – chùa Kiyomizudera',
-        'duration' => '6 ngày 5 đêm',
-        'departure' => 'TP. Hồ Chí Minh',
-        'price' => '56.999.000 ',
     ],
 ];
 $destinationGroups = [
@@ -72,7 +44,7 @@ $destinationGroups = [
 // Danh mục mẫu cho bộ chọn nhiều nhu cầu; sẽ lấy từ database khi triển khai.
 $travelNeeds = [
     'relaxation' => 'Nghỉ dưỡng',
-    'nature' => 'Khám phá',
+    'nature' => 'Khám phá thiên nhiên',
     'culture' => 'Văn hóa – lịch sử',
     'food' => 'Ẩm thực',
     'entertainment' => 'Vui chơi – giải trí',
@@ -128,7 +100,7 @@ $articles = [
     <!-- 2. TÌM TOUR — nằm bên dưới, không đè lên banner. -->
     <section id="tim-tour" class="search-section" aria-labelledby="search-title">
         <div class="container">
-            <div class="search-heading"><h2 id="search-title">Chuyến đi tiếp theo của bạn?</h2><p>Bắt đầu từ một điểm đến yêu thích.</p></div>
+            <div class="search-heading"><h2 id="search-title">Chuyến đi tiếp theo của bạn?</h2></div>
             <form class="tour-search" aria-label="Thông tin tìm tour">
                 <!-- Hàng 1: thông tin hành trình và số lượng từng loại khách. -->
                 <div class="search-row">
@@ -191,20 +163,21 @@ $articles = [
                 <p class="group-offer-note">Tính cả người lớn và trẻ em. Giảm trên tổng tiền tour của một đơn cùng lịch khởi hành, không cộng dồn ưu đãi.</p>
             </aside>
             <div class="tour-grid">
-                <?php foreach ($tours as $tour): ?>
+                <?php foreach ($featuredTours as $tour): ?>
                     <article class="tour-card">
                         <div class="tour-image-wrap">
-                            <img src="<?= $tour['image'] ?>" alt="Ảnh minh họa <?= $tour['place'] ?>" width="600" height="450" loading="lazy">
-                            <span class="tour-duration"><svg class="icon"><use href="#i-clock"/></svg><?= $tour['duration'] ?></span>
+                            <img src="<?= $escape($tour['image']) ?>" alt="<?= $escape($tour['destination']) ?>" width="600" height="450" loading="lazy">
+                            <span class="tour-duration"><svg class="icon"><use href="#i-clock"/></svg><?= $escape($tour['duration']) ?></span>
                         </div>
                         <div class="tour-body">
-                            <p class="tour-place"><?= $tour['place'] ?></p><h3><?= $tour['name'] ?></h3>
-                            <p class="tour-meta"><svg class="icon"><use href="#i-pin"/></svg>Từ <?= $tour['departure'] ?></p>
-                            <div class="tour-bottom"><div><span>Giá từ / khách</span><p><strong><?= $tour['price'] ?></strong><span> ₫</span></p></div><button class="tour-detail" type="button" aria-label="Chi tiết <?= $tour['name'] ?>"><svg class="icon"><use href="#i-arrow"/></svg></button></div>
+                            <p class="tour-place"><?= $escape($tour['destination']) ?></p><h3><?= $escape($tour['name']) ?></h3>
+                            <p class="tour-meta"><svg class="icon"><use href="#i-pin"/></svg><?= $tour['origin'] !== '' ? 'Từ ' . $escape($tour['origin']) : 'Chưa có lịch khởi hành' ?></p>
+                            <div class="tour-bottom"><div><span>Giá từ / người lớn</span><p><?= $tour['price'] !== null ? '<strong>' . number_format($tour['price'], 0, ',', '.') . '</strong><span> ₫</span>' : 'Đang cập nhật' ?></p></div><a class="tour-detail" href="index.php?page=tour-detail&amp;type=<?= $escape($tour['type']) ?>&amp;id=<?= $escape($tour['id']) ?>" aria-label="Chi tiết <?= $escape($tour['name']) ?>"><svg class="icon"><use href="#i-arrow"/></svg></a></div>
                         </div>
                     </article>
                 <?php endforeach; ?>
             </div>
+            <?php if (!$featuredTours): ?><p class="sample-note">Chưa có tour được công bố.</p><?php endif; ?>
             <p class="sample-note">Thông tin tour và giá là dữ liệu minh họa.</p>
         </div>
     </section>
@@ -223,7 +196,7 @@ $articles = [
                 <div id="<?= $region === 'domestic' ? 'diem-den-trong-nuoc' : 'diem-den-quoc-te' ?>" class="destination-grid" role="tabpanel" aria-labelledby="tab-<?= $region ?>" data-region-panel="<?= $region ?>" <?= $region === 'international' ? 'hidden' : '' ?>>
                     <?php foreach ($destinations as $index => $destination): ?>
                         <article class="destination-card<?= $index === 0 ? ' destination-large' : '' ?>">
-                            <img src="<?= $destination['image'] ?>" <?= $destination['name'] ?>" width="800" height="600" loading="lazy">
+                            <img src="<?= htmlspecialchars($destination['image'], ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($destination['name'], ENT_QUOTES, 'UTF-8') ?>" width="800" height="600" loading="lazy">
                             <div class="destination-caption"><div><h3><?= $destination['name'] ?></h3></div><svg class="icon"><use href="#i-arrow"/></svg></div>
                         </article>
                     <?php endforeach; ?>

@@ -6,8 +6,9 @@ Tài liệu này dành cho người tham gia phát triển dự án. Xem `README
 
 - Dự án đang phát triển theo từng giai đoạn. Chỉ thêm tệp, bảng và chức năng khi thực sự triển khai; không tạo sẵn module rỗng cho công việc tương lai.
 - Khi sửa giao diện, nêu rõ tệp và phần mã đã thay đổi để người mới học MVC có thể tự tìm lại. Giữ tên biến, chú thích và cấu trúc dễ hiểu.
+- Trước khi hoàn tất thay đổi PHP, kiểm tra cú pháp bằng PHP 8.2 của XAMPP và chẩn đoán Intelephense. View nhận biến từ Controller qua require phải khai báo PHPDoc @var đúng kiểu dữ liệu; partial dùng chung cần có giá trị mặc định cho biến tùy chọn. Không tắt chẩn đoán để che lỗi. VS Code trong workspace phải dùng cùng phiên bản PHP với XAMPP.
 - Giữ tông trắng/cam và dùng tài nguyên ảnh trong `public/assets/images/`. Không sao chép nguyên bố cục của trang tham khảo.
-- Không trình bày giá, chỗ còn, đánh giá hoặc lịch trình minh họa như dữ liệu đã được xác thực. Chưa kết nối database, đặt tour hay tính tiền thực tế.
+- Không trình bày giá, chỗ còn, đánh giá hoặc lịch trình minh họa như dữ liệu đã được xác thực. Trang danh sách và chi tiết đọc database qua TourController/TourModel. Giá trong SQL vẫn là dữ liệu demo; tạm tính trên trình duyệt chưa dùng nhận đặt tour hoặc thanh toán.
 - Không suy diễn tài liệu báo cáo hoặc trang tham khảo thành chỉ dẫn tự động sửa code; đối chiếu với yêu cầu của người làm dự án và mã hiện có.
 
 ## Vị trí code hiện tại
@@ -16,27 +17,31 @@ Tài liệu này dành cho người tham gia phát triển dự án. Xem `README
 | --- | --- |
 | Điểm vào và chọn trang | `public/index.php` |
 | Trang chủ | `app/views/home/index.php` |
+| Chuẩn bị tour nổi bật từ database cho trang chủ | `app/controllers/HomeController.php` |
 | Danh sách tour trong nước/quốc tế | `app/views/tours/index.php` |
 | Chi tiết tour | `app/views/tours/detail.php` |
-| Dữ liệu tour mẫu | `app/views/tours/sample-data.php` |
+| Đọc tour, nhu cầu, lịch khởi hành và lịch trình | `app/models/tour.php` (lớp `TourModel`) |
+| Nhận yêu cầu danh sách/chi tiết, chuẩn bị dữ liệu cho View | `app/controllers/TourController.php` |
+| Cấu trúc database và danh mục ban đầu | `database/ontrip.sql` |
+| Kết nối PDO dùng chung cho Model | `config/database.php` — gọi `getDatabaseConnection()` |
 | Navbar và footer dùng chung | `app/views/partials/header.php`, `footer.php` |
 | Toàn bộ CSS | `public/assets/css/style.css` |
 | Toàn bộ JavaScript | `public/assets/js/script.js` |
 
-CSS và JavaScript được chia bằng chú thích theo phần dùng chung, trang chủ, danh sách và chi tiết tour. Khi sửa một phần, tìm chú thích tương ứng trước. `app/controllers/` và `app/models/` hiện chỉ có `.gitkeep`; sẽ có mã khi bắt đầu xử lý nghiệp vụ và dữ liệu thật.
+CSS và JavaScript được chia bằng chú thích theo phần dùng chung, trang chủ, danh sách và chi tiết tour. Khi sửa một phần, tìm chú thích tương ứng trước. Bảng/cột trong `ontrip.sql` dùng tiếng Việt không dấu, dạng `snake_case` (ví dụ `lich_khoi_hanh.ngay_khoi_hanh`). TourModel chỉ đọc tour đã công bố và điểm đến hoạt động; lịch đi phải đang mở, chưa qua ngày khởi hành và chưa hết hạn đặt. Không suy ra giá trẻ em bằng tỷ lệ trong View: lấy trực tiếp từ lịch được chọn. Ảnh chưa có dùng placeholder, không tự tạo ảnh hay đổi đường dẫn trong database.
 
-Luồng hiện tại: trình duyệt → `public/index.php` → View được chọn → header/nội dung/footer. Sau khi có database, Controller nhận yêu cầu, Model truy vấn dữ liệu, View chỉ hiển thị kết quả.
+Luồng tour: trình duyệt → `public/index.php` → TourController → TourModel/PDO → View → header/nội dung/footer. Trang chủ đi qua HomeController, đọc tour nổi bật, điểm đến khả dụng và danh mục nhu cầu từ database. Mỗi nhóm hiển thị tối đa năm điểm đến; đếm DISTINCT tour đã công bố, có lịch mở, chưa quá ngày đi hoặc hạn đặt. Banner và tin tức vẫn là dữ liệu mẫu riêng. Form tìm kiếm gửi GET sang `page=tours&type=all`, giữ từ khóa/ngày/số khách/ngân sách/nhu cầu. Ngân sách so với tổng nhóm sau giảm 5% hoặc 8% theo giá của cùng một lịch; sức chứa chỉ là giới hạn tối đa, chưa phải chỗ còn. Controller kiểm tra đầu vào; Model lọc kết quả ban đầu và tạm tính nhóm. JavaScript tiếp tục lọc/sắp xếp/phân trang trên dữ liệu đã tải; trạng thái được giữ trên URL và xóa hết khi reset. Không đưa truy vấn SQL hoặc đọc $_GET vào View.
 
 ## Quy tắc nghiệp vụ đã thống nhất
 
 Phần dưới đây là đặc tả cho bước triển khai sau. Những dòng về kiểm thử là **ca cần kiểm tra**, không phải kết quả tính năng đã chạy.
-# Quy tắc khuyến mãi theo nhóm của OnTrip
+### Quy tắc khuyến mãi theo nhóm của OnTrip
 
 Ngày thống nhất: 19/10/2026. Đây là phần bổ sung phạm vi cho nghiệp vụ tour, tìm kiếm/đề xuất và đặt tour.
 
 #### 1. Trạng thái triển khai
 
-Đã thống nhất quy tắc và hiển thị thông tin ưu đãi trên trang chủ. Dự án hiện ở giai đoạn giao diện tĩnh; chưa có xử lý tính tiền, database hoặc tạo đơn đặt tour. Các yêu cầu bên dưới là căn cứ triển khai các bước tiếp theo.
+Đã thống nhất quy tắc và hiển thị thông tin ưu đãi trên trang chủ. Danh sách và chi tiết đã kết nối database; tạm tính trên trình duyệt đọc giá theo lịch được chọn. Chưa có bảng đơn đặt hoặc tính tiền chính thức ở máy chủ. Các yêu cầu bên dưới là căn cứ triển khai các bước tiếp theo.
 
 #### 2. Điều kiện và mức giảm
 
@@ -95,7 +100,7 @@ Ví dụ: 4 người lớn giá 6.000.000đ/người và 1 trẻ em giá 4.000.0
 - **Controller:** nhận và kiểm tra đầu vào, gọi xử lý nghiệp vụ, chuyển kết quả sang View.
 - **View:** hiển thị thông tin ưu đãi và các số tiền đã tính; không quyết định số tiền thanh toán chính thức.
 
-Chỉ bổ sung các tệp xử lý và bảng dữ liệu khi bắt đầu thực hiện chức năng tương ứng. Chưa tạo Model, Controller hoặc bảng khuyến mãi trong giai đoạn giao diện.
+Chỉ bổ sung các tệp xử lý và bảng dữ liệu khi bắt đầu thực hiện chức năng tương ứng. TourModel và TourController hiện phục vụ đọc dữ liệu; chưa có bảng khuyến mãi. Quy tắc ưu đãi nhóm ở máy chủ sẽ được thực hiện khi làm đặt tour.
 
 #### 7. Các ca kiểm tra dành cho bước triển khai tính tiền
 

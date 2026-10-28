@@ -1,14 +1,15 @@
 # OnTrip
 
-OnTrip là dự án website quản lý tour du lịch, xây dựng bằng PHP thuần theo hướng MVC để phát triển từng giai đoạn. Phiên bản hiện tại là **giao diện trình diễn** cho trang chủ, danh sách tour và chi tiết tour. Dữ liệu tour đang nằm trong các mảng PHP; dự án **chưa kết nối cơ sở dữ liệu**.
+OnTrip là dự án website quản lý tour du lịch, xây dựng bằng PHP thuần theo kiến trúc MVC và phát triển từng giai đoạn. Trang chủ đọc tour nổi bật, điểm đến và nhu cầu từ database; tìm kiếm dẫn sang danh sách tour với các điều kiện đã chọn. Danh sách và chi tiết cũng đọc database qua Model/Controller. Banner và tin tức vẫn dùng dữ liệu mẫu. Dự án chưa nhận đặt tour hoặc thanh toán.
 
 ## Chạy trên máy cá nhân
 
-Yêu cầu: XAMPP có Apache và PHP 8.2 trở lên. Không cần Composer, Node.js hay lệnh cài gói để chạy website.
+Yêu cầu: XAMPP có Apache, PHP 8.2 trở lên và MariaDB 10.4 trở lên. Không cần Composer, Node.js hay lệnh cài gói để xem website.
 
 1. Chép hoặc clone thư mục dự án vào `htdocs/QLDAPM_Nhom03` của XAMPP.
-2. Khởi động **Apache** trong XAMPP.
-3. Mở <http://localhost/QLDAPM_Nhom03/public/>.
+2. Khởi động **Apache** và **MySQL** trong XAMPP.
+3. Import `database/ontrip.sql` qua phpMyAdmin để có bảng và 48 tour demo. Chỉ có bảng mà chưa nhập dữ liệu thì danh sách tour sẽ trống.
+4. Mở <http://localhost/QLDAPM_Nhom03/public/>.
 
 Nếu đặt thư mục bằng tên khác, thay `QLDAPM_Nhom03` trong URL bằng tên thư mục đó. Truy cập qua Apache để PHP xử lý các View; mở trực tiếp tệp `.php` trong trình duyệt sẽ không chạy ứng dụng.
 
@@ -17,38 +18,46 @@ Nếu đặt thư mục bằng tên khác, thay `QLDAPM_Nhom03` trong URL bằng
 | Trang chủ | <http://localhost/QLDAPM_Nhom03/public/> |
 | Tour trong nước | <http://localhost/QLDAPM_Nhom03/public/index.php?page=tours&type=domestic> |
 | Tour quốc tế | <http://localhost/QLDAPM_Nhom03/public/index.php?page=tours&type=international> |
-| Chi tiết tour mẫu | <http://localhost/QLDAPM_Nhom03/public/index.php?page=tour-detail&type=domestic&id=domestic-1> |
+| Chi tiết tour | <http://localhost/QLDAPM_Nhom03/public/index.php?page=tour-detail&type=domestic&id=mb01> |
 
 Có thể chọn vùng từ menu **Tour** trên navbar. Ví dụ URL danh sách tour miền Bắc thêm `&region=north`. Trên trang danh sách, nhấn **Xem chi tiết** để mở đúng tour.
 
 ## Những gì đã có
 
 - Trang chủ với navbar, ba banner tự chuyển mỗi 7 giây, thanh tìm tour, bốn tour nổi bật, điểm đến trong nước/quốc tế, tin tức và footer.
+- Khám phá điểm đến hiển thị tối đa năm điểm mỗi nhóm và số tour đang có lịch mở nhận đặt; nhấp ảnh để xem đúng các tour của điểm đến đó. Danh mục nhu cầu lấy chung bảng `nhu_cau` với trang tour.
+- Thanh tìm tour gửi từ khóa, ngày đi, người lớn/trẻ em, ngân sách và nhu cầu sang kết quả trong nước lẫn quốc tế. Ngân sách là tổng nhóm sau ưu đãi; ngày, giá và ngân sách phải khớp cùng một lịch. Điều kiện giữ khi tải lại trang; xóa bộ lọc sẽ xóa cả ngân sách và số khách. Đây là tạm tính, chưa xác nhận chỗ còn hay nhận đặt tour.
 - Danh sách tour trong nước và quốc tế dùng chung một View. Mỗi loại có **24 tour mẫu**, hiển thị **12 tour/trang** theo lưới 3 cột × 4 hàng trên desktop; bộ lọc ở bên trái, phân trang ở giữa bên dưới danh sách.
-- Bộ lọc mẫu theo điểm đến, nơi khởi hành, ngày, mức giá và nhu cầu; tìm theo tên/điểm đến có hỗ trợ không dấu, sắp xếp giá và thời lượng. Bộ lọc và phân trang hiện xử lý trên các thẻ đã tải bằng JavaScript.
-- Trang chi tiết có một ảnh lớn, thông tin tour, lịch trình theo ngày, giá và lịch đi minh họa, khu vực đánh giá chưa có dữ liệu, cùng ba tour liên quan với hai nút chuyển.
+- Bộ lọc theo điểm đến, nơi khởi hành, ngày, mức giá và nhu cầu; tìm theo tên/điểm đến có hỗ trợ không dấu, sắp xếp giá và thời lượng. Bộ lọc và phân trang xử lý bằng JavaScript trên dữ liệu database đã tải. Ngày, nơi khởi hành và mức giá phải khớp cùng một lịch đi.
+- Trang chi tiết đọc giới thiệu, lịch trình, lịch khởi hành và giá người lớn/trẻ em từ database. Chọn lịch khác sẽ đổi giá tạm tính theo lịch đó. Có một ảnh lớn, khu vực đánh giá chưa có dữ liệu, cùng ba tour liên quan với hai nút chuyển. Tour không có lịch đang mở sẽ hiện thông báo và không có giá giả định.
 - Giao diện hiển thị **chính sách ưu đãi nhóm**: 5–9 khách giảm 5%, từ 10 khách giảm 8% cho một đơn cùng lịch khởi hành. Quy tắc đầy đủ nằm trong [AGENT.md](AGENT.md).
 
-**Chưa triển khai:** database, Model/Controller nghiệp vụ, đặt tour, tính giá/giảm giá thật, đăng nhập/đăng ký, đăng đánh giá, tìm tour từ trang chủ và API thời tiết. Một số nút chỉ minh họa giao diện. Các ngày khởi hành, giá, số lượng tour và lịch trình trong trang chi tiết là dữ liệu mẫu; không dùng để nhận đặt tour thực tế.
+**Chưa triển khai:** đặt tour, xác nhận giá và giảm giá cho đơn đặt, đăng nhập/đăng ký, đăng đánh giá và API thời tiết. Giá và lịch trình trong SQL là dữ liệu demo. Máy chủ đã tạm tính ngân sách nhóm cho tìm kiếm; trang chi tiết có tạm tính trên trình duyệt. Cả hai chưa dùng để nhận đặt tour thực tế.
 
 ## Cấu trúc mã
 
 ```text
 QLDAPM_Nhom03/
 ├── app/
-│   ├── controllers/                 # Chưa có nghiệp vụ; giữ thư mục bằng .gitkeep
-│   ├── models/                      # Chưa kết nối dữ liệu; giữ thư mục bằng .gitkeep
+│   ├── controllers/
+│   │   ├── HomeController.php      # Chuẩn bị tour nổi bật cho trang chủ
+│   │   └── TourController.php      # Chuẩn bị danh sách và chi tiết tour
+│   ├── models/tour.php              # Lớp TourModel truy vấn dữ liệu bằng PDO
 │   └── views/
 │       ├── home/index.php          # Trang chủ và dữ liệu mẫu của trang chủ
 │       ├── tours/
 │       │   ├── index.php           # Danh sách tour trong nước/quốc tế
-│       │   ├── detail.php          # Chi tiết một tour
-│       │   └── sample-data.php     # Dữ liệu mẫu của danh sách và chi tiết
+│       │   └── detail.php          # Chi tiết một tour
+│       ├── errors/database.php     # Thông báo khi không tải được dữ liệu
 │       └── partials/
 │           ├── header.php          # Navbar và biểu tượng dùng chung
 │           └── footer.php          # Footer dùng chung
+├── database/
+│   └── ontrip.sql                  # Cấu trúc bảng và danh mục vùng/nhu cầu
+├── config/
+│   └── database.php                # Hàm lấy kết nối PDO dùng chung
 ├── public/
-│   ├── index.php                   # Điểm vào, chọn View theo URL
+│   ├── index.php                   # Điểm vào, điều hướng sang Controller hoặc trang chủ
 │   └── assets/
 │       ├── css/style.css           # Toàn bộ CSS
 │       ├── js/script.js            # Toàn bộ JavaScript
@@ -58,7 +67,25 @@ QLDAPM_Nhom03/
 └── README.md
 ```
 
-Luồng hiện tại: **trình duyệt → `public/index.php` → View → `header.php` + nội dung + `footer.php`**. `public/index.php` chỉ chọn trong các View cố định; chưa có Controller/Model xử lý dữ liệu. Khi triển khai database, Controller sẽ nhận yêu cầu, Model lấy dữ liệu, còn View hiển thị kết quả.
+Luồng tour: **trình duyệt → `public/index.php` → TourController → TourModel → database → View**. Controller nhận tham số URL; Model truy vấn PDO; View hiển thị kết quả. Trang chủ đi qua HomeController để lấy tối đa bốn tour, ưu tiên tour được đánh dấu `noi_bat = 1`; nếu chưa đủ thì bổ sung tour đã công bố. Mã tour không tồn tại trả HTTP 404; lỗi database trả HTTP 503 với thông báo chung, chi tiết lỗi được ghi vào log PHP.
+
+## Database `ontrip`
+
+Kết nối PDO được chuẩn bị trong `config/database.php`. Model sẽ nạp tệp này bằng `require_once` và gọi `getDatabaseConnection()` để nhận đối tượng PDO. Mặc định kết nối tới `127.0.0.1:3306`, database `ontrip`, tài khoản `root`, mật khẩu trống của XAMPP. Có thể ghi đè bằng biến môi trường `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`; tệp không tự đọc `.env`. Bật MySQL trong XAMPP khi dùng kết nối này. HomeController và TourController sử dụng TourModel để đọc dữ liệu qua kết nối PDO.
+
+Mở **phpMyAdmin → Import** và chọn [database/ontrip.sql](database/ontrip.sql). Tệp tạo database `ontrip`, bảy bảng có khóa ngoại và nhập sáu vùng cùng sáu nhu cầu. Tệp không xóa bảng hay dữ liệu khi nhập lại. Trên máy phát triển hiện tại, SQL đã được nhập vào MariaDB 10.4 để kiểm tra; khi clone trên máy khác vẫn cần nhập tệp này.
+
+| Bảng | Vai trò |
+| --- | --- |
+| `khu_vuc_tour`, `diem_den` | Phân loại trong nước/quốc tế, vùng và điểm đến; lưu ảnh điểm đến. |
+| `tour` | Tên, mã tour nghiệp vụ, giới thiệu, số ngày, ảnh đại diện và trạng thái. `id_tour` là khóa nội bộ, `ma_tour` để hiển thị/tra cứu. |
+| `lich_trinh_ngay` | Nội dung từng ngày của một tour. |
+| `nhu_cau`, `tour_nhu_cau` | Danh mục nhu cầu và quan hệ nhiều-nhiều với tour. |
+| `lich_khoi_hanh` | Ngày đi, nơi xuất phát, giá người lớn/trẻ em, sức chứa, hạn nhận đặt và trạng thái theo **từng lịch**. |
+
+Tên bảng/cột dùng tiếng Việt không dấu theo dạng `snake_case`, ví dụ `ngay_khoi_hanh`, `gia_nguoi_lon`. Mã loại/vùng/nhu cầu và giá trị trạng thái trong dữ liệu giữ dạng mã ngắn để sau này đối chiếu với URL và bộ lọc hiện có.
+
+Tệp SQL có 48 tour demo: 24 tour trong nước và 24 tour quốc tế, mỗi khu vực 8 tour, kèm nhu cầu, lịch trình theo ngày và 3 lịch khởi hành cho mỗi tour. Giá, ngày đi, sức chứa và chương trình phục vụ học tập, chưa phải dữ liệu kinh doanh đã xác nhận. Chạy lại tệp chỉ bổ sung bản ghi còn thiếu, không cập nhật các bản ghi đã có. Danh sách, chi tiết và tour nổi bật trang chủ đọc database. Database chưa có bảng đặt tour, tài khoản, tin tức hay đánh giá vì các chức năng này chưa được triển khai. Khi làm đặt tour, số chỗ còn phải xét đơn đặt hợp lệ và sức chứa của lịch.
 
 ## Sửa giao diện và dữ liệu mẫu
 
@@ -66,9 +93,11 @@ Luồng hiện tại: **trình duyệt → `public/index.php` → View → `head
 | --- | --- |
 | Logo, navbar, menu Tour | `app/views/partials/header.php` |
 | Footer | `app/views/partials/footer.php` |
-| Banner, tour nổi bật, điểm đến, tin tức trang chủ | Các mảng `$banners`, `$tours`, `$destinationGroups`, `$articles` ở đầu `app/views/home/index.php` |
+| Banner, tin tức trang chủ | Các mảng `$banners`, `$articles` ở đầu `app/views/home/index.php` |
+| Điểm đến, nhu cầu và điều kiện tìm kiếm | `TourModel`, `HomeController`, `TourController`; dữ liệu ở các bảng liên quan trong database |
+| Tour nổi bật trang chủ | `TourModel::getFeaturedTours()` và cột `tour.noi_bat` trong database |
 | Danh sách, bộ lọc và thẻ tour | `app/views/tours/index.php` |
-| Ảnh, tên, giá, nhu cầu và lịch mẫu của tour | `app/views/tours/sample-data.php` |
+| Dữ liệu tour, giá, nhu cầu và lịch khởi hành | Các bảng trong database `ontrip`; `database/ontrip.sql` là dữ liệu cài đặt ban đầu |
 | Nội dung trang chi tiết | `app/views/tours/detail.php` |
 | Màu sắc, kích thước và bố cục | `public/assets/css/style.css`, chia bằng chú thích theo phần dùng chung và từng trang |
 | Banner, menu, bộ lọc, phân trang, tour liên quan | `public/assets/js/script.js`, chia bằng chú thích theo từng trang |
@@ -78,6 +107,6 @@ Luồng hiện tại: **trình duyệt → `public/index.php` → View → `head
 
 ## Hướng phát triển tiếp theo
 
-Hoàn thiện dữ liệu/lịch trình của trang chi tiết, sau đó thiết kế cơ sở dữ liệu và đưa dữ liệu tour, lịch khởi hành, nhu cầu, giá và chỗ còn vào Model/Controller. Khi có luồng đặt tour, áp dụng quy tắc ưu đãi nhóm trong [AGENT.md](AGENT.md) ở phía máy chủ. Các trang và chức năng khác được bổ sung theo tiến độ dự án, không tạo sẵn module chưa sử dụng.
+Triển khai đăng ký/đăng nhập và các chức năng tài khoản theo tiến độ; cập nhật nội dung tour thực tế. Khi có luồng đặt tour, kiểm tra chỗ còn và tính lại giá/ưu đãi ở máy chủ theo [AGENT.md](AGENT.md). Các trang và chức năng khác được bổ sung theo tiến độ dự án, không tạo sẵn module chưa sử dụng.
 
 Giao diện có tham khảo các trang du lịch công khai và hình mẫu trong quá trình thiết kế; nhận diện và bố cục OnTrip được xây dựng riêng.

@@ -11,7 +11,9 @@
  * @var array<string, mixed>|null $selectedSchedule
  * @var array<int, array<string, mixed>> $relatedTours
  */
-$escape = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+$escape = static function ($value): string {
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+};
 $adultPrice = $selectedSchedule['adult_price'] ?? 0;
 $childPrice = $selectedSchedule['child_price'] ?? 0;
 ?>
@@ -38,7 +40,7 @@ $childPrice = $selectedSchedule['child_price'] ?? 0;
             <div><span class="detail-kicker"><?= $typeTitle ?> <span>·</span> <?= $escape($tour['destination']) ?></span><h1><?= $escape($tour['name']) ?></h1><p>Hành trình <?= $escape($tour['duration']) ?> · <?= $tour['origin'] !== '' ? 'Khởi hành từ ' . $escape($tour['origin']) : 'Chưa có lịch khởi hành' ?></p></div>
             <span class="detail-code">Mã tour: <?= $escape($tour['id']) ?></span>
         </header>
-        <div class="detail-hero"><img src="<?= $escape($tour['image']) ?>" alt="<?= $escape($tour['destination']) ?>" width="1200" height="590"><span>Ảnh minh họa hành trình · <?= $escape($tour['destination']) ?></span></div>
+        <div class="detail-hero"><img src="<?= $escape($tour['image']) ?>" alt="<?= $escape($tour['destination']) ?>" width="1200" height="590"></div>
         <div class="detail-facts" aria-label="Thông tin nhanh">
             <div><span>ĐIỂM ĐẾN</span><strong><?= $escape($tour['destination']) ?></strong></div>
             <div><span>THỜI LƯỢNG</span><strong><?= $escape($tour['duration']) ?></strong></div>

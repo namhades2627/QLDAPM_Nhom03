@@ -3,8 +3,13 @@
  * Dữ liệu tour nổi bật do HomeController truyền vào.
  * @var string $page
  * @var array<int, array<string, mixed>> $featuredTours
+ * @var array<string, array<int, array<string, mixed>>> $destinationGroups
+ * @var array<int, array<string, mixed>> $availableDestinations
+ * @var array<string, string> $travelNeeds
  */
-$escape = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+$escape = static function ($value): string {
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+};
 $banners = [
     [
         'image' => 'assets/images/banner2.jpg',
@@ -24,31 +29,6 @@ $banners = [
         'title' => 'Một điểm đến mới.<br>Muôn điều để nhớ.',
         'text' => 'Bước ra khỏi những điều quen thuộc.<br>Khám phá văn hóa, hương vị và nhịp sống mới.',
     ],
-];
-$destinationGroups = [
-    'domestic' => [
-        ['name' => 'Đà Nẵng', 'image' => 'assets/images/KhamPha_DN.jpg'],
-        ['name' => 'Hà Giang', 'image' => 'assets/images/KhamPha_HG.jpg'],
-        ['name' => 'Phú Quốc', 'image' => 'assets/images/KhamPha_PQ.jpg'],
-        ['name' => 'Hà Nội', 'image' => 'assets/images/KhamPha_HN.jpg'],
-        ['name' => 'Đà Lạt', 'image' => 'assets/images/KhamPha_DL.jpg'],
-    ],
-    'international' => [
-        ['name' => 'Nhật Bản', 'image' => 'assets/images/KhamPha_JP.jpg'],
-        ['name' => 'Đức', 'image' => 'assets/images/KhamPha_GM.jpg'],
-        ['name' => 'Mỹ', 'image' => 'assets/images/KhamPha_US.jpg'],
-        ['name' => 'Australia', 'image' => 'assets/images/KhamPha_AU.jpg'],
-        ['name' => 'Trung Quốc', 'image' => 'assets/images/KhamPha_CN.jpg'],
-    ],
-];
-// Danh mục mẫu cho bộ chọn nhiều nhu cầu; sẽ lấy từ database khi triển khai.
-$travelNeeds = [
-    'relaxation' => 'Nghỉ dưỡng',
-    'nature' => 'Khám phá thiên nhiên',
-    'culture' => 'Văn hóa – lịch sử',
-    'food' => 'Ẩm thực',
-    'entertainment' => 'Vui chơi – giải trí',
-    'adventure' => 'Vận động – trải nghiệm',
 ];
 $articles = [
     ['image' => 'assets/images/news/news01.jpg', 'title' => 'Đi Pháp dịp này có an toàn?', 'date' => '15.10.2026'],
@@ -101,24 +81,27 @@ $articles = [
     <section id="tim-tour" class="search-section" aria-labelledby="search-title">
         <div class="container">
             <div class="search-heading"><h2 id="search-title">Chuyến đi tiếp theo của bạn?</h2></div>
-            <form class="tour-search" aria-label="Thông tin tìm tour">
+            <form class="tour-search" action="index.php" method="get" aria-label="Thông tin tìm tour">
+                <input type="hidden" name="page" value="tours">
+                <input type="hidden" name="type" value="all">
                 <!-- Hàng 1: thông tin hành trình và số lượng từng loại khách. -->
                 <div class="search-row">
                     <label class="search-field">
                         <span>ĐIỂM ĐẾN</span>
-                        <span class="field-control"><svg class="icon"><use href="#i-pin"/></svg><input type="text" name="destination" placeholder="Bạn muốn đi đâu?"></span>
+                        <span class="field-control"><svg class="icon"><use href="#i-pin"/></svg><input type="text" name="q" list="search-destinations" maxlength="255" placeholder="Bạn muốn đi đâu?"></span>
+                        <datalist id="search-destinations"><?php foreach ($availableDestinations as $destination): ?><option value="<?= $escape($destination['name']) ?>"></option><?php endforeach; ?></datalist>
                     </label>
                     <label class="search-field">
                         <span>NGÀY KHỞI HÀNH</span>
-                        <span class="field-control"><input type="date" name="departure" aria-label="Ngày khởi hành"></span>
+                        <span class="field-control"><input type="date" name="date" aria-label="Ngày khởi hành"></span>
                     </label>
                     <label class="search-field">
                         <span>NGƯỜI LỚN</span>
-                        <input type="number" name="adults" min="1" step="1" value="1" inputmode="numeric">
+                        <input type="number" name="adults" min="1" max="99" step="1" value="1" inputmode="numeric" required>
                     </label>
                     <label class="search-field">
                         <span>TRẺ EM</span>
-                        <input type="number" name="children" min="0" step="1" value="0" inputmode="numeric">
+                        <input type="number" name="children" min="0" max="99" step="1" value="0" inputmode="numeric" required>
                     </label>
                 </div>
                 <!-- Hàng 2: ngân sách, nhu cầu tùy chọn và nút tìm. -->
@@ -136,15 +119,16 @@ $articles = [
                         <div class="needs-options" role="group" aria-label="Chọn một hoặc nhiều nhu cầu chuyến đi">
                             <?php foreach ($travelNeeds as $value => $label): ?>
                                 <label class="needs-option">
-                                    <input type="checkbox" name="needs[]" value="<?= $value ?>">
-                                    <span><?= $label ?></span>
+                                    <input type="checkbox" name="needs[]" value="<?= $escape($value) ?>">
+                                    <span><?= $escape($label) ?></span>
                                 </label>
                             <?php endforeach; ?>
                         </div>
                     </details>
-                    <button class="button button-primary search-submit" type="button"><svg class="icon"><use href="#i-search"/></svg>Tìm tour</button>
+                    <button class="button button-primary search-submit" type="submit"><svg class="icon"><use href="#i-search"/></svg>Tìm tour</button>
                 </div>
             </form>
+            <p class="search-budget-note">Ngân sách là tổng tiền cho cả nhóm sau ưu đãi, theo lịch khởi hành phù hợp.</p>
         </div>
     </section>
 
@@ -195,12 +179,13 @@ $articles = [
             <?php foreach ($destinationGroups as $region => $destinations): ?>
                 <div id="<?= $region === 'domestic' ? 'diem-den-trong-nuoc' : 'diem-den-quoc-te' ?>" class="destination-grid" role="tabpanel" aria-labelledby="tab-<?= $region ?>" data-region-panel="<?= $region ?>" <?= $region === 'international' ? 'hidden' : '' ?>>
                     <?php foreach ($destinations as $index => $destination): ?>
-                        <article class="destination-card<?= $index === 0 ? ' destination-large' : '' ?>">
+                        <a class="destination-card<?= $index === 0 ? ' destination-large' : '' ?>" href="index.php?page=tours&amp;type=<?= $escape($region) ?>&amp;destination=<?= (int) $destination['id'] ?>" aria-label="Xem tour <?= $escape($destination['name']) ?>">
                             <img src="<?= htmlspecialchars($destination['image'], ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($destination['name'], ENT_QUOTES, 'UTF-8') ?>" width="800" height="600" loading="lazy">
-                            <div class="destination-caption"><div><h3><?= $destination['name'] ?></h3></div><svg class="icon"><use href="#i-arrow"/></svg></div>
-                        </article>
+                            <div class="destination-caption"><div><h3><?= $escape($destination['name']) ?></h3><p><?= (int) $destination['tour_count'] ?> tour khả dụng</p></div><svg class="icon"><use href="#i-arrow"/></svg></div>
+                        </a>
                     <?php endforeach; ?>
                 </div>
+                <?php if (!$destinations): ?><p class="destination-empty" data-region-panel="<?= $escape($region) ?>" <?= $region === 'international' ? 'hidden' : '' ?>>Chưa có điểm đến có lịch khởi hành đang mở.</p><?php endif; ?>
             <?php endforeach; ?>
         </div>
     </section>

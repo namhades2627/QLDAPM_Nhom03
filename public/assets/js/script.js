@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePauseButton();
     restartTimer();
 
-    // 3. ĐIỂM ĐẾN: chuyển hai nhóm dữ liệu mẫu, không truy vấn database.
+    // 3. ĐIỂM ĐẾN: chuyển hai nhóm đã được Controller lấy từ database.
     const tabs = [...document.querySelectorAll('.destination-tab')];
 
     function selectRegion(region) {
@@ -246,8 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     updateNeedsSummary();
 
-    // Ngăn Enter gửi form hoặc tải lại trang khi chưa có xử lý tìm kiếm.
-    document.querySelector('.tour-search').addEventListener('submit', (event) => event.preventDefault());
+    // Form GET gửi điều kiện tìm kiếm sang danh sách tour, hỗ trợ cả phím Enter.
 });
 
 /* ===== DANH SÁCH TOUR ===== */
@@ -274,6 +273,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function readCriteria() {
         return {
             region: form.elements.region.value,
+            destination: Number(form.elements.destination.value),
+            budget: Number(form.elements.budget?.value || 0),
+            groupSearch: Boolean(form.elements.adults && !form.elements.adults.disabled),
+            guests: Number(form.elements.adults?.value || 1) + Number(form.elements.children?.value || 0),
             keyword: normalize(keywordInput.value),
             origin: form.elements.origin.value,
             date: form.elements.date.value,
@@ -287,18 +290,21 @@ document.addEventListener('DOMContentLoaded', () => {
     function matches(card) {
         const data = card.dataset;
         if (criteria.region && data.region !== criteria.region) return false;
+        if (criteria.destination && Number(data.destinationId) !== criteria.destination) return false;
         if (criteria.keyword && !normalize(`${data.name} ${data.destination}`).includes(criteria.keyword)) return false;
         // Ngày, nơi khởi hành và mức giá phải cùng thuộc một lịch phù hợp.
         const schedules = schedulesByCard.get(card).filter(schedule => {
+            if (criteria.groupSearch && criteria.guests > Number(schedule.capacity)) return false;
             if (criteria.origin && schedule.origin !== criteria.origin) return false;
             if (criteria.date && schedule.date !== criteria.date) return false;
+            if (criteria.budget > 0 && schedule.group_total > criteria.budget) return false;
             if (criteria.price) {
                 const [minimum, maximum] = criteria.price.split('-');
                 if (schedule.adult_price < Number(minimum) || (maximum && schedule.adult_price >= Number(maximum))) return false;
             }
             return true;
         });
-        if ((criteria.origin || criteria.date || criteria.price) && schedules.length === 0) return false;
+        if ((criteria.destination || criteria.groupSearch || criteria.origin || criteria.date || criteria.price || criteria.budget > 0) && schedules.length === 0) return false;
         // Chọn nhiều nhu cầu: tour phù hợp ít nhất một mục được chọn.
         if (criteria.needs.length && !criteria.needs.some((need) => data.needs.split(',').includes(need))) return false;
         data.sortPrice = schedules.length ? String(Math.min(...schedules.map(schedule => schedule.adult_price))) : '';
@@ -360,30 +366,52 @@ document.addEventListener('DOMContentLoaded', () => {
         pagination.append(buildPageButton('‹', currentPage - 1, currentPage === 1));
         for (let page = 1; page <= pageCount; page++) pagination.append(buildPageButton(String(page), page, false, page === currentPage));
         pagination.append(buildPageButton('›', currentPage + 1, currentPage === pageCount));
+        const summary = [];
+        const destination = cards.find(card => Number(card.dataset.destinationId) === criteria.destination);
+        if (destination) summary.push(destination.dataset.destination);
+        if (form.elements.adults && !form.elements.adults.disabled) {
+            summary.push(`${form.elements.adults.value} người lớn, ${form.elements.children.value} trẻ em`);
+        }
+        if (criteria.budget > 0) summary.push(`Ngân sách nhóm: ${new Intl.NumberFormat('vi-VN').format(criteria.budget)} ₫ (sau ưu đãi)`);
+        const summaryElement = document.querySelector('.catalog-search-summary');
+        summaryElement.textContent = summary.join(' · ');
+        summaryElement.hidden = summary.length === 0;
+    }
+
+    function searchUrl(type = root.dataset.catalogType) {
+        const url = new URL(window.location.href);
+        url.search = '';
+        url.searchParams.set('page', 'tours');
+        url.searchParams.set('type', type);
+        for (const [name, value] of new FormData(form)) {
+            if (value === '' || ((name === 'destination' || name === 'budget') && Number(value) === 0)) continue;
+            url.searchParams.append(name, value);
+        }
+        if (keywordInput.value.trim()) url.searchParams.set('q', keywordInput.value.trim());
+        return url;
     }
 
     function applyFilters(event) {
         event.preventDefault();
         const regionOption = form.elements.region.selectedOptions[0];
         const selectedType = regionOption.dataset.regionType;
-        if (selectedType && selectedType !== root.dataset.catalogType) {
-            const url = new URL(window.location.href);
-            url.searchParams.set('page', 'tours');
-            url.searchParams.set('type', selectedType);
-            url.searchParams.set('region', regionOption.value);
-            if (keywordInput.value.trim()) url.searchParams.set('q', keywordInput.value.trim());
-            else url.searchParams.delete('q');
-            window.location.assign(url.href);
+        if (selectedType && root.dataset.catalogType !== 'all' && selectedType !== root.dataset.catalogType) {
+            form.elements.destination.value = '0';
+            window.location.assign(searchUrl(selectedType).href);
             return;
         }
         criteria = readCriteria();
         currentPage = 1;
         needsPicker.open = false;
         renderResults();
+        window.history.replaceState(null, '', searchUrl());
     }
 
     form.addEventListener('submit', applyFilters);
-    form.elements.region.addEventListener('change', applyFilters);
+    form.elements.region.addEventListener('change', event => {
+        form.elements.destination.value = '0';
+        applyFilters(event);
+    });
     document.querySelector('.catalog-quick-search').addEventListener('submit', applyFilters);
     keywordInput.addEventListener('search', (event) => {
         if (keywordInput.value === '') applyFilters(event);
@@ -405,9 +433,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (event) => {
         if (!needsPicker.contains(event.target)) needsPicker.open = false;
     });
-    needsPicker.addEventListener('focusout', (event) => {
-        if (!needsPicker.contains(event.relatedTarget)) needsPicker.open = false;
-    });
+    // Không đóng ở focusout: thu gọn ở mousedown sẽ làm nút Áp dụng
+    // dịch chuyển trước mouseup, khiến trình duyệt không phát sinh submit.
+    // Đóng bằng click bên ngoài, submit hoặc Escape thay thế.
     needsPicker.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             needsPicker.open = false;
@@ -420,6 +448,17 @@ document.addEventListener('DOMContentLoaded', () => {
         keywordInput.value = '';
         sortInput.value = 'default';
         form.elements.region.value = '';
+        form.elements.destination.value = '0';
+        form.elements.origin.value = '';
+        form.elements.date.value = '';
+        form.elements.price.value = '';
+        needsInputs.forEach(input => { input.checked = false; });
+        for (const name of ['adults', 'children', 'budget']) {
+            if (form.elements[name]) {
+                form.elements[name].value = name === 'adults' ? '1' : '0';
+                form.elements[name].disabled = true;
+            }
+        }
         currentPage = 1;
         criteria = readCriteria();
         needsPicker.open = false;
@@ -427,10 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('[data-tour-type]').forEach((link) => {
             link.classList.toggle('is-selected', link.dataset.tourType === root.dataset.catalogType && link.dataset.tourRegion === '');
         });
-        const url = new URL(window.location.href);
-        url.searchParams.delete('region');
-        url.searchParams.delete('q');
-        window.history.replaceState(null, '', url);
+        window.history.replaceState(null, '', searchUrl());
         renderResults();
     }));
 

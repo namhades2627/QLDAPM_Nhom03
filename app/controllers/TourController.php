@@ -18,6 +18,12 @@ class TourController
         return is_string($_GET[$name] ?? null) ? trim($_GET[$name]) : '';
     }
 
+    private function queryInteger(string $name, int $default, int $minimum, int $maximum): int
+    {
+        $value = filter_var($this->queryString($name), FILTER_VALIDATE_INT);
+        return $value !== false && $value >= $minimum && $value <= $maximum ? $value : $default;
+    }
+
     /** Ảnh chưa được bổ sung sẽ dùng placeholder, không hiện ảnh lỗi. */
     private function prepareImage(array $tour): array
     {
@@ -34,16 +40,23 @@ class TourController
     public function index(): void
     {
         $page = 'tours';
-        $tourType = $this->queryString('type') === 'international' ? 'international' : 'domestic';
-        $typeTitle = $tourType === 'domestic' ? 'Tour trong nước' : 'Tour quốc tế';
+        $requestedType = $this->queryString('type');
+        $tourType = in_array($requestedType, ['domestic', 'international', 'all'], true) ? $requestedType : 'domestic';
+        $typeTitle = $tourType === 'all' ? 'Kết quả tìm tour' : ($tourType === 'domestic' ? 'Tour trong nước' : 'Tour quốc tế');
         $domesticRegions = $this->model->getRegions('domestic');
         $internationalRegions = $this->model->getRegions('international');
-        $regionNames = $tourType === 'domestic' ? $domesticRegions : $internationalRegions;
+        $regionNames = $tourType === 'all' ? array_merge($domesticRegions, $internationalRegions)
+            : ($tourType === 'domestic' ? $domesticRegions : $internationalRegions);
         $requestedRegion = $this->queryString('region');
         $tourRegion = isset($regionNames[$requestedRegion]) ? $requestedRegion : '';
-        $keyword = $this->queryString('q');
+        $keyword = mb_substr($this->queryString('q'), 0, 255, 'UTF-8');
         $catalogNeeds = $this->model->getNeeds();
-        $tours = array_map($this->prepareImage(...), $this->model->getPublishedTours($tourType));
+        $tours = $tourType === 'all'
+            ? array_merge($this->model->getPublishedTours('domestic'), $this->model->getPublishedTours('international'))
+            : $this->model->getPublishedTours($tourType);
+        $adults = $this->queryInteger('adults', 1, 1, 99);
+        $children = $this->queryInteger('children', 0, 0, 99);
+        $tours = array_map([$this, 'prepareImage'], $this->model->addGroupEstimates($tours, $adults, $children));
         $destinationRegions = array_merge($domesticRegions, $internationalRegions);
         $destinationRegionTypes = array_merge(
             array_fill_keys(array_keys($domesticRegions), 'domestic'),
@@ -58,6 +71,41 @@ class TourController
                 $origins[$origin] = $origin;
             }
         }
+        $date = $this->queryString('date');
+        $parsedDate = preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date)
+            ? DateTimeImmutable::createFromFormat('!Y-m-d', $date) : false;
+        if (!$parsedDate || $parsedDate->format('Y-m-d') !== $date) $date = '';
+        $requestedNeeds = $_GET['needs'] ?? [];
+        $needs = [];
+        if (is_array($requestedNeeds)) {
+            foreach ($requestedNeeds as $need) {
+                if (is_string($need) && isset($catalogNeeds[$need])) $needs[$need] = $need;
+            }
+        }
+        $origin = $this->queryString('origin');
+        $price = $this->queryString('price');
+        $hasGroupSearch = isset($_GET['adults']) || isset($_GET['children']) || $this->queryInteger('budget', 0, 0, 1000000000000) > 0;
+        $filters = [
+            'q' => $keyword, 'region' => $tourRegion,
+            'destination' => $this->queryInteger('destination', 0, 0, PHP_INT_MAX),
+            'date' => $date, 'origin' => isset($origins[$origin]) ? $origin : '',
+            'price' => in_array($price, ['0-5000000', '5000000-10000000', '10000000-20000000', '20000000-50000000', '50000000-'], true) ? $price : '',
+            'needs' => array_values($needs), 'adults' => $adults, 'children' => $children,
+            'group_search' => $hasGroupSearch,
+            'budget' => $this->queryInteger('budget', 0, 0, 1000000000000),
+        ];
+        $matchedTours = $this->model->filterTours($tours, $filters);
+        $searchSummary = [];
+        if ($filters['destination'] > 0) {
+            foreach ($tours as $tour) {
+                if ((int) $tour['destination_id'] === $filters['destination']) {
+                    $searchSummary[] = $tour['destination'];
+                    break;
+                }
+            }
+        }
+        if ($hasGroupSearch) $searchSummary[] = $adults . ' người lớn, ' . $children . ' trẻ em';
+        if ($filters['budget'] > 0) $searchSummary[] = 'Ngân sách nhóm: ' . number_format($filters['budget'], 0, ',', '.') . ' ₫ (sau ưu đãi)';
         require __DIR__ . '/../views/tours/index.php';
     }
 

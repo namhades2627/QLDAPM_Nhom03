@@ -1,4 +1,9 @@
-<?php $isToursPage = in_array(($page ?? 'home'), ['tours', 'tour-detail'], true); ?>
+<?php
+// Trang chủ không truyền loại tour/vùng; dùng chuỗi trống để menu có trạng thái mặc định.
+$tourType = $tourType ?? '';
+$tourRegion = $tourRegion ?? '';
+$isToursPage = in_array(($page ?? 'home'), ['tours', 'tour-detail'], true);
+?>
 <!-- Biểu tượng vector nội bộ, không cần thư viện ngoài. -->
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.8"/></symbol>

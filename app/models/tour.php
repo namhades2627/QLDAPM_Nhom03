@@ -34,7 +34,7 @@ class TourModel
             "SELECT t.id_tour, t.ma_tour AS id, t.ten_tour AS name, t.gioi_thieu AS introduction,
                     t.so_ngay AS days, t.duong_dan_anh AS image, t.noi_bat AS featured,
                     k.loai_tour AS type,
-                    d.ten_diem_den AS destination, d.ma_khu_vuc AS region
+                    d.ten_diem_den AS destination, d.id_diem_den AS destination_id, d.ma_khu_vuc AS region
              FROM tour t
              JOIN diem_den d ON d.id_diem_den = t.id_diem_den_chinh
              JOIN khu_vuc_tour k ON k.ma_khu_vuc = d.ma_khu_vuc
@@ -96,6 +96,83 @@ class TourModel
         }
         unset($tour);
         return $tours;
+    }
+
+    /** Đếm mỗi tour một lần, dù tour có nhiều lịch còn mở. */
+    public function getAvailableDestinations(): array
+    {
+        $now = new DateTimeImmutable('now', new DateTimeZone('Asia/Ho_Chi_Minh'));
+        $statement = $this->connection->prepare(
+            "SELECT d.id_diem_den AS id, d.ten_diem_den AS name, d.duong_dan_anh AS image,
+                    k.loai_tour AS type, COUNT(DISTINCT t.id_tour) AS tour_count,
+                    MAX(t.noi_bat) AS featured
+             FROM diem_den d
+             JOIN khu_vuc_tour k ON k.ma_khu_vuc = d.ma_khu_vuc
+             JOIN tour t ON t.id_diem_den_chinh = d.id_diem_den AND t.trang_thai = 'published'
+             WHERE d.dang_hoat_dong = 1 AND EXISTS (
+                 SELECT 1 FROM lich_khoi_hanh l WHERE l.id_tour = t.id_tour
+                   AND l.trang_thai = 'open' AND l.ngay_khoi_hanh >= ?
+                   AND (l.han_dat IS NULL OR l.han_dat >= ?)
+             )
+             GROUP BY d.id_diem_den, d.ten_diem_den, d.duong_dan_anh, k.loai_tour
+             ORDER BY tour_count DESC, featured DESC, d.id_diem_den"
+        );
+        $statement->execute([$now->format('Y-m-d'), $now->format('Y-m-d H:i:s')]);
+        return $statement->fetchAll();
+    }
+
+    /** Tạm tính nhóm theo giá lịch đi; chưa phải xác nhận đặt tour hay chỗ còn. */
+    public function addGroupEstimates(array $tours, int $adults, int $children): array
+    {
+        $count = $adults + $children;
+        $rate = $count >= 10 ? 8 : ($count >= 5 ? 5 : 0);
+        foreach ($tours as &$tour) {
+            foreach ($tour['schedules'] as &$schedule) {
+                $subtotal = $adults * $schedule['adult_price'] + $children * $schedule['child_price'];
+                $schedule['group_total'] = $subtotal - (int) round($subtotal * $rate / 100);
+            }
+            unset($schedule);
+        }
+        unset($tour);
+        return $tours;
+    }
+
+    private function normalizeSearch(string $value): string
+    {
+        $value = mb_strtolower(trim($value), 'UTF-8');
+        $groups = ['a' => 'àáạảãâầấậẩẫăằắặẳẵ', 'e' => 'èéẹẻẽêềếệểễ',
+            'i' => 'ìíịỉĩ', 'o' => 'òóọỏõôồốộổỗơờớợởỡ', 'u' => 'ùúụủũưừứựửữ',
+            'y' => 'ỳýỵỷỹ', 'd' => 'đ'];
+        foreach ($groups as $replacement => $characters) {
+            $value = preg_replace('/[' . $characters . ']/u', $replacement, $value);
+        }
+        return $value;
+    }
+
+    /** Cùng một lịch phải khớp ngày, nơi xuất phát, đơn giá và ngân sách nhóm. */
+    public function filterTours(array $tours, array $filters): array
+    {
+        $keyword = $this->normalizeSearch($filters['q']);
+        return array_values(array_filter($tours, function (array $tour) use ($filters, $keyword): bool {
+            if ($filters['region'] !== '' && $tour['region'] !== $filters['region']) return false;
+            if ($filters['destination'] > 0 && (int) $tour['destination_id'] !== $filters['destination']) return false;
+            if ($keyword !== '' && strpos($this->normalizeSearch($tour['name'] . ' ' . $tour['destination']), $keyword) === false) return false;
+            if ($filters['needs'] && !array_intersect($filters['needs'], $tour['needs'])) return false;
+            $requiresSchedule = $filters['destination'] > 0 || $filters['group_search'] || $filters['date'] !== '' || $filters['origin'] !== '' || $filters['price'] !== '' || $filters['budget'] > 0;
+            if (!$requiresSchedule) return true;
+            foreach ($tour['schedules'] as $schedule) {
+                if ($filters['group_search'] && $filters['adults'] + $filters['children'] > (int) $schedule['capacity']) continue;
+                if ($filters['date'] !== '' && $schedule['date'] !== $filters['date']) continue;
+                if ($filters['origin'] !== '' && $schedule['origin'] !== $filters['origin']) continue;
+                if ($filters['price'] !== '') {
+                    [$minimum, $maximum] = explode('-', $filters['price']);
+                    if ($schedule['adult_price'] < (int) $minimum || ($maximum !== '' && $schedule['adult_price'] >= (int) $maximum)) continue;
+                }
+                if ($filters['budget'] > 0 && $schedule['group_total'] > $filters['budget']) continue;
+                return true;
+            }
+            return false;
+        }));
     }
 
     /** Ưu tiên tour được đánh dấu nổi bật; bổ sung tour đã công bố nếu chưa đủ bốn. */

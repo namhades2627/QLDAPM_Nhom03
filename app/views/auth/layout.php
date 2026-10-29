@@ -7,13 +7,21 @@
  * @var array $values
  * @var string $message
  * @var string $csrfToken
+ * @var bool $isAdminLogin
+ * @var string $authAssetPrefix
+ * @var string $authHomeUrl
+ * @var string $authFormAction
  */
 $errors = $errors ?? [];
 $values = $values ?? [];
 $message = $message ?? '';
 $csrfToken = $csrfToken ?? '';
 $escape = static function ($value): string { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); };
-$authTitle = $isRegister ? 'Đăng ký' : 'Đăng nhập';
+$isAdminLogin = $isAdminLogin ?? false;
+$authAssetPrefix = $authAssetPrefix ?? '';
+$authHomeUrl = $authHomeUrl ?? 'index.php';
+$authFormAction = $authFormAction ?? ('index.php?page=' . ($isRegister ? 'register' : 'login'));
+$authTitle = $isAdminLogin ? 'Đăng nhập quản trị' : ($isRegister ? 'Đăng ký' : 'Đăng nhập');
 ?>
 <!doctype html>
 <html lang="vi">
@@ -21,27 +29,27 @@ $authTitle = $isRegister ? 'Đăng ký' : 'Đăng nhập';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="<?= $isRegister ? 'Đăng ký tài khoản' : 'Đăng nhập' ?> OnTrip để bắt đầu hành trình của bạn.">
-    <title><?= $isRegister ? 'Đăng ký' : 'Đăng nhập' ?> | OnTrip</title>
-    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
-    <link rel="stylesheet" href="assets/css/style.css">
-    <script src="assets/js/script.js" defer></script>
+    <title><?= $authTitle ?> | OnTrip</title>
+    <link rel="icon" type="image/svg+xml" href="<?= $escape($authAssetPrefix) ?>assets/images/favicon.svg">
+    <link rel="stylesheet" href="<?= $escape($authAssetPrefix) ?>assets/css/style.css">
+    <script src="<?= $escape($authAssetPrefix) ?>assets/js/script.js" defer></script>
 </head>
-<body class="auth-page">
+<body class="auth-page<?= $isAdminLogin ? ' admin-login-page' : '' ?>">
 <main id="noi-dung" class="auth-main">
     <div class="auth-shell<?= $isRegister ? ' auth-shell-register' : '' ?>">
         <section class="auth-panel" aria-labelledby="auth-title">
-            <a class="auth-back" href="index.php"><span aria-hidden="true">←</span> Về trang chủ</a>
-            <a class="brand auth-brand" href="index.php" aria-label="OnTrip — Trang chủ">
+            <a class="auth-back" href="<?= $escape($authHomeUrl) ?>"><span aria-hidden="true">←</span> Về trang chủ</a>
+            <a class="brand auth-brand" href="<?= $escape($authHomeUrl) ?>" aria-label="OnTrip — Trang chủ">
                 <svg class="brand-mark" viewBox="0 0 44 50" aria-hidden="true"><path d="M22 3C11.8 3 5 10.2 5 19c0 12 17 27 17 27s17-15 17-27C39 10.2 32.2 3 22 3Z"/><circle cx="22" cy="19" r="6.5"/></svg>
                 <span class="brand-word">On<span>Trip</span><small>ĐI & KHÁM PHÁ</small></span>
             </a>
             <header class="auth-heading">
                 <h1 id="auth-title"><?= $authTitle ?></h1>
-                <p><?= $isRegister ? 'Tạo tài khoản để bắt đầu hành trình cùng OnTrip.' : 'Sử dụng email và mật khẩu của bạn để tiếp tục.' ?></p>
+                <p><?= $isAdminLogin ? 'Dành cho quản trị viên và nhân viên OnTrip.' : ($isRegister ? 'Tạo tài khoản để bắt đầu hành trình cùng OnTrip.' : 'Sử dụng email và mật khẩu của bạn để tiếp tục.') ?></p>
             </header>
 
             <!-- Controller kiểm tra lại dữ liệu, kể cả khi tắt JavaScript. -->
-            <form class="auth-form" data-auth-form data-auth-mode="<?= $isRegister ? 'register' : 'login' ?>" method="post" action="index.php?page=<?= $isRegister ? 'register' : 'login' ?>" novalidate>
+            <form class="auth-form" data-auth-form data-auth-mode="<?= $isRegister ? 'register' : 'login' ?>" method="post" action="<?= $escape($authFormAction) ?>" novalidate>
                 <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
                 <div class="auth-message" data-auth-message role="alert" <?= $message === '' ? 'hidden' : '' ?>><?= $escape($message) ?></div>
                 <?php if ($isRegister): ?>
@@ -87,7 +95,9 @@ $authTitle = $isRegister ? 'Đăng ký' : 'Đăng nhập';
                 </div>
                 <?php endif; ?>
                 <button class="button button-primary auth-submit" type="submit"><?= $isRegister ? 'Đăng ký' : 'Đăng nhập' ?></button>
+                <?php if (!$isAdminLogin): ?>
                 <p class="auth-switch"><?= $isRegister ? 'Bạn đã có tài khoản?' : 'Bạn chưa có tài khoản?' ?> <a href="index.php?page=<?= $isRegister ? 'login' : 'register' ?>"><?= $isRegister ? 'Đăng nhập' : 'Đăng ký ngay' ?></a></p>
+                <?php endif; ?>
             </form>
         </section>
     </div>

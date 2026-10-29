@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../models/tour.php';
+require_once __DIR__ . '/../models/WeatherService.php';
 
 /** Nhận tham số URL, gọi Model và truyền dữ liệu vào View. */
 class TourController
@@ -120,11 +121,51 @@ class TourController
         $notFound = $tour === null;
         $relatedTours = [];
         $selectedSchedule = null;
+        $itineraryWeather = [];
+
         if ($notFound) {
             http_response_code(404);
         } else {
             $tour = $this->prepareImage($tour);
-            $selectedSchedule = $tour['schedules'][0] ?? null;
+
+            // Tìm lịch khởi hành được chọn: nếu truyền ?date= thì tìm, ngược lại lấy lịch đầu tiên
+            $requestedDate = $this->queryString('date');
+            if ($requestedDate !== '' && !empty($tour['schedules'])) {
+                foreach ($tour['schedules'] as $schedule) {
+                    if ($schedule['date'] === $requestedDate) {
+                        $selectedSchedule = $schedule;
+                        break;
+                    }
+                }
+            }
+            if ($selectedSchedule === null) {
+                $selectedSchedule = $tour['schedules'][0] ?? null;
+            }
+
+            // Tích hợp WeatherService: Dự báo thời tiết chi tiết theo từng ngày theo ngày bắt đầu đã chọn
+            $startDate = $selectedSchedule ? $selectedSchedule['date'] : ($requestedDate ?: date('Y-m-d'));
+            if (!empty($tour['itinerary'])) {
+                $itineraryWeather = WeatherService::getItineraryWeather(
+                    $tour['itinerary'],
+                    $startDate,
+                    $tour['destination'] ?? ''
+                );
+            }
+
+            // Hỗ trợ API AJAX khi khách bấm chọn lịch khởi hành khác trên giao diện
+            if ($this->queryString('action') === 'weather') {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'success' => true,
+                    'tour_id' => $tour['id'],
+                    'departure_date' => $startDate,
+                    'departure_formatted' => WeatherService::formatVietnameseDate($startDate),
+                    'origin' => $selectedSchedule['origin'] ?? '',
+                    'weather' => $itineraryWeather
+                ], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
             $relatedTours = array_values(array_filter(
                 $this->model->getPublishedTours($tourType),
                 static fn($item) => $item['id'] !== $tour['id']

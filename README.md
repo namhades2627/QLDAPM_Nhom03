@@ -19,6 +19,7 @@ Nếu đặt thư mục bằng tên khác, thay `QLDAPM_Nhom03` trong URL bằng
 | Tour trong nước | <http://localhost/QLDAPM_Nhom03/public/index.php?page=tours&type=domestic> |
 | Tour quốc tế | <http://localhost/QLDAPM_Nhom03/public/index.php?page=tours&type=international> |
 | Chi tiết tour | <http://localhost/QLDAPM_Nhom03/public/index.php?page=tour-detail&type=domestic&id=mb01> |
+| Đề xuất tour thông minh | <http://localhost/QLDAPM_Nhom03/public/index.php?page=smart-search> |
 
 Có thể chọn vùng từ menu **Tour** trên navbar. Ví dụ URL danh sách tour miền Bắc thêm `&region=north`. Trên trang danh sách, nhấn **Xem chi tiết** để mở đúng tour.
 
@@ -32,7 +33,7 @@ Có thể chọn vùng từ menu **Tour** trên navbar. Ví dụ URL danh sách 
 - Trang chi tiết đọc giới thiệu, lịch trình, lịch khởi hành và giá người lớn/trẻ em từ database. Chọn lịch khác sẽ đổi giá tạm tính theo lịch đó. Có một ảnh lớn, khu vực đánh giá chưa có dữ liệu, cùng ba tour liên quan với hai nút chuyển. Tour không có lịch đang mở sẽ hiện thông báo và không có giá giả định.
 - Giao diện hiển thị **chính sách ưu đãi nhóm**: 5–9 khách giảm 5%, từ 10 khách giảm 8% cho một đơn cùng lịch khởi hành. Quy tắc đầy đủ nằm trong [AGENT.md](AGENT.md).
 
-**Chưa triển khai:** đặt tour, xác nhận giá và giảm giá cho đơn đặt, đăng nhập/đăng ký, đăng đánh giá và API thời tiết. Giá và lịch trình trong SQL là dữ liệu demo. Máy chủ đã tạm tính ngân sách nhóm cho tìm kiếm; trang chi tiết có tạm tính trên trình duyệt. Cả hai chưa dùng để nhận đặt tour thực tế.
+**Chưa triển khai:** đặt tour, xác nhận giá và giảm giá cho đơn đặt, đăng nhập/đăng ký, và đăng đánh giá. (API thời tiết theo từng ngày lịch trình đã hoàn thành tích hợp). Giá và lịch trình trong SQL là dữ liệu demo. Máy chủ đã tạm tính ngân sách nhóm cho tìm kiếm; trang chi tiết có tạm tính trên trình duyệt. Cả hai chưa dùng để nhận đặt tour thực tế.
 
 ## Cấu trúc mã
 
@@ -42,7 +43,10 @@ QLDAPM_Nhom03/
 │   ├── controllers/
 │   │   ├── HomeController.php      # Chuẩn bị tour nổi bật cho trang chủ
 │   │   └── TourController.php      # Chuẩn bị danh sách và chi tiết tour
-│   ├── models/tour.php              # Lớp TourModel truy vấn dữ liệu bằng PDO
+│   ├── models/
+│   │   ├── tour.php                # Lớp TourModel truy vấn dữ liệu bằng PDO
+│   │   ├── SmartRecommendation.php # Lớp SmartRecommendationModel xếp hạng, mùa vụ, thời tiết, ±3 ngày
+│   │   └── WeatherService.php      # Lớp WeatherService gọi Open-Meteo API & dự báo thời tiết theo lịch trình
 │   └── views/
 │       ├── home/index.php          # Trang chủ và dữ liệu mẫu của trang chủ
 │       ├── tours/

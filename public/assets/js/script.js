@@ -272,12 +272,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const normalize = (value) => value.toLocaleLowerCase('vi').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').trim();
 
     function readCriteria() {
+        const adults = Math.max(1, parseInt(form.elements.adults?.value, 10) || 1);
+        const children = Math.max(0, parseInt(form.elements.children?.value, 10) || 0);
+        const budget = Number(form.elements.budget?.value || 0);
+        const hasCustomGroup = budget > 0 || adults > 1 || children > 0;
         return {
             region: form.elements.region.value,
             destination: Number(form.elements.destination.value),
-            budget: Number(form.elements.budget?.value || 0),
-            groupSearch: Boolean(form.elements.adults && !form.elements.adults.disabled),
-            guests: Number(form.elements.adults?.value || 1) + Number(form.elements.children?.value || 0),
+            budget: budget,
+            adults: adults,
+            children: children,
+            groupSearch: hasCustomGroup || Boolean(form.elements.adults && !form.elements.adults.disabled),
+            guests: adults + children,
             keyword: normalize(keywordInput.value),
             origin: form.elements.origin.value,
             date: form.elements.date.value,
@@ -308,15 +314,36 @@ document.addEventListener('DOMContentLoaded', () => {
         if ((criteria.destination || criteria.groupSearch || criteria.origin || criteria.date || criteria.price || criteria.budget > 0) && schedules.length === 0) return false;
         // Chọn nhiều nhu cầu: tour phù hợp ít nhất một mục được chọn.
         if (criteria.needs.length && !criteria.needs.some((need) => data.needs.split(',').includes(need))) return false;
-        data.sortPrice = schedules.length ? String(Math.min(...schedules.map(schedule => schedule.adult_price))) : '';
+        const rate = criteria.guests >= 10 ? 8 : (criteria.guests >= 5 ? 5 : 0);
+        schedules.forEach(schedule => {
+            const subtotal = criteria.adults * schedule.adult_price + criteria.children * schedule.child_price;
+            schedule.group_total = subtotal - Math.round(subtotal * rate / 100);
+        });
+
+        const bestSchedule = schedules.length ? schedules[0] : null;
+        data.sortPrice = bestSchedule ? String(criteria.groupSearch ? bestSchedule.group_total : bestSchedule.adult_price) : '';
         const priceElement = card.querySelector('[data-card-price]');
-        if (data.sortPrice !== '') {
+        const priceLabel = card.querySelector('.card-price-label');
+
+        if (priceElement && data.sortPrice !== '') {
             const amount = document.createElement('strong');
             amount.textContent = new Intl.NumberFormat('vi-VN').format(Number(data.sortPrice));
             const currency = document.createElement('span');
             currency.textContent = ' ₫';
-            priceElement.replaceChildren(amount, currency);
-        } else priceElement.textContent = 'Đang cập nhật';
+            if (criteria.groupSearch && rate > 0) {
+                const discountPill = document.createElement('small');
+                discountPill.className = 'card-discount-pill';
+                discountPill.textContent = ` -${rate}%`;
+                priceElement.replaceChildren(amount, currency, discountPill);
+            } else {
+                priceElement.replaceChildren(amount, currency);
+            }
+            if (priceLabel) {
+                priceLabel.textContent = criteria.groupSearch ? `Tổng nhóm (${criteria.guests} khách):` : 'Giá từ / người lớn';
+            }
+        } else if (priceElement) {
+            priceElement.textContent = 'Đang cập nhật';
+        }
         const origins = [...new Set(schedules.map(schedule => schedule.origin))];
         card.querySelector('[data-card-origin]').textContent = origins.length ? `Khởi hành từ ${origins.join(', ')}` : 'Chưa có lịch khởi hành';
         return true;
@@ -337,6 +364,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const filtered = cards.filter(matches);
         filtered.sort((a, b) => {
             let difference = 0;
+            if (sortInput.value === 'smart') {
+                difference = Number(b.dataset.smartScore || 0) - Number(a.dataset.smartScore || 0);
+            }
             if (sortInput.value.startsWith('price-')) {
                 if (a.dataset.sortPrice === '' && b.dataset.sortPrice !== '') return 1;
                 if (b.dataset.sortPrice === '' && a.dataset.sortPrice !== '') return -1;
@@ -454,12 +484,10 @@ document.addEventListener('DOMContentLoaded', () => {
         form.elements.date.value = '';
         form.elements.price.value = '';
         needsInputs.forEach(input => { input.checked = false; });
-        for (const name of ['adults', 'children', 'budget']) {
-            if (form.elements[name]) {
-                form.elements[name].value = name === 'adults' ? '1' : '0';
-                form.elements[name].disabled = true;
-            }
-        }
+        if (form.elements.adults) form.elements.adults.value = '1';
+        if (form.elements.children) form.elements.children.value = '0';
+        if (form.elements.budget) form.elements.budget.value = '';
+        updateCatalogGuestTier();
         currentPage = 1;
         criteria = readCriteria();
         needsPicker.open = false;
@@ -471,13 +499,30 @@ document.addEventListener('DOMContentLoaded', () => {
         renderResults();
     }));
 
+    function updateCatalogGuestTier() {
+        const adults = Math.max(1, parseInt(form.elements.adults?.value, 10) || 1);
+        const children = Math.max(0, parseInt(form.elements.children?.value, 10) || 0);
+        const total = adults + children;
+        const rate = total >= 10 ? 8 : (total >= 5 ? 5 : 0);
+        const countEl = form.querySelector('[data-guest-count]');
+        const labelEl = form.querySelector('[data-discount-label]');
+        if (countEl) countEl.textContent = `${total} khách`;
+        if (labelEl) {
+            labelEl.textContent = rate > 0 ? `Giảm ${rate}%` : 'Đạt 5 khách giảm 5%';
+        }
+    }
+    if (form.elements.adults) form.elements.adults.addEventListener('input', () => { updateCatalogGuestTier(); renderResults(); });
+    if (form.elements.children) form.elements.children.addEventListener('input', () => { updateCatalogGuestTier(); renderResults(); });
+    if (form.elements.budget) form.elements.budget.addEventListener('input', () => { renderResults(); });
+
+    updateCatalogGuestTier();
     updateNeedsText();
     renderResults();
 });
 
 /* ===== CHI TIẾT TOUR ===== */
 
-// Tạm tính theo giá lịch đi từ database; nút đặt tour chưa gửi dữ liệu.
+// Tạm tính theo giá lịch đi từ database; tích hợp cập nhật API thời tiết khi đổi lịch.
 document.addEventListener('DOMContentLoaded', () => {
     const preview = document.querySelector('[data-booking-preview]');
     if (preview) {
@@ -487,7 +532,82 @@ document.addEventListener('DOMContentLoaded', () => {
         const childRow = preview.querySelector('[data-quantity="child"]');
         let adults = 1;
         let children = 0;
+        let lastSelectedDate = preview.querySelector('input[name="departure"]:checked')?.dataset.date || '';
         const money = value => `${new Intl.NumberFormat('vi-VN').format(value)} ₫`;
+
+        function updateWeatherForecast(startDate, origin) {
+            if (!startDate) return;
+            const weatherOverview = document.querySelector('[data-weather-overview]');
+            const tourId = document.body.dataset.tourId;
+            if (!weatherOverview || !tourId) return;
+
+            const originEl = weatherOverview.querySelector('[data-weather-origin]');
+            if (originEl && origin) originEl.textContent = origin;
+
+            const sourceText = weatherOverview.querySelector('[data-weather-source-text]');
+            if (sourceText) sourceText.textContent = 'Đang đồng bộ API thời tiết...';
+
+            document.querySelectorAll('[data-weather-card]').forEach(card => card.classList.add('is-loading'));
+
+            fetch(`index.php?page=tour-detail&action=weather&id=${encodeURIComponent(tourId)}&date=${encodeURIComponent(startDate)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.success && Array.isArray(data.weather)) {
+                        const startDateEl = weatherOverview.querySelector('[data-weather-start-date]');
+                        if (startDateEl && data.departure_formatted) {
+                            startDateEl.textContent = data.departure_formatted;
+                        }
+                        if (sourceText) {
+                            sourceText.textContent = 'API Open-Meteo & Khí tượng du lịch';
+                        }
+
+                        data.weather.forEach(w => {
+                            const dayNum = w.day;
+                            const badge = document.querySelector(`[data-weather-badge="${dayNum}"]`);
+                            const card = document.querySelector(`[data-weather-card="${dayNum}"]`);
+
+                            if (badge) {
+                                badge.classList.remove('is-hidden');
+                                const iconEl = badge.querySelector('[data-weather-icon]');
+                                const tempEl = badge.querySelector('[data-weather-temp]');
+                                const tagEl = badge.querySelector('[data-weather-tag]');
+                                if (iconEl) iconEl.textContent = w.icon;
+                                if (tempEl) tempEl.textContent = w.temp_range;
+                                if (tagEl) tagEl.textContent = w.badge;
+                            }
+
+                            if (card) {
+                                card.classList.remove('is-hidden');
+                                card.classList.remove('is-loading');
+
+                                const dateEl = card.querySelector('[data-weather-date]');
+                                const locEl = card.querySelector('[data-weather-loc]');
+                                const rainEl = card.querySelector('[data-weather-rain]');
+                                const statusEl = card.querySelector('[data-weather-status]');
+                                const adviceEl = card.querySelector('[data-weather-advice]');
+                                const adviceBox = card.querySelector('[data-weather-advice-box]');
+
+                                if (dateEl) dateEl.textContent = w.date_formatted;
+                                if (locEl) locEl.textContent = w.location;
+                                if (rainEl) rainEl.textContent = `${w.rain}%`;
+                                if (statusEl) statusEl.textContent = w.status;
+                                if (adviceEl) adviceEl.textContent = w.advice;
+                                if (adviceBox) {
+                                    adviceBox.classList.toggle('is-hidden', !w.advice);
+                                }
+
+                                card.classList.add('weather-card-updated');
+                                setTimeout(() => card.classList.remove('weather-card-updated'), 500);
+                            }
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.warn('Lỗi đồng bộ thời tiết:', err);
+                    document.querySelectorAll('[data-weather-card]').forEach(card => card.classList.remove('is-loading'));
+                    if (sourceText) sourceText.textContent = 'Khí hậu dự báo theo mùa';
+                });
+        }
 
         function renderEstimate() {
             const selected = preview.querySelector('input[name="departure"]:checked');
@@ -495,6 +615,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 adultPrice = Number(selected.dataset.adultPrice);
                 childPrice = Number(selected.dataset.childPrice);
                 preview.querySelector('[data-schedule-origin]').textContent = selected.dataset.origin;
+                if (selected.dataset.date && selected.dataset.date !== lastSelectedDate) {
+                    lastSelectedDate = selected.dataset.date;
+                    updateWeatherForecast(selected.dataset.date, selected.dataset.origin);
+                }
             }
             adultRow.querySelector('[data-unit-price]').textContent = money(adultPrice);
             childRow.querySelector('[data-unit-price]').textContent = money(childPrice);

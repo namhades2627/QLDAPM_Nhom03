@@ -3,6 +3,7 @@
 $tourType = $tourType ?? '';
 $tourRegion = $tourRegion ?? '';
 $isToursPage = in_array(($page ?? 'home'), ['tours', 'tour-detail'], true);
+$isHomePage = ($page ?? 'home') === 'home';
 ?>
 <!-- Biểu tượng vector nội bộ, không cần thư viện ngoài. -->
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -23,7 +24,7 @@ $isToursPage = in_array(($page ?? 'home'), ['tours', 'tour-detail'], true);
             <span class="brand-word">On<span>Trip</span><small>ĐI & KHÁM PHÁ</small></span>
         </a>
         <nav id="main-navigation" class="main-navigation" aria-label="Điều hướng chính">
-            <a class="nav-link<?= $isToursPage ? '' : ' is-current' ?>" href="index.php" <?= $isToursPage ? '' : 'aria-current="page"' ?>>Trang chủ</a>
+            <a class="nav-link<?= $isHomePage ? ' is-current' : '' ?>" href="index.php" <?= $isHomePage ? 'aria-current="page"' : '' ?>>Trang chủ</a>
             <a class="nav-link" href="#gioi-thieu">Giới thiệu</a>
             <div class="dropdown">
                 <button class="nav-link dropdown-toggle<?= $isToursPage ? ' is-current' : '' ?>" type="button" aria-expanded="false" aria-controls="tour-menu">Tour <svg class="icon chevron-down"><use href="#i-chevron"/></svg></button>
@@ -64,9 +65,16 @@ $isToursPage = in_array(($page ?? 'home'), ['tours', 'tour-detail'], true);
             <div class="dropdown account-dropdown">
                 <button class="icon-button dropdown-toggle" type="button" aria-label="Tài khoản" aria-expanded="false" aria-controls="account-menu"><svg class="icon"><use href="#i-user"/></svg></button>
                 <div id="account-menu" class="dropdown-menu dropdown-menu-right">
-                    <!-- Nút giao diện; chưa có trang hoặc xử lý tài khoản. -->
-                    <button type="button">Đăng nhập</button>
-                    <button type="button">Đăng ký</button>
+                    <?php if (isset($_SESSION['tai_khoan'])): ?>
+                    <span class="account-name"><?= htmlspecialchars($_SESSION['tai_khoan']['ho_ten'], ENT_QUOTES, 'UTF-8') ?></span>
+                    <form method="post" action="index.php?page=logout">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
+                        <button class="account-logout" type="submit">Đăng xuất</button>
+                    </form>
+                    <?php else: ?>
+                    <a href="index.php?page=login">Đăng nhập</a>
+                    <a href="index.php?page=register">Đăng ký</a>
+                    <?php endif; ?>
                 </div>
             </div>
             <button class="icon-button mobile-menu-toggle" type="button" aria-label="Mở menu" aria-expanded="false" aria-controls="main-navigation"><svg class="icon"><use href="#i-menu"/></svg></button>

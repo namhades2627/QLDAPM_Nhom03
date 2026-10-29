@@ -5,6 +5,8 @@ Tài liệu này dành cho người tham gia phát triển dự án. Xem `README
 ## Nguyên tắc làm việc
 
 - Dự án đang phát triển theo từng giai đoạn. Chỉ thêm tệp, bảng và chức năng khi thực sự triển khai; không tạo sẵn module rỗng cho công việc tương lai.
+- Tôn trọng phân công nghiệp vụ của nhóm. Khi sửa, thay đổi hoặc bổ sung code, chỉ tác động đến các thư mục, tệp và phần mã liên quan trực tiếp đến yêu cầu. Chỉ sửa thêm phần phụ thuộc khi thực sự cần để chức năng hoạt động đúng; nêu rõ phần đã sửa và lý do.
+- Không tự ý sửa nghiệp vụ của thành viên khác, tái cấu trúc, đổi tên, định dạng lại hoặc dọn code ngoài phạm vi công việc. Với tệp dùng chung, giới hạn thay đổi ở đoạn cần thiết và giữ nguyên những phần còn lại để hạn chế xung đột khi commit/push lên GitHub. Nếu cần thay đổi nghiệp vụ ngoài phần được giao, thống nhất với thành viên phụ trách trước khi thực hiện.
 - Khi sửa giao diện, nêu rõ tệp và phần mã đã thay đổi để người mới học MVC có thể tự tìm lại. Giữ tên biến, chú thích và cấu trúc dễ hiểu.
 - Trước khi hoàn tất thay đổi PHP, kiểm tra cú pháp bằng PHP 8.2 của XAMPP và chẩn đoán Intelephense. View nhận biến từ Controller qua require phải khai báo PHPDoc @var đúng kiểu dữ liệu; partial dùng chung cần có giá trị mặc định cho biến tùy chọn. Không tắt chẩn đoán để che lỗi. VS Code trong workspace phải dùng cùng phiên bản PHP với XAMPP.
 - Giữ tông trắng/cam và dùng tài nguyên ảnh trong `public/assets/images/`. Không sao chép nguyên bố cục của trang tham khảo.

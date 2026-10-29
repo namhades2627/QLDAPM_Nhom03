@@ -831,5 +831,52 @@ a, button, input, select { outline-offset: 5px; }
 .detail-related-card:hover h3 { color:var(--orange); }
 .detail-not-found { padding:100px 0; }
 .detail-not-found p { margin:10px 0 25px; }
+
+/* ===== TÀI KHOẢN: GIAO DIỆN ĐĂNG NHẬP / ĐĂNG KÝ ===== */
+.auth-page { background:#f7f6f3; }
+.auth-main { min-height:100vh; min-height:100svh; display:flex; align-items:center; justify-content:center; padding:28px 20px; }
+.auth-shell { width:100%; max-width:500px; background:#fff; border:1px solid #eae6df; border-radius:16px; box-shadow:0 12px 40px #32231308; }
+.auth-panel { padding:26px 38px 28px; }
+.auth-back { display:inline-flex; align-items:center; gap:8px; color:#827b72; font-size:11px; margin-bottom:18px; }
+.auth-back > span { font-size:20px; line-height:1; }
+.auth-back:hover { color:var(--orange-dark); }
+.auth-brand { display:flex; width:max-content; margin:0 auto 24px; }
+.auth-brand .brand-mark { width:35px; height:42px; }
+.auth-brand .brand-word { font-size:36px; }
+.auth-brand .brand-word small { font-size:8px; }
+.auth-heading { text-align:center; margin-bottom:28px; }
+.auth-heading h1 { font-size:30px; letter-spacing:-.8px; line-height:1.3; margin-bottom:12px; }
+.auth-heading > p { font-size:12px; color:var(--muted); line-height:1.7; }
+.auth-form { display:grid; gap:18px; }
+.auth-field > label { display:block; font-size:12px; font-weight:600; margin-bottom:8px; }
+.auth-field input { display:block; width:100%; height:49px; padding:12px 14px; border:1px solid #e6e2dc; border-radius:8px; background:#faf9f7; color:var(--ink); font-size:13px; transition:border-color .15s,box-shadow .15s; }
+.auth-field input::placeholder { color:#a09b92; }
+.auth-field input:focus { border-color:var(--orange); background:#fff; outline:none; box-shadow:0 0 0 3px #df602417; }
+.auth-field input[aria-invalid="true"] { border-color:#b9382d; background:#fffafa; }
+.auth-password-wrap { position:relative; }
+.auth-password-wrap input { padding-right:65px; }
+.auth-password-toggle { position:absolute; right:6px; top:6px; width:37px; height:37px; padding:0; display:grid; place-items:center; background:transparent; color:#847a6e; border-radius:5px; }
+.auth-password-toggle .icon { width:20px; height:20px; }
+.auth-eye-slash { display:none; }
+.auth-password-toggle[aria-pressed="true"] .auth-eye-slash { display:block; }
+.auth-password-toggle:hover { background:var(--orange-light); color:var(--orange-dark); }
+.auth-field-hint { margin-top:6px; font-size:10px; color:#8c867d; }
+.auth-field-error { margin-top:6px; font-size:11px; color:#b9382d; }
+.auth-message { padding:11px 13px; border:1px solid #efd0c9; border-radius:6px; color:#a33629; background:#fff6f3; font-size:12px; line-height:1.7; }
+.auth-message.is-preview { color:#75634f; background:#faf6ee; border-color:#e8dfd0; }
+.auth-submit { width:100%; min-height:49px; justify-content:center; border-radius:8px; font-size:13px; padding:13px 16px; margin-top:3px; }
+.auth-switch { text-align:center; color:#817a70; font-size:12px; padding-top:4px; }
+.auth-switch a { color:var(--orange-dark); font-weight:600; margin-left:4px; }
+.auth-switch a:hover { text-decoration:underline; }
+.auth-shell-register .auth-form { gap:13px; }
+.auth-shell-register .auth-brand { margin-bottom:18px; }
+.auth-shell-register .auth-heading { margin-bottom:22px; }
+@media(max-width:540px) { .auth-main{padding:18px 14px}.auth-panel{padding:22px}.auth-heading h1{font-size:28px} }
+
 @media(max-width:950px){.detail-layout{gap:28px;grid-template-columns:minmax(0,1fr) 300px}.detail-hero{height:390px}.detail-facts>div{padding:16px}}
 @media(max-width:700px){.detail-heading,.detail-layout{display:block}.detail-code{display:block;margin-top:15px}.detail-hero{height:280px}.detail-facts{grid-template-columns:repeat(2,1fr)}.detail-facts>div:nth-child(2){border-right:0}.detail-facts>div:nth-child(-n+2){border-bottom:1px solid var(--line)}.detail-sidebar{position:static;margin-bottom:45px}.detail-related-grid{grid-template-columns:1fr}.detail-related-card:not(:first-child){display:none}.detail-section{margin-bottom:35px;padding-bottom:35px}}
+
+/* Tài khoản trên navbar. */
+.account-name { display:block; padding:12px 16px; font-weight:600; overflow-wrap:anywhere; }
+.account-logout { display:block; width:100%; padding:12px 16px; text-align:left; background:transparent; color:inherit; font:inherit; }
+.account-logout:hover { background:#fff1e8; color:#cf6632; }

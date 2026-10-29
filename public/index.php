@@ -1,7 +1,23 @@
 <?php
+// Khởi tạo trước mọi HTML để có thể đổi session ID và chuyển hướng an toàn.
+session_start([
+    'use_strict_mode' => true,
+    'cookie_httponly' => true,
+    'cookie_secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+    'cookie_samesite' => 'Lax',
+]);
+if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 // Điều hướng trang chủ và các trang tour qua Controller tương ứng.
 $requestedPage = $_GET['page'] ?? '';
-$page = in_array($requestedPage, ['tours', 'tour-detail'], true) ? $requestedPage : 'home';
+$page = in_array($requestedPage, ['tours', 'tour-detail', 'login', 'register', 'logout'], true) ? $requestedPage : 'home';
+// Các yêu cầu tài khoản được xử lý qua AuthController.
+if (in_array($page, ['login', 'register', 'logout'], true)) {
+    require_once __DIR__ . '/../app/controllers/AuthController.php';
+    $authController = new AuthController();
+    if ($page === 'logout') $authController->logout();
+    else $authController->form($page);
+    return;
+}
 require_once __DIR__ . '/../app/controllers/HomeController.php';
 require_once __DIR__ . '/../app/controllers/TourController.php';
 try {

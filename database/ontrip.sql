@@ -104,6 +104,22 @@ CREATE TABLE IF NOT EXISTS `lich_khoi_hanh` (
         REFERENCES `tour` (`id_tour`) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tài khoản: email dùng đăng nhập; xác nhận mật khẩu chỉ dùng kiểm tra trên form.
+-- Đăng ký công khai mặc định là khách hàng; không nhận vai trò admin/nhân viên từ form.
+CREATE TABLE IF NOT EXISTS `tai_khoan` (
+    `id_tai_khoan` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `ho_ten` VARCHAR(120) NOT NULL,
+    `email` VARCHAR(254) NOT NULL,
+    `so_dien_thoai` VARCHAR(20) NOT NULL,
+    `mat_khau` VARCHAR(255) NOT NULL COMMENT 'Lưu hash tạo bằng password_hash(), không lưu mật khẩu gốc',
+    `vai_tro` ENUM('admin', 'nhan_vien', 'khach_hang') NOT NULL DEFAULT 'khach_hang',
+    `dang_hoat_dong` TINYINT(1) NOT NULL DEFAULT 1,
+    `tao_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `cap_nhat_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id_tai_khoan`),
+    UNIQUE KEY `uq_tai_khoan_email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT IGNORE INTO `khu_vuc_tour` (`ma_khu_vuc`, `ten_khu_vuc`, `loai_tour`, `thu_tu`) VALUES
     ('north', 'Miền Bắc', 'domestic', 1),
     ('central', 'Miền Trung', 'domestic', 2),
@@ -815,3 +831,9 @@ WHERE NOT EXISTS (
 DROP TEMPORARY TABLE du_lieu_lich_khoi_hanh;
 
 COMMIT;
+
+INSERT INTO `tai_khoan` (`ho_ten`, `email`, `so_dien_thoai`, `mat_khau`, `vai_tro`) VALUES
+    ('Quản trị viên OnTrip', 'admin@gmail.com', '0900000001', '$2y$10$ufw0tc9NxMFsAod9bkqz6eFK53E6fIBS1yARkatM0vejO4BRUKL6e', 'admin'),
+    ('Nhân viên OnTrip', 'nhanvien@gmail.com', '0900000002', '$2y$10$0gnunfYVmmayw87.Sq/n6eKDeOf2py1qEyy4r0.m.eVpzFZGtj9vu', 'nhan_vien'),
+    ('Khách hàng OnTrip', 'khachhang@gmail.com', '0900000003', '$2y$10$2/VNP7hIDmHevHCbIhl.MO3xZEQGwNFISdrjHiOEaM2avqnESllQ2', 'khach_hang')
+ON DUPLICATE KEY UPDATE `id_tai_khoan` = `id_tai_khoan`;

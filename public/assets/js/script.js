@@ -4,6 +4,7 @@
 
 /* NAVBAR DÙNG CHUNG cho trang chủ và trang danh sách tour. */
 document.addEventListener('DOMContentLoaded', () => {
+    if (!document.querySelector('.site-header')) return;
     // 2. MENU: chuột, bàn phím và chạm trên điện thoại.
     const mobileToggle = document.querySelector('.mobile-menu-toggle');
     const navigation = document.querySelector('.main-navigation');
@@ -544,4 +545,86 @@ document.addEventListener('DOMContentLoaded', () => {
     previous.addEventListener('click', () => { start = (start - 1 + cards.length) % cards.length; show(); });
     next.addEventListener('click', () => { start = (start + 1) % cards.length; show(); });
     show();
+});
+
+/* ===== TÀI KHOẢN: KIỂM TRA FORM TRƯỚC KHI GỬI ===== */
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('[data-auth-form]');
+    if (!form) return;
+    const register = form.dataset.authMode === 'register';
+    const fields = [...form.querySelectorAll('input:not([type="hidden"])')];
+    const touched = new Set();
+    const message = form.querySelector('[data-auth-message]');
+    let submitted = false;
+
+    function fieldMessage(input) {
+        const value = input.value;
+        switch (input.name) {
+            case 'ho_ten':
+                if (!value.trim()) return 'Vui lòng nhập họ và tên.';
+                if (value.trim().length < 2) return 'Họ và tên cần ít nhất 2 ký tự.';
+                return '';
+            case 'email':
+                if (!value.trim()) return 'Vui lòng nhập email.';
+                if (input.validity.typeMismatch || /\s/.test(value.trim())) return 'Vui lòng nhập email đúng định dạng.';
+                return '';
+            case 'so_dien_thoai':
+                if (!value.trim()) return 'Vui lòng nhập số điện thoại.';
+                if (!/^\+?[0-9]{9,15}$/.test(value.replace(/[\s().-]/g, ''))) return 'Số điện thoại cần có từ 9 đến 15 chữ số.';
+                return '';
+            case 'mat_khau':
+                if (!value) return 'Vui lòng nhập mật khẩu.';
+                if (register && value.length < 8) return 'Mật khẩu cần ít nhất 8 ký tự.';
+                if (register && new TextEncoder().encode(value).length > 72) return 'Mật khẩu không vượt quá 72 byte.';
+                return '';
+            case 'xac_nhan_mat_khau':
+                if (!value) return 'Vui lòng nhập lại mật khẩu.';
+                if (value !== form.elements.mat_khau.value) return 'Mật khẩu xác nhận chưa trùng khớp.';
+                return '';
+            default:
+                return '';
+        }
+    }
+
+    function validate(input) {
+        const error = fieldMessage(input);
+        const output = document.getElementById(`${input.id}-error`);
+        input.setAttribute('aria-invalid', String(Boolean(error)));
+        output.textContent = error;
+        output.hidden = error === '';
+        return error === '';
+    }
+
+    fields.forEach(input => {
+        input.addEventListener('blur', () => { touched.add(input); validate(input); });
+        input.addEventListener('input', () => {
+            message.hidden = true;
+            if (submitted || touched.has(input)) validate(input);
+            if (input.name === 'mat_khau' && register && touched.has(form.elements.xac_nhan_mat_khau)) {
+                validate(form.elements.xac_nhan_mat_khau);
+            }
+        });
+    });
+
+    form.querySelectorAll('[data-password-toggle]').forEach(button => {
+        const input = document.getElementById(button.getAttribute('aria-controls'));
+        const fieldName = input.name === 'xac_nhan_mat_khau' ? 'xác nhận mật khẩu' : 'mật khẩu';
+        button.addEventListener('click', () => {
+            const reveal = input.type === 'password';
+            input.type = reveal ? 'text' : 'password';
+            button.setAttribute('aria-pressed', String(reveal));
+            button.setAttribute('aria-label', `${reveal ? 'Ẩn' : 'Hiện'} ${fieldName}`);
+        });
+    });
+
+    form.addEventListener('submit', event => {
+        submitted = true;
+        const invalid = fields.filter(input => !validate(input));
+        if (invalid.length) {
+            event.preventDefault();
+            message.hidden = false;
+            message.textContent = 'Vui lòng kiểm tra các thông tin được đánh dấu bên dưới.';
+            invalid[0].focus();
+        }
+    });
 });

@@ -16,3 +16,7 @@ desktop.ini
 *.log
 *.tmp
 *.bak
+
+# Ảnh tài khoản sinh ra khi sử dụng, không commit ảnh cá nhân.
+public/uploads/avatars/*
+!public/uploads/avatars/.htaccess

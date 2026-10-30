@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS `tai_khoan` (
     `ho_ten` VARCHAR(120) NOT NULL,
     `email` VARCHAR(254) NOT NULL,
     `so_dien_thoai` VARCHAR(20) NOT NULL,
+    `hinh_anh` VARCHAR(255) DEFAULT NULL,
     `mat_khau` VARCHAR(255) NOT NULL COMMENT 'Lưu hash tạo bằng password_hash(), không lưu mật khẩu gốc',
     `vai_tro` ENUM('admin', 'nhan_vien', 'khach_hang') NOT NULL DEFAULT 'khach_hang',
     `dang_hoat_dong` TINYINT(1) NOT NULL DEFAULT 1,
@@ -119,6 +120,37 @@ CREATE TABLE IF NOT EXISTS `tai_khoan` (
     PRIMARY KEY (`id_tai_khoan`),
     UNIQUE KEY `uq_tai_khoan_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- BEGIN CAP_NHAT_2026_10_30_HINH_ANH
+-- Database đã import có thể chạy riêng khối này, không cần nhập lại dữ liệu demo.
+-- Đổi tên cột cũ và giữ nguyên đường dẫn ảnh; chạy lại không làm mất dữ liệu.
+DROP PROCEDURE IF EXISTS `_ontrip_cap_nhat_hinh_anh`;
+DELIMITER $$
+CREATE PROCEDURE `_ontrip_cap_nhat_hinh_anh`()
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.COLUMNS
+               WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tai_khoan' AND COLUMN_NAME = 'anh_dai_dien') THEN
+        IF EXISTS (SELECT 1 FROM information_schema.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tai_khoan' AND COLUMN_NAME = 'hinh_anh') THEN
+            IF EXISTS (SELECT 1 FROM `tai_khoan`
+                       WHERE `anh_dai_dien` IS NOT NULL AND `hinh_anh` IS NOT NULL
+                         AND BINARY `anh_dai_dien` <> BINARY `hinh_anh`) THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Hai cot anh co du lieu khac nhau. Can doi chieu truoc khi gop.';
+            END IF;
+            UPDATE `tai_khoan` SET `hinh_anh` = COALESCE(`hinh_anh`, `anh_dai_dien`);
+            ALTER TABLE `tai_khoan` DROP COLUMN `anh_dai_dien`;
+        ELSE
+            ALTER TABLE `tai_khoan` CHANGE COLUMN `anh_dai_dien` `hinh_anh` VARCHAR(255) DEFAULT NULL;
+        END IF;
+    ELSEIF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS
+                       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tai_khoan' AND COLUMN_NAME = 'hinh_anh') THEN
+        ALTER TABLE `tai_khoan` ADD COLUMN `hinh_anh` VARCHAR(255) DEFAULT NULL AFTER `so_dien_thoai`;
+    END IF;
+END$$
+DELIMITER ;
+CALL `_ontrip_cap_nhat_hinh_anh`();
+DROP PROCEDURE `_ontrip_cap_nhat_hinh_anh`;
+-- END CAP_NHAT_2026_10_30_HINH_ANH
 
 INSERT IGNORE INTO `khu_vuc_tour` (`ma_khu_vuc`, `ten_khu_vuc`, `loai_tour`, `thu_tu`) VALUES
     ('north', 'Miền Bắc', 'domestic', 1),

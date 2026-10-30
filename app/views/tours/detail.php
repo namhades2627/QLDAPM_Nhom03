@@ -1,5 +1,5 @@
 <?php
-// TourController truyền thông tin tour, lịch trình và các lịch còn mở vào View.
+// TourController truyền thông tin tour, lịch trình, thời tiết từng ngày và các lịch còn mở vào View.
 /**
  * Các biến được TourController::detail() truyền qua require.
  * @var string $page
@@ -9,6 +9,7 @@
  * @var bool $notFound
  * @var array<string, mixed>|null $tour
  * @var array<string, mixed>|null $selectedSchedule
+ * @var array<int, array<string, mixed>> $itineraryWeather
  * @var array<int, array<string, mixed>> $relatedTours
  */
 $escape = static function ($value): string {
@@ -16,6 +17,13 @@ $escape = static function ($value): string {
 };
 $adultPrice = $selectedSchedule['adult_price'] ?? 0;
 $childPrice = $selectedSchedule['child_price'] ?? 0;
+
+$weatherByDay = [];
+if (!empty($itineraryWeather)) {
+    foreach ($itineraryWeather as $w) {
+        $weatherByDay[(int) $w['day']] = $w;
+    }
+}
 ?>
 <!doctype html>
 <html lang="vi">
@@ -28,7 +36,7 @@ $childPrice = $selectedSchedule['child_price'] ?? 0;
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="assets/js/script.js" defer></script>
 </head>
-<body class="detail-page">
+<body class="detail-page" data-tour-id="<?= $escape($tour['id'] ?? '') ?>">
 <?php require __DIR__ . '/../partials/header.php'; ?>
 <main id="noi-dung" class="detail-main">
 <?php if ($notFound): ?>
@@ -53,13 +61,88 @@ $childPrice = $selectedSchedule['child_price'] ?? 0;
                     <p><?= nl2br($escape($tour['introduction'] ?: 'Giới thiệu tour đang được cập nhật.')) ?></p>
                 </section>
                 <section class="detail-section" id="lich-trinh">
-                    <span class="detail-section-label">2 / LỊCH TRÌNH</span><h2>Lịch trình theo ngày</h2>
+                    <div class="detail-section-header">
+                        <span class="detail-section-label">2 / LỊCH TRÌNH &amp; THỜI TIẾT DỰ BÁO</span>
+                        <h2>Lịch trình chi tiết theo ngày</h2>
+                    </div>
+
+                    <?php if ($selectedSchedule): ?>
+                    <div class="itinerary-weather-bar" data-weather-overview>
+                        <div class="weather-bar-header">
+                            <div class="weather-bar-icon-wrap" aria-hidden="true">
+                                <span class="weather-pulse-icon">🌤️</span>
+                            </div>
+                            <div class="weather-bar-content">
+                                <div class="weather-bar-kicker">
+                                    <span>THÔNG TIN THỜI TIẾT TỰ ĐỘNG THEO LỊCH TRÌNH</span>
+                                    <span class="weather-live-indicator" data-weather-live-pill>
+                                        <span class="pulse-dot"></span>
+                                        <span data-weather-source-text>API Open-Meteo &amp; Khí tượng du lịch</span>
+                                    </span>
+                                </div>
+                                <div class="weather-bar-title">
+                                    Khởi hành dự kiến: <strong data-weather-start-date><?= WeatherService::formatVietnameseDate($selectedSchedule['date']) ?></strong>
+                                    <span class="weather-origin-tag">từ <span data-weather-origin><?= $escape($selectedSchedule['origin']) ?></span></span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="weather-bar-note">
+                            💡 Thời tiết và nhiệt độ dưới đây được tự động tính toán chính xác theo từng ngày và địa điểm của hành trình. Khi quý khách bấm đổi lịch khởi hành bên phải, dự báo từng ngày sẽ tự động cập nhật ngay.
+                        </p>
+                    </div>
+                    <?php endif; ?>
+
                     <?php if (!$tour['itinerary']): ?><p>Lịch trình đang được cập nhật.</p><?php endif; ?>
-                    <div class="detail-days">
+                    <div class="detail-days" data-detail-days>
                         <?php foreach ($tour['itinerary'] as $day): ?>
-                        <article class="detail-day">
-                            <span class="detail-day-number"><?= str_pad((string) $day['day'], 2, '0', STR_PAD_LEFT) ?></span>
-                            <div><h3>Ngày <?= (int) $day['day'] ?> <span>·</span> <?= $escape($day['title']) ?></h3><p><?= nl2br($escape($day['content'])) ?></p></div>
+                        <?php
+                            $dayNum = (int) $day['day'];
+                            $dayWeather = $weatherByDay[$dayNum] ?? null;
+                        ?>
+                        <article class="detail-day" data-day-item="<?= $dayNum ?>">
+                            <span class="detail-day-number"><?= str_pad((string) $dayNum, 2, '0', STR_PAD_LEFT) ?></span>
+                            <div class="detail-day-body">
+                                <div class="detail-day-title-row">
+                                    <h3>Ngày <?= $dayNum ?> <span>·</span> <?= $escape($day['title']) ?></h3>
+                                    <?php if ($dayWeather): ?>
+                                    <div class="day-weather-badge" data-weather-badge="<?= $dayNum ?>">
+                                        <span class="weather-icon" data-weather-icon><?= $dayWeather['icon'] ?></span>
+                                        <span class="weather-temp" data-weather-temp><?= $escape($dayWeather['temp_range']) ?></span>
+                                        <span class="weather-tag" data-weather-tag><?= $escape($dayWeather['badge']) ?></span>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <?php if ($dayWeather): ?>
+                                <div class="day-weather-card" data-weather-card="<?= $dayNum ?>">
+                                    <div class="weather-card-meta">
+                                        <span class="weather-meta-item weather-meta-date">
+                                            <span aria-hidden="true">📅</span>
+                                            <span data-weather-date><?= $escape($dayWeather['date_formatted']) ?></span>
+                                        </span>
+                                        <span class="weather-meta-item weather-meta-loc">
+                                            <span aria-hidden="true">📍</span>
+                                            <span data-weather-loc><?= $escape($dayWeather['location']) ?></span>
+                                        </span>
+                                        <span class="weather-meta-item weather-meta-rain">
+                                            <span aria-hidden="true">💧</span>
+                                            <span>Khả năng mưa: <strong data-weather-rain><?= (int) $dayWeather['rain'] ?>%</strong></span>
+                                        </span>
+                                    </div>
+                                    <div class="weather-card-desc">
+                                        <span class="weather-status-text" data-weather-status><?= $escape($dayWeather['status']) ?></span>
+                                    </div>
+                                    <?php if (!empty($dayWeather['advice'])): ?>
+                                    <div class="weather-card-advice" data-weather-advice-box>
+                                        <span class="advice-label">💡 Gợi ý chuẩn bị:</span>
+                                        <span class="advice-content" data-weather-advice><?= $escape($dayWeather['advice']) ?></span>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+                                <?php endif; ?>
+
+                                <p class="detail-day-content"><?= nl2br($escape($day['content'])) ?></p>
+                            </div>
                         </article>
                         <?php endforeach; ?>
                     </div>
@@ -78,7 +161,7 @@ $childPrice = $selectedSchedule['child_price'] ?? 0;
                         <div class="detail-date-list" role="radiogroup" aria-label="Chọn lịch khởi hành">
                             <?php foreach ($tour['schedules'] as $index => $schedule): ?>
                             <label class="detail-date-option">
-                                <input type="radio" name="departure" value="<?= (int) $schedule['id'] ?>" data-adult-price="<?= $schedule['adult_price'] ?>" data-child-price="<?= $schedule['child_price'] ?>" data-origin="<?= $escape($schedule['origin']) ?>" <?= $index === 0 ? 'checked' : '' ?>>
+                                <input type="radio" name="departure" value="<?= (int) $schedule['id'] ?>" data-date="<?= $escape($schedule['date']) ?>" data-adult-price="<?= $schedule['adult_price'] ?>" data-child-price="<?= $schedule['child_price'] ?>" data-origin="<?= $escape($schedule['origin']) ?>" <?= ($selectedSchedule && (int) $schedule['id'] === (int) $selectedSchedule['id']) ? 'checked' : '' ?>>
                                 <span><?= date('d/m/Y', strtotime($schedule['date'])) ?><small><?= $escape($schedule['origin']) ?></small></span>
                             </label>
                             <?php endforeach; ?>

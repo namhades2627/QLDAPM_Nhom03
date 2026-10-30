@@ -125,10 +125,13 @@ $articles = [
                             <?php endforeach; ?>
                         </div>
                     </details>
-                    <button class="button button-primary search-submit" type="submit"><svg class="icon"><use href="#i-search"/></svg>Tìm tour</button>
+                    <div class="search-actions-group" style="display:flex;gap:8px;align-items:center;">
+                        <button class="button button-primary search-submit" type="submit"><svg class="icon"><use href="#i-search"/></svg>Tìm tour</button>
+                        <a href="index.php?page=smart-search" class="button button-outline" style="border-color:var(--orange);color:var(--orange-dark);font-weight:600;display:inline-flex;align-items:center;gap:6px;height:45px;padding:0 16px;border-radius:4px;"><span aria-hidden="true">✨</span> Đề xuất thông minh</a>
+                    </div>
                 </div>
             </form>
-            <p class="search-budget-note">Ngân sách là tổng tiền cho cả nhóm sau ưu đãi, theo lịch khởi hành phù hợp.</p>
+            <p class="search-budget-note">Ngân sách là tổng tiền cho cả nhóm sau ưu đãi (5–9 khách -5%, từ 10 khách -8%). Hệ thống đối chiếu sở thích, mùa vụ, thời tiết &amp; gợi ý lịch tiết kiệm ±3 ngày.</p>
         </div>
     </section>
 

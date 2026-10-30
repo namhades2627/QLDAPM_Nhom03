@@ -104,48 +104,25 @@ Có tám bảng nghiệp vụ hiện tại:
 
 | Bảng | Ý nghĩa / lưu ý |
 | --- | --- |
-| `khu_vuc_tour` | Sáu vùng, có loại tour `domestic`/`international` |
-| `diem_den` | Điểm đến, vùng, trạng thái hoạt động |
-| `nhu_cau`, `tour_nhu_cau` | Danh mục nhu cầu và quan hệ nhiều–nhiều với tour |
-| `tour` | ID nội bộ, mã nghiệp vụ, tên, điểm đến chính, giới thiệu, số ngày, ảnh, trạng thái và nổi bật; **không lưu giá chung** |
-| `lich_trinh_ngay` | Nội dung từng ngày của tour |
-| `lich_khoi_hanh` | Ngày đi, điểm khởi hành (hiện là cột văn bản), giá người lớn/trẻ em, sức chứa, hạn đặt, trạng thái của từng lịch |
-| `tai_khoan` | ID, họ tên, email duy nhất, điện thoại, hash mật khẩu, vai trò, trạng thái, thời điểm tạo/cập nhật |
+| Điểm vào và chọn trang | `public/index.php` |
+| Trang chủ | `app/views/home/index.php` |
+| Chuẩn bị tour nổi bật từ database cho trang chủ | `app/controllers/HomeController.php` |
+| Danh sách tour trong nước/quốc tế | `app/views/tours/index.php` |
+| Chi tiết tour | `app/views/tours/detail.php` |
+| Tra cứu và đề xuất tour thông minh chuyên sâu | `app/views/tours/smart_search.php` |
+| Thuật toán xếp hạng, mùa vụ, thời tiết và gợi ý ±3 ngày | `app/models/SmartRecommendation.php` (lớp `SmartRecommendationModel`) |
+| Dịch vụ API thời tiết Open-Meteo & đồng bộ lịch trình từng ngày | `app/models/WeatherService.php` (lớp `WeatherService`) |
+| Đọc tour, nhu cầu, lịch khởi hành và lịch trình | `app/models/tour.php` (lớp `TourModel`) |
+| Nhận yêu cầu danh sách/chi tiết, chuẩn bị dữ liệu cho View | `app/controllers/TourController.php` |
+| Cấu trúc database và danh mục ban đầu | `database/ontrip.sql` |
+| Kết nối PDO dùng chung cho Model | `config/database.php` — gọi `getDatabaseConnection()` |
+| Navbar và footer dùng chung | `app/views/partials/header.php`, `footer.php` |
+| Toàn bộ CSS | `public/assets/css/style.css` |
+| Toàn bộ JavaScript | `public/assets/js/script.js` |
 
-- Tên bảng/cột tiếng Việt không dấu dạng `snake_case`. Giữ mã vùng, loại và trạng thái hiện có để tương thích URL/bộ lọc.
-- Vùng trong nước: `north`, `central`, `south`; quốc tế: `asia`, `europe`, `americas-oceania`.
-- Mã tour demo: `mb01`–`mb08`, `mt01`–`mt08`, `mn01`–`mn08`, `as01`–`as08`, `eu01`–`eu08`, `us01`–`us08`. Tổng 48 tour, mỗi loại 24; SQL có ba lịch demo cho mỗi tour. Không tự đánh lại mã hoặc đổi tên/ảnh mà người dùng đã chỉnh.
-- Trạng thái tour: `draft`, `published`, `archived`; lịch: `open`, `closed`, `cancelled`. Tài khoản dùng `vai_tro = admin|nhan_vien|khach_hang`, `dang_hoat_dong = 1|0`.
-- Email là duy nhất. `tai_khoan.mat_khau` chứa hash; không lưu cột xác nhận mật khẩu. `tao_luc`, `cap_nhat_luc` hiện có trong schema.
-- `ontrip.sql` là cấu trúc và seed cài đặt; import lại chủ yếu bổ sung bản ghi thiếu, **không tự cập nhật nội dung hoặc mật khẩu của bản ghi đã tồn tại**. Sửa SQL trong repo không tự sửa database phpMyAdmin của thành viên khác. Không mặc định người dùng đã import bản mới.
-- Khi được giao thay đổi schema/dữ liệu, nêu rõ lệnh cập nhật dành cho database đã import và kiểm tra với schema hiện có; không xóa dữ liệu hoặc chạy lại seed để thay thế migration tùy tiện.
-- Ba tài khoản demo trong seed: `admin@gmail.com` / `adminontrip123`; `nhanvien@gmail.com` / `nhanvienontrip123`; `khachhang@gmail.com` / `khachhangontrip123`. SQL chỉ lưu hash, các mật khẩu này phục vụ chạy thử. Database đã import trước lần đổi mật khẩu có thể vẫn còn hash cũ.
+CSS và JavaScript được chia bằng chú thích theo phần dùng chung, trang chủ, danh sách và chi tiết tour. Khi sửa một phần, tìm chú thích tương ứng trước. Bảng/cột trong `ontrip.sql` dùng tiếng Việt không dấu, dạng `snake_case` (ví dụ `lich_khoi_hanh.ngay_khoi_hanh`). TourModel chỉ đọc tour đã công bố và điểm đến hoạt động; lịch đi phải đang mở, chưa qua ngày khởi hành và chưa hết hạn đặt. Không suy ra giá trẻ em bằng tỷ lệ trong View: lấy trực tiếp từ lịch được chọn. Ảnh chưa có dùng placeholder, không tự tạo ảnh hay đổi đường dẫn trong database.
 
-## 7. Luồng tour và quy ước dữ liệu hiển thị
-
-- Luồng: trình duyệt → entry point → Controller → Model/PDO → View. Controller nhận và kiểm tra GET/POST; Model truy vấn; View hiển thị. Không đưa SQL hoặc đọc trực tiếp GET/POST vào View để thực hiện nghiệp vụ.
-- TourModel cho khách hàng đọc tour công bố và điểm đến hoạt động; lịch phải `open`, chưa qua ngày đi, chưa hết `han_dat`. Không có lịch hợp lệ thì không hiển thị giá giả định.
-- “Giá từ” là giá người lớn thấp nhất của lịch hợp lệ. Giá trẻ em đọc trực tiếp từ lịch được chọn, không suy ra theo tỷ lệ tại View.
-- HomeController chuẩn bị tour nổi bật, nhu cầu, nhóm điểm đến và ảnh khám phá riêng. Banner/tin tức còn trong mảng View; không phục hồi `sample-data.php` (đã bỏ).
-- Form tìm tour trang chủ gửi GET sang `page=tours&type=all`: `q`, `date`, `adults`, `children`, `budget`, `needs[]`. Danh sách còn dùng `region`, `destination`, `origin`, `price`. Giá/ngân sách, ngày, nơi đi phải khớp **cùng một lịch**.
-- Ngân sách trang chủ là tổng nhóm sau ưu đãi; mức giá trang danh sách là giá từ/người lớn trước giảm nhóm. Không gộp hai ý nghĩa. Số khách và ngân sách được giữ khi lọc, tải lại URL và xóa khi reset.
-- Controller/Model lọc kết quả ban đầu, JS tiếp tục lọc/sắp xếp/phân trang trên dữ liệu đã tải; thay đổi phải giữ hai phía nhất quán. Lưới desktop 3 cột, 12 tour/trang, phân trang giữa phía dưới; không tự thêm người lớn/trẻ em vào bộ lọc bên trái.
-- Tạm tính chi tiết hiện ở trình duyệt. Máy chủ đã tạm tính nhóm cho **tìm kiếm**, chưa tạo đơn hoặc chốt thanh toán. `so_cho` là sức chứa, chưa trừ đơn đặt; không gọi là chỗ còn.
-- AdminModel đọc số liệu quản trị riêng: đếm toàn bộ tour, tour công bố, điểm đến hoạt động, lịch `open` từ hôm nay và năm lịch gần nhất. Đây không phải điều kiện khả dụng dành cho khách hàng: thống kê lịch chưa xét hạn đặt, trạng thái tour hoặc chỗ còn. Không đồng nhất hai truy vấn khi chưa chốt nghiệp vụ.
-- Ảnh tour dùng chung giữa trang chủ/danh sách/chi tiết theo database. Ảnh khám phá là bộ ảnh riêng `KhamPha_*.jpg` được ánh xạ trong HomeController. Ảnh chưa có dùng `placeholder.svg`; không tự tạo ảnh hoặc sửa đường dẫn database ngoài phần được giao.
-- Đường dẫn tài nguyên View khách hàng tính từ `public/`; View quản trị dùng `../public/assets/...`. Không tạo bản CSS/JS/ảnh trùng trong thư mục `admin/`.
-
-## 8. Kiểm tra trước khi bàn giao
-
-- Kiểm tra cú pháp các file PHP đã sửa bằng **PHP 8.2 của XAMPP** (`php -l <tệp>`). Đảm bảo VS Code và PHP chạy thực tế cùng phiên bản; không sử dụng PHP cũ trên PATH rồi tắt chẩn đoán để che lỗi.
-- Chạy chẩn đoán Intelephense với PHP 8.2, sửa lỗi thực sự; View nhận biến từ Controller/include khai báo PHPDoc `@var` đúng kiểu; partial có giá trị mặc định cho biến tùy chọn. Không giả định máy khác có script chẩn đoán tạm của người phát triển trước.
-- Sửa JavaScript thì kiểm tra cú pháp (`node --check public/assets/js/script.js` nếu có Node) và console trình duyệt. PHP/CSS/JS cùng chia sẻ nhiều trang nên kiểm tra trang bị tác động và phần phụ thuộc liên quan.
-- Tài khoản: đăng ký hợp lệ, email trùng, lỗi từng trường, sai mật khẩu, tài khoản bị khóa, navbar sau đăng nhập và sau đăng xuất; không hiện lại mật khẩu trong HTML khi lỗi.
-- Quản trị: mở `/admin/` chưa đăng nhập, từ chối tài khoản khách hàng, nhận admin/nhân viên, kiểm tra phiên riêng và đăng xuất về form quản trị. Tài khoản mất quyền/khóa không còn mở bảng điều khiển được.
-- Giao diện quản trị: menu user mở/đóng bằng click, đóng khi nhấn ngoài/Esc; sidebar trượt và nội dung giãn mượt, không để phần ẩn nhận focus. Không gắn chức năng giả cho mục chỉ giao diện.
-- Tour: kiểm tra lọc và chuyển trang giữ điều kiện; tour không tồn tại trả 404; không có lịch thì không giả giá; lỗi database thông báo chung 503. Không import lại hoặc sửa dữ liệu của thành viên khác chỉ để kiểm tra UI.
-- Dự án chưa có bộ test tự động được commit vào repo. Các kiểm tra trước đây không thay thế kiểm tra phần vừa sửa trên máy nhận việc; không báo đã chạy kiểm tra nếu chưa thực hiện. Không tạo test chỉ để sao chép implementation cho sửa giao diện nhỏ.
-- Kiểm tra `git diff --check` và diff cuối; không để log, ảnh chụp thử, script tạm hoặc cấu hình cá nhân lọt vào commit. Báo rõ file đã thay đổi và phần chưa kiểm tra nếu môi trường thiếu công cụ.
+Luồng tour: trình duyệt → `public/index.php` → TourController → TourModel/PDO → View → header/nội dung/footer. Trang chủ đi qua HomeController, đọc tour nổi bật, điểm đến khả dụng và danh mục nhu cầu từ database. Mỗi nhóm hiển thị tối đa năm điểm đến; đếm DISTINCT tour đã công bố, có lịch mở, chưa quá ngày đi hoặc hạn đặt. Banner và tin tức vẫn là dữ liệu mẫu riêng. Form tìm kiếm gửi GET sang `page=tours&type=all`, giữ từ khóa/ngày/số khách/ngân sách/nhu cầu. Ngân sách so với tổng nhóm sau giảm 5% hoặc 8% theo giá của cùng một lịch; sức chứa chỉ là giới hạn tối đa, chưa phải chỗ còn. Controller kiểm tra đầu vào; Model lọc kết quả ban đầu và tạm tính nhóm. JavaScript tiếp tục lọc/sắp xếp/phân trang trên dữ liệu đã tải; trạng thái được giữ trên URL và xóa hết khi reset. Không đưa truy vấn SQL hoặc đọc $_GET vào View.
 
 ## Quy tắc nghiệp vụ đã thống nhất
 

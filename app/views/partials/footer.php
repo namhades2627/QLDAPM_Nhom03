@@ -8,7 +8,7 @@
             <p>Một chuyến đi hợp ý, nhiều trải nghiệm đáng nhớ. Cùng OnTrip tìm cảm hứng cho hành trình tiếp theo của bạn.</p>
             <span class="footer-signature">Hẹn bạn ở một nơi mới.</span>
         </div>
-        <div class="footer-column"><h2>Khám phá OnTrip</h2><a href="#gioi-thieu">Về chúng tôi</a><a href="index.php#tour-noi-bat">Tour nổi bật</a><a href="index.php#kham-pha">Điểm đến</a><a href="index.php#tin-tuc">Tin tức & cảm hứng</a></div>
+        <div class="footer-column"><h2>Khám phá OnTrip</h2><a href="#gioi-thieu">Về chúng tôi</a><a href="index.php#tour-noi-bat">Tour nổi bật</a><a href="index.php#kham-pha">Điểm đến</a></div>
         <div class="footer-column"><h2>Hành trình của bạn</h2><a href="index.php?page=tours&amp;type=domestic">Tìm tour phù hợp</a><a href="index.php?page=tours&amp;type=domestic">Du lịch trong nước</a><a href="index.php?page=tours&amp;type=international">Du lịch quốc tế</a></div>
         <div class="footer-column footer-contact"><h2>Kết nối với OnTrip</h2><p><svg class="icon"><use href="#i-mail"/></svg>Email: Nhom03@gmail.com</p><p><svg class="icon"><use href="#i-user"/></svg>Hotline: 0776512174</p><p class="footer-contact-note">Cùng lên ý tưởng cho chuyến đi tiếp theo của bạn.</p></div>
     </div>

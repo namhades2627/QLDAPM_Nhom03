@@ -30,12 +30,6 @@ $banners = [
         'text' => 'Bước ra khỏi những điều quen thuộc.<br>Khám phá văn hóa, hương vị và nhịp sống mới.',
     ],
 ];
-$articles = [
-    ['image' => 'assets/images/news/news01.jpg', 'title' => 'Đi Pháp dịp này có an toàn?', 'date' => '15.10.2026'],
-    ['image' => 'assets/images/news/news02.jpg', 'title' => 'Tour Nga có thể trở lại đỉnh sau khi khách Việt được miễn visa ', 'date' => '14.10.2026'],
-    ['image' => 'assets/images/news/news03.jpg', 'title' => 'Vietnam Airlines mở đường bay thẳng Hà Nội - Hàng Châu', 'date' => '12.10.2026'],
-    ['image' => 'assets/images/news/news04.jpg', 'title' => 'Việt Nam trong danh sách điểm đến mùa thu đẹp nhất thế giới', 'date' => '10.10.2026'],
-];
 ?>
 <!doctype html>
 <html lang="vi">
@@ -190,22 +184,6 @@ $articles = [
                 </div>
                 <?php if (!$destinations): ?><p class="destination-empty" data-region-panel="<?= $escape($region) ?>" <?= $region === 'international' ? 'hidden' : '' ?>>Chưa có điểm đến có lịch khởi hành đang mở.</p><?php endif; ?>
             <?php endforeach; ?>
-        </div>
-    </section>
-
-    <!-- 5. TIN TỨC — bốn bài mẫu, chưa có trang nội dung bài viết. -->
-    <section id="tin-tuc" class="section news-section" aria-labelledby="news-title">
-        <div class="container">
-            <div class="section-heading"><div><p class="eyebrow">CHUYỆN TRÊN NHỮNG CUNG ĐƯỜNG</p><h2 id="news-title">Tin tức & cảm hứng</h2><p>Cẩm nang, kinh nghiệm và những gợi ý cho người thích đi.</p></div><span class="section-number" aria-hidden="true">GÓC ONTRIP <span>↗</span></span></div>
-            <div class="news-grid">
-                <?php foreach ($articles as $article): ?>
-                    <article class="news-card">
-                        <div class="news-image-wrap"><img src="<?= $article['image'] ?>" alt="Ảnh minh họa: <?= $article['title'] ?>" width="600" height="400" loading="lazy"></div>
-                        <div class="news-meta"><time datetime="<?= implode('-', array_reverse(explode('.', $article['date']))) ?>"><?= $article['date'] ?></time></div>
-                        <h3><?= $article['title'] ?></h3><button class="news-read" type="button">Đọc tiếp <svg class="icon"><use href="#i-arrow"/></svg></button>
-                    </article>
-                <?php endforeach; ?>
-            </div>
         </div>
     </section>
 </main>

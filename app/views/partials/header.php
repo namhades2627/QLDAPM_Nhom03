@@ -45,7 +45,6 @@ $isHomePage = ($page ?? 'home') === 'home';
                     </div>
                 </div>
             </div>
-            <a class="nav-link" href="index.php#tin-tuc">Tin tức</a>
             <a class="nav-link" href="#lien-he">Liên hệ</a>
         </nav>
         <div class="nav-actions">

@@ -111,7 +111,7 @@ Có tám bảng nghiệp vụ hiện tại:
 | Chi tiết tour | `app/views/tours/detail.php` |
 | Tra cứu và đề xuất tour thông minh chuyên sâu | `app/views/tours/smart_search.php` |
 | Thuật toán xếp hạng, mùa vụ, thời tiết và gợi ý ±3 ngày | `app/models/SmartRecommendation.php` (lớp `SmartRecommendationModel`) |
-| Dịch vụ API thời tiết Open-Meteo & đồng bộ lịch trình từng ngày | `app/models/WeatherService.php` (lớp `WeatherService`) |
+| Dịch vụ API thời tiết Open-Meteo & đồng bộ lịch trình từng ngày | `app/models/thoi_tiet.php` (lớp `WeatherService`) |
 | Đọc tour, nhu cầu, lịch khởi hành và lịch trình | `app/models/tour.php` (lớp `TourModel`) |
 | Nhận yêu cầu danh sách/chi tiết, chuẩn bị dữ liệu cho View | `app/controllers/TourController.php` |
 | Cấu trúc database và danh mục ban đầu | `database/ontrip.sql` |

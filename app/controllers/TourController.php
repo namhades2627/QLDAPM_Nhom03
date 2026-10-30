@@ -122,24 +122,31 @@ class TourController
         $relatedTours = [];
         $selectedSchedule = null;
         $itineraryWeather = [];
+        $bookingMessage = is_string($_SESSION['booking_message'] ?? null) ? $_SESSION['booking_message'] : '';
+        unset($_SESSION['booking_message']);
 
         if ($notFound) {
             http_response_code(404);
         } else {
             $tour = $this->prepareImage($tour);
 
-            // Tìm lịch khởi hành được chọn: nếu truyền ?date= thì tìm, ngược lại lấy lịch đầu tiên
+            // Tìm lịch khởi hành được chọn: ưu tiên lịch còn chỗ, có thể chỉ định qua ?date=
             $requestedDate = $this->queryString('date');
             if ($requestedDate !== '' && !empty($tour['schedules'])) {
                 foreach ($tour['schedules'] as $schedule) {
-                    if ($schedule['date'] === $requestedDate) {
+                    if ($schedule['date'] === $requestedDate && (int) $schedule['seats_left'] > 0) {
                         $selectedSchedule = $schedule;
                         break;
                     }
                 }
             }
             if ($selectedSchedule === null) {
-                $selectedSchedule = $tour['schedules'][0] ?? null;
+                foreach ($tour['schedules'] as $schedule) {
+                    if ((int) $schedule['seats_left'] > 0) {
+                        $selectedSchedule = $schedule;
+                        break;
+                    }
+                }
             }
 
             // Tích hợp WeatherService: Dự báo thời tiết chi tiết theo từng ngày theo ngày bắt đầu đã chọn

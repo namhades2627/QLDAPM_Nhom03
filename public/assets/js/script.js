@@ -532,8 +532,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const childRow = preview.querySelector('[data-quantity="child"]');
         let adults = 1;
         let children = 0;
-        let lastSelectedDate = preview.querySelector('input[name="departure"]:checked')?.dataset.date || '';
+        let seatsLeft = 99;
+        let lastSelectedDate = preview.querySelector('input[name="id_lich_khoi_hanh"]:checked')?.dataset.date || '';
         const money = value => `${new Intl.NumberFormat('vi-VN').format(value)} ₫`;
+        const formatDeadline = value => {
+            if (!value) return 'theo lịch';
+            const [datePart, timePart = ''] = value.split(' ');
+            const [year, month, day] = datePart.split('-');
+            const hm = timePart.slice(0, 5);
+            return hm ? `${hm} ${day}/${month}/${year}` : `${day}/${month}/${year}`;
+        };
 
         function updateWeatherForecast(startDate, origin) {
             if (!startDate) return;
@@ -610,16 +618,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function renderEstimate() {
-            const selected = preview.querySelector('input[name="departure"]:checked');
+            const selected = preview.querySelector('input[name="id_lich_khoi_hanh"]:checked');
             if (selected) {
                 adultPrice = Number(selected.dataset.adultPrice);
                 childPrice = Number(selected.dataset.childPrice);
-                preview.querySelector('[data-schedule-origin]').textContent = selected.dataset.origin;
+                seatsLeft = Number(selected.dataset.seats || 0);
+                const originEl = preview.querySelector('[data-schedule-origin]');
+                if (originEl && selected.dataset.origin) originEl.textContent = selected.dataset.origin;
+                const seatsEl = preview.querySelector('[data-schedule-seats]');
+                if (seatsEl) seatsEl.textContent = String(Math.max(0, seatsLeft));
+                const deadlineEl = preview.querySelector('[data-schedule-deadline]');
+                if (deadlineEl) deadlineEl.textContent = formatDeadline(selected.dataset.deadline);
                 if (selected.dataset.date && selected.dataset.date !== lastSelectedDate) {
                     lastSelectedDate = selected.dataset.date;
                     updateWeatherForecast(selected.dataset.date, selected.dataset.origin);
                 }
             }
+            // Không cho chọn quá số chỗ còn lại của lịch đang chọn.
+            const maxGuests = Math.max(1, Math.min(99, seatsLeft));
+            if (adults > maxGuests) adults = maxGuests;
+            if (adults + children > maxGuests) children = Math.max(0, maxGuests - adults);
             adultRow.querySelector('[data-unit-price]').textContent = money(adultPrice);
             childRow.querySelector('[data-unit-price]').textContent = money(childPrice);
             const adultTotal = adults * adultPrice;
@@ -633,8 +651,12 @@ document.addEventListener('DOMContentLoaded', () => {
             childRow.querySelector('[data-count]').textContent = children;
             adultRow.querySelector('[data-step="-1"]').disabled = adults <= 1;
             childRow.querySelector('[data-step="-1"]').disabled = children <= 0;
-            adultRow.querySelector('[data-step="1"]').disabled = adults >= 99;
-            childRow.querySelector('[data-step="1"]').disabled = children >= 99;
+            adultRow.querySelector('[data-step="1"]').disabled = guests >= maxGuests;
+            childRow.querySelector('[data-step="1"]').disabled = guests >= maxGuests;
+            const adultsField = preview.querySelector('[data-guest-adults]');
+            const childrenField = preview.querySelector('[data-guest-children]');
+            if (adultsField) adultsField.value = adults;
+            if (childrenField) childrenField.value = children;
             preview.querySelector('[data-adult-count]').textContent = adults;
             preview.querySelector('[data-adult-total]').textContent = money(adultTotal);
             preview.querySelector('[data-child-count]').textContent = children;
@@ -645,15 +667,25 @@ document.addEventListener('DOMContentLoaded', () => {
             preview.querySelector('[data-discount-rate]').textContent = `(${discountRate}%)`;
             preview.querySelector('[data-discount-amount]').textContent = `−${money(discount)}`;
             preview.querySelector('[data-total]').textContent = money(subtotal - discount);
+            const submit = preview.querySelector('button.detail-book-button');
+            if (submit) {
+                const overloaded = !selected || seatsLeft <= 0 || guests > seatsLeft;
+                submit.disabled = overloaded;
+                submit.setAttribute('aria-disabled', String(overloaded));
+            }
         }
 
         preview.querySelectorAll('[data-step]').forEach(button => button.addEventListener('click', () => {
             const step = Number(button.dataset.step);
-            if (button.closest('[data-quantity]').dataset.quantity === 'adult') adults = Math.max(1, Math.min(99, adults + step));
-            else children = Math.max(0, Math.min(99, children + step));
+            const maxGuests = Math.max(1, Math.min(99, seatsLeft));
+            if (button.closest('[data-quantity]').dataset.quantity === 'adult') {
+                adults = Math.max(1, Math.min(maxGuests - children, adults + step));
+            } else {
+                children = Math.max(0, Math.min(maxGuests - adults, children + step));
+            }
             renderEstimate();
         }));
-        preview.querySelectorAll('input[name="departure"]').forEach(input => input.addEventListener('change', renderEstimate));
+        preview.querySelectorAll('input[name="id_lich_khoi_hanh"]').forEach(input => input.addEventListener('change', renderEstimate));
         renderEstimate();
     }
 
@@ -790,3 +822,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+/* ===== XÁC NHẬN TRƯỚC THAO TÁC KHÔNG THỂ HOÀN TÁC ===== */
+// Dùng thuộc tính data-confirm trên <form> để hỏi lại người dùng (ví dụ: hủy đơn đặt tour).
+document.addEventListener('submit', event => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement) || !form.dataset.confirm) return;
+    if (!window.confirm(form.dataset.confirm)) event.preventDefault();
+}, true);

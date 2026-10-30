@@ -18,11 +18,19 @@ if ($action === 'logout') {
     $controller->login();
 } else {
     try {
-        $controller->index();
+        if ($action === 'schedules') {
+            $controller->schedules();
+        } elseif ($action === 'schedule') {
+            $controller->schedule();
+        } elseif ($action === 'order-status') {
+            $controller->updateOrderStatus();
+        } else {
+            $controller->index();
+        }
     } catch (PDOException $exception) {
         error_log('OnTrip admin database error: ' . $exception->getMessage());
         http_response_code(503);
-        $errorTitle = 'Chưa thể tải bảng điều khiển';
+        $errorTitle = 'Chưa thể tải dữ liệu quản trị';
         $errorMessage = 'Vui lòng thử lại sau ít phút.';
         require __DIR__ . '/../app/views/admin/forbidden.php';
     }

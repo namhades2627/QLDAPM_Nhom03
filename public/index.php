@@ -9,7 +9,11 @@ session_start([
 if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 // Điều hướng trang chủ và các trang tour qua Controller tương ứng.
 $requestedPage = $_GET['page'] ?? '';
-$page = in_array($requestedPage, ['tours', 'tour-detail', 'login', 'register', 'logout', 'admin'], true) ? $requestedPage : 'home';
+$page = in_array(
+    $requestedPage,
+    ['tours', 'tour-detail', 'login', 'register', 'logout', 'admin', 'booking', 'booking-success', 'my-bookings', 'cancel-booking'],
+    true
+) ? $requestedPage : 'home';
 if ($page === 'admin') {
     header('Location: ../admin/', true, 303);
     return;
@@ -20,6 +24,22 @@ if (in_array($page, ['login', 'register', 'logout'], true)) {
     $authController = new AuthController();
     if ($page === 'logout') $authController->logout();
     else $authController->form($page);
+    return;
+}
+// Đặt tour, xem đơn và hủy đơn đi qua BookingController.
+if (in_array($page, ['booking', 'booking-success', 'my-bookings', 'cancel-booking'], true)) {
+    require_once __DIR__ . '/../app/controllers/BookingController.php';
+    try {
+        $bookingController = new BookingController();
+        if ($page === 'booking') $bookingController->form();
+        elseif ($page === 'booking-success') $bookingController->success();
+        elseif ($page === 'cancel-booking') $bookingController->cancel();
+        else $bookingController->myBookings();
+    } catch (PDOException $exception) {
+        error_log('OnTrip booking database error: ' . $exception->getMessage());
+        http_response_code(503);
+        require __DIR__ . '/../app/views/errors/database.php';
+    }
     return;
 }
 require_once __DIR__ . '/../app/controllers/HomeController.php';

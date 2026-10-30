@@ -18,6 +18,13 @@ class TaiKhoanModel
         return $query->fetch() ?: null;
     }
 
+    public function findById(int $id): ?array
+    {
+        $query = $this->connection->prepare('SELECT * FROM tai_khoan WHERE id_tai_khoan = ? LIMIT 1');
+        $query->execute([$id]);
+        return $query->fetch() ?: null;
+    }
+
     public function createCustomer(string $name, string $email, string $phone, string $passwordHash): void
     {
         // Vai trò và trạng thái do máy chủ quyết định, không lấy từ form đăng ký.

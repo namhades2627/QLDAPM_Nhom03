@@ -67,6 +67,7 @@ $isHomePage = ($page ?? 'home') === 'home';
                 <div id="account-menu" class="dropdown-menu dropdown-menu-right">
                     <?php if (isset($_SESSION['tai_khoan'])): ?>
                     <span class="account-name"><?= htmlspecialchars($_SESSION['tai_khoan']['ho_ten'], ENT_QUOTES, 'UTF-8') ?></span>
+                    <a href="index.php?page=my-bookings">Đơn của tôi</a>
                     <form method="post" action="index.php?page=logout">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
                         <button class="account-logout" type="submit">Đăng xuất</button>

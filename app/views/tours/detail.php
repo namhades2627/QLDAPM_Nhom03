@@ -11,10 +11,12 @@
  * @var array<string, mixed>|null $selectedSchedule
  * @var array<int, array<string, mixed>> $itineraryWeather
  * @var array<int, array<string, mixed>> $relatedTours
+ * @var string $bookingMessage
  */
 $escape = static function ($value): string {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
+$bookingMessage = $bookingMessage ?? '';
 $adultPrice = $selectedSchedule['adult_price'] ?? 0;
 $childPrice = $selectedSchedule['child_price'] ?? 0;
 
@@ -149,25 +151,36 @@ if (!empty($itineraryWeather)) {
                 </section>
                 <section class="detail-section" id="danh-gia"><span class="detail-section-label">3 / CẢM NHẬN</span><h2>Đánh giá tour</h2><div class="detail-review-empty"><span aria-hidden="true">☆</span><div><strong>Chưa có đánh giá</strong><p>Nhận xét của khách đã hoàn thành chuyến đi sẽ xuất hiện tại đây khi chức năng đánh giá được triển khai.</p></div></div></section>
             </div>
-            <aside class="detail-sidebar" aria-label="Lịch khởi hành và tạm tính tour">
-                <div class="detail-booking" <?= $selectedSchedule ? 'data-booking-preview' : '' ?> data-adult-price="<?= $adultPrice ?>" data-child-price="<?= $childPrice ?>">
+            <aside class="detail-sidebar" aria-label="Lịch khởi hành và đặt tour">
+                <?php if ($bookingMessage !== ''): ?>
+                <p class="detail-booking-alert" role="alert"><?= $escape($bookingMessage) ?></p>
+                <?php endif; ?>
+                <form class="detail-booking" method="post" action="index.php?page=booking&amp;action=confirm" <?= $selectedSchedule ? 'data-booking-preview' : '' ?> data-adult-price="<?= $adultPrice ?>" data-child-price="<?= $childPrice ?>">
+                    <input type="hidden" name="csrf_token" value="<?= $escape($_SESSION['csrf_token']) ?>">
+                    <input type="hidden" name="ma_tour" value="<?= $escape($tour['id']) ?>">
+                    <input type="hidden" name="type" value="<?= $tourType ?>">
+                    <input type="hidden" name="so_nguoi_lon" value="1" data-guest-adults>
+                    <input type="hidden" name="so_tre_em" value="0" data-guest-children>
                     <span class="detail-booking-label">GIÁ TỪ / NGƯỜI LỚN</span>
                     <p class="detail-price"><?= $tour['price'] !== null ? number_format($tour['price'], 0, ',', '.') . ' <small>₫</small>' : 'Đang cập nhật' ?></p>
-                    <p class="detail-price-note">Giá lấy theo lịch khởi hành. Dữ liệu demo phục vụ học tập, chưa nhận đặt tour.</p>
+                    <p class="detail-price-note">Giá theo lịch khởi hành đang mở nhận đặt; chỗ còn được tính từ các đơn hiện có.</p>
                     <div class="detail-booking-divider"></div><h2>Lịch khởi hành</h2>
-                    <?php if (!$selectedSchedule): ?>
+                    <?php if (!$tour['schedules']): ?>
                         <p>Chưa có lịch khởi hành đang mở nhận đặt.</p>
                     <?php else: ?>
                         <div class="detail-date-list" role="radiogroup" aria-label="Chọn lịch khởi hành">
-                            <?php foreach ($tour['schedules'] as $index => $schedule): ?>
-                            <label class="detail-date-option">
-                                <input type="radio" name="departure" value="<?= (int) $schedule['id'] ?>" data-date="<?= $escape($schedule['date']) ?>" data-adult-price="<?= $schedule['adult_price'] ?>" data-child-price="<?= $schedule['child_price'] ?>" data-origin="<?= $escape($schedule['origin']) ?>" <?= ($selectedSchedule && (int) $schedule['id'] === (int) $selectedSchedule['id']) ? 'checked' : '' ?>>
-                                <span><?= date('d/m/Y', strtotime($schedule['date'])) ?><small><?= $escape($schedule['origin']) ?></small></span>
+                            <?php foreach ($tour['schedules'] as $schedule): ?>
+                            <?php $soldOut = (int) $schedule['seats_left'] <= 0; ?>
+                            <label class="detail-date-option<?= $soldOut ? ' is-sold-out' : '' ?>">
+                                <input type="radio" name="id_lich_khoi_hanh" value="<?= (int) $schedule['id'] ?>" data-date="<?= $escape($schedule['date']) ?>" data-adult-price="<?= $schedule['adult_price'] ?>" data-child-price="<?= $schedule['child_price'] ?>" data-origin="<?= $escape($schedule['origin']) ?>" data-seats="<?= (int) $schedule['seats_left'] ?>" data-deadline="<?= $escape($schedule['deadline'] ?? '') ?>" <?= $soldOut ? 'disabled' : '' ?> <?= ($selectedSchedule && (int) $schedule['id'] === (int) $selectedSchedule['id']) ? 'checked' : '' ?>>
+                                <span><?= date('d/m/Y', strtotime($schedule['date'])) ?><small><?= $escape($schedule['origin']) ?> · <?= $soldOut ? 'Hết chỗ' : 'còn ' . (int) $schedule['seats_left'] . ' chỗ' ?></small></span>
                             </label>
                             <?php endforeach; ?>
                         </div>
-                        <p class="detail-seat-note">Khởi hành từ <span data-schedule-origin><?= $escape($selectedSchedule['origin']) ?></span>. Số chỗ còn lại sẽ được xử lý khi triển khai đặt tour.</p>
-                        <div class="detail-booking-divider"></div><h2>Số người</h2>
+                        <?php if (!$selectedSchedule): ?>
+                        <p class="detail-seat-note">Tất cả lịch khởi hành của tour đã kín chỗ. Vui lòng chọn tour khác hoặc liên hệ để được giữ chỗ chờ.</p>
+                        <?php else: ?>
+                        <p class="detail-seat-note">Khởi hành từ <span data-schedule-origin><?= $escape($selectedSchedule['origin']) ?></span> · còn <strong data-schedule-seats><?= (int) $selectedSchedule['seats_left'] ?></strong> chỗ. Hạn đặt chỗ: <span data-schedule-deadline><?= $selectedSchedule['deadline'] ? date('H:i d/m/Y', strtotime($selectedSchedule['deadline'])) : 'theo lịch' ?></span>.</p>                        <div class="detail-booking-divider"></div><h2>Số người</h2>
                         <div class="detail-quantity-row" data-quantity="adult"><div><strong>Người lớn</strong><small><span data-unit-price><?= number_format($adultPrice, 0, ',', '.') ?> ₫</span> / khách</small></div><div class="detail-stepper"><button type="button" data-step="-1" aria-label="Giảm số người lớn">−</button><output data-count>1</output><button type="button" data-step="1" aria-label="Tăng số người lớn">+</button></div></div>
                         <div class="detail-quantity-row" data-quantity="child"><div><strong>Trẻ em</strong><small><span data-unit-price><?= number_format($childPrice, 0, ',', '.') ?> ₫</span> / khách</small></div><div class="detail-stepper"><button type="button" data-step="-1" aria-label="Giảm số trẻ em">−</button><output data-count>0</output><button type="button" data-step="1" aria-label="Tăng số trẻ em">+</button></div></div>
                         <div class="detail-booking-divider"></div>
@@ -179,9 +192,18 @@ if (!empty($itineraryWeather)) {
                             <div data-discount-line hidden><span>Ưu đãi nhóm <span data-discount-rate></span></span><strong data-discount-amount></strong></div>
                             <div class="detail-estimate-total"><span>Tổng cộng tạm tính</span><strong data-total><?= number_format($adultPrice, 0, ',', '.') ?> ₫</strong></div>
                         </div>
+                        <?php endif; ?>
                     <?php endif; ?>
-                    <button class="button button-primary detail-book-button" type="button" disabled>Đặt tour ngay</button><p class="detail-static-note">Chưa nhận đặt tour. Tổng tiền chỉ là tạm tính trên trình duyệt.</p>
-                </div>
+                    <?php if ($selectedSchedule): ?>
+                        <?php if (isset($_SESSION['tai_khoan'])): ?>
+                            <button class="button button-primary detail-book-button" type="submit">Đặt tour ngay</button>
+                            <p class="detail-static-note">Máy chủ kiểm tra lại hạn đặt và chỗ còn trước khi tạo đơn.</p>
+                        <?php else: ?>
+                            <a class="button button-primary detail-book-button" href="index.php?page=login">Đăng nhập để đặt tour</a>
+                            <p class="detail-static-note">Bạn cần đăng nhập để đặt tour và theo dõi đơn đã đặt.</p>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </form>
             </aside>
         </div>
         <?php if ($relatedTours): ?>

@@ -671,7 +671,45 @@ document.addEventListener('DOMContentLoaded', () => {
     show();
 });
 
+/* ===== KHUNG QUẢN TRỊ: THU GỌN THANH BÊN ===== */
+document.addEventListener('DOMContentLoaded', () => {
+    const layout = document.querySelector('[data-admin-layout]');
+    const toggle = document.querySelector('[data-admin-toggle]');
+    if (!layout || !toggle) return;
+    toggle.addEventListener('click', () => {
+        const collapsed = layout.classList.toggle('is-sidebar-collapsed');
+        layout.querySelector('.admin-sidebar').inert = collapsed;
+        toggle.setAttribute('aria-expanded', String(!collapsed));
+        toggle.setAttribute('aria-label', collapsed ? 'Mở thanh bên' : 'Thu gọn thanh bên');
+    });
+});
+
 /* ===== TÀI KHOẢN: KIỂM TRA FORM TRƯỚC KHI GỬI ===== */
+// Menu tài khoản quản trị: chỉ xử lý đóng/mở giao diện.
+document.addEventListener('DOMContentLoaded', () => {
+    const account = document.querySelector('[data-admin-account]');
+    if (!account) return;
+    const toggle = account.querySelector('[data-admin-account-toggle]');
+    const panel = document.getElementById(toggle.getAttribute('aria-controls'));
+    function setOpen(open) {
+        toggle.setAttribute('aria-expanded', String(open));
+        panel.hidden = !open;
+    }
+    toggle.addEventListener('click', () => setOpen(panel.hidden));
+    document.addEventListener('click', event => {
+        if (!account.contains(event.target)) setOpen(false);
+    });
+    account.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !panel.hidden) {
+            setOpen(false);
+            toggle.focus();
+        }
+    });
+    account.addEventListener('focusout', event => {
+        if (!account.contains(event.relatedTarget)) setOpen(false);
+    });
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('[data-auth-form]');
     if (!form) return;

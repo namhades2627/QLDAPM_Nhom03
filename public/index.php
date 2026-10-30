@@ -9,7 +9,11 @@ session_start([
 if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 // Điều hướng trang chủ và các trang tour qua Controller tương ứng.
 $requestedPage = $_GET['page'] ?? '';
-$page = in_array($requestedPage, ['tours', 'tour-detail', 'login', 'register', 'logout'], true) ? $requestedPage : 'home';
+$page = in_array($requestedPage, ['tours', 'tour-detail', 'login', 'register', 'logout', 'admin'], true) ? $requestedPage : 'home';
+if ($page === 'admin') {
+    header('Location: ../admin/', true, 303);
+    return;
+}
 // Các yêu cầu tài khoản được xử lý qua AuthController.
 if (in_array($page, ['login', 'register', 'logout'], true)) {
     require_once __DIR__ . '/../app/controllers/AuthController.php';

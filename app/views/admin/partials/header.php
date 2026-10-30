@@ -5,8 +5,10 @@
  * @var string $roleName
  * @var string $csrfToken
  * @var string $adminSection
+ * @var string $avatarUrl
  */
 $adminSection = $adminSection ?? 'dashboard';
+$avatarUrl = $avatarUrl ?? '';
 $adminTitle = ['dashboard' => 'Bảng điều khiển', 'profile' => 'Hồ sơ cá nhân', 'password' => 'Đổi mật khẩu'][$adminSection] ?? 'Bảng điều khiển';
 $escape = static function ($value): string { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); };
 ?>
@@ -68,7 +70,7 @@ $escape = static function ($value): string { return htmlspecialchars((string) $v
                 <button class="icon-button admin-toolbar-icon" type="button" aria-label="Thông báo" title="Thông báo"><svg class="icon"><use href="#a-bell"/></svg></button>
                 <div class="admin-account-dropdown" data-admin-account>
                     <button class="admin-user" type="button" data-admin-account-toggle aria-expanded="false" aria-controls="admin-account-menu" aria-label="Mở menu tài khoản">
-                        <span class="admin-avatar"><svg class="icon"><use href="#a-user"/></svg></span>
+                        <span class="admin-avatar"><?php if ($avatarUrl !== ''): ?><img src="<?= $escape($avatarUrl) ?>" alt="Ảnh đại diện"><?php else: ?><svg class="icon"><use href="#a-user"/></svg><?php endif; ?></span>
                         <span><strong><?= $escape($account['ho_ten']) ?></strong><small><?= $escape($roleName) ?></small></span>
                         <svg class="icon admin-account-chevron"><use href="#a-down"/></svg>
                     </button>

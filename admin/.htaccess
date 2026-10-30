@@ -1,0 +1,5 @@
+# Giới hạn upload chỉ áp dụng cho khu vực quản trị trên XAMPP/mod_php.
+<IfModule php_module>
+    php_value upload_max_filesize 5M
+    php_value post_max_size 8M
+</IfModule>

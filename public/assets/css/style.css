@@ -911,6 +911,8 @@ a, button, input, select { outline-offset: 5px; }
 .admin-account-dropdown { position:relative; padding-left:20px; border-left:1px solid #e9ebef; }
 .admin-user { display:flex; align-items:center; gap:11px; padding:4px 0; background:transparent; text-align:left; }
 .admin-avatar { display:grid; place-items:center; width:41px; height:41px; border:1px solid #e8eaf0; border-radius:50%; color:#646e80; background:#fafbfc; }
+.admin-avatar { overflow:hidden; flex-shrink:0; }
+.admin-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
 .admin-user strong { display:block; font-size:13px; line-height:1.5; }
 .admin-user small { display:block; color:#949cab; font-size:11px; }
 .admin-account-chevron { width:15px; height:15px; color:#919aab; transition:transform .2s; margin-left:8px; }
@@ -1005,6 +1007,13 @@ a, button, input, select { outline-offset: 5px; }
 .admin-profile-identity { padding:30px 24px 25px; text-align:center; border-bottom:1px solid #eef0f4; }
 .admin-profile-avatar { display:grid; place-items:center; width:90px; height:90px; margin:0 auto 17px; background:#fff3e9; border:6px solid #fff9f4; border-radius:50%; color:#cc7a47; }
 .admin-profile-avatar .icon { width:43px; height:43px; stroke-width:1.35; }
+.admin-profile-avatar { overflow:hidden; }
+.admin-profile-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.admin-avatar-field { margin-top:25px; }
+.admin-avatar-field input[type="file"] { padding:0; height:auto; min-height:46px; line-height:44px; color:#8590a1; font-size:12px; }
+.admin-avatar-field input::file-selector-button { border:0; border-right:1px solid #e2e6ec; padding:0 15px; margin-right:13px; height:44px; background:#f7f8fa; color:#606e82; cursor:pointer; font:inherit; }
+.admin-avatar-field input::file-selector-button:hover { background:#fff2e6; color:#bd6b3d; }
+.admin-avatar-error { color:#be573d; font-size:11px; margin-top:7px; }
 .admin-profile-identity h2 { font-size:19px; font-weight:600; margin-bottom:10px; }
 .admin-profile-identity .admin-account-role { margin:0; }
 .admin-profile-details { padding:23px 25px 25px; }
@@ -1039,6 +1048,9 @@ a, button, input, select { outline-offset: 5px; }
 .admin-secondary-button:hover { background:#f0f2f6; color:#4c596d; }
 .admin-form-preview-note { color:#a1a8b4; font-size:10px; text-align:right; margin-top:14px; }
 .admin-form-message { padding:12px 14px; margin-bottom:23px; border:1px solid #ead8c6; background:#fff9f0; color:#987044; border-radius:6px; font-size:12px; }
+.admin-form-message.is-success { border-color:#cbe5d6; background:#f0f9f3; color:#438064; }
+.admin-field-error { margin-top:7px; font-size:11px; color:#be573d; }
+.admin-form-field input[aria-invalid="true"] { border-color:#d78e79; }
 .admin-password-panel { width:min(100%,710px); margin:30px auto 0; }
 .admin-password-account { display:flex; align-items:center; gap:12px; padding:15px 18px; background:#f8f9fb; border:1px solid #e9ecf2; border-radius:7px; margin-bottom:26px; }
 .admin-password-account strong { display:block; font-size:13px; font-weight:600; }

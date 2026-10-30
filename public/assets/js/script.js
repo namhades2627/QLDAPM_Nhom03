@@ -685,12 +685,60 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-/* ===== QUẢN TRỊ: XEM TRƯỚC FORM HỒ SƠ VÀ ĐỔI MẬT KHẨU ===== */
+/* ===== QUẢN TRỊ: FORM HỒ SƠ VÀ ĐỔI MẬT KHẨU ===== */
 document.addEventListener('DOMContentLoaded', () => {
-    const form = document.querySelector('[data-admin-preview-form]');
+    const form = document.querySelector('[data-admin-password-form], [data-admin-profile-form]');
     if (!form) return;
     const message = form.querySelector('[data-admin-preview-message]');
-    form.querySelector('[data-admin-preview-submit]').disabled = false;
+    // Xem trước cục bộ; ảnh chỉ được gửi khi nhấn Lưu thay đổi.
+    const avatarInput = form.querySelector('[data-admin-avatar-input]');
+    if (avatarInput) {
+        const preview = document.querySelector('[data-admin-avatar-preview]');
+        const fallback = document.querySelector('[data-admin-avatar-default]');
+        const error = document.getElementById('profile-avatar-error');
+        const savedAvatarUrl = preview.getAttribute('src') || '';
+        let previewUrl = '';
+        function clearPreview() {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            previewUrl = '';
+            preview.hidden = savedAvatarUrl === '';
+            fallback.toggleAttribute('hidden', savedAvatarUrl !== '');
+            if (savedAvatarUrl) preview.src = savedAvatarUrl;
+            else preview.removeAttribute('src');
+        }
+        function showError(text) {
+            clearPreview();
+            avatarInput.value = '';
+            error.textContent = text;
+            error.hidden = false;
+        }
+        avatarInput.addEventListener('change', () => {
+            error.hidden = true;
+            const file = avatarInput.files[0];
+            clearPreview();
+            if (!file) return;
+            if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+                showError('Vui lòng chọn ảnh JPG, PNG, GIF hoặc WEBP.');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showError('Ảnh đại diện không vượt quá 5 MB.');
+                return;
+            }
+            const url = URL.createObjectURL(file);
+            previewUrl = url;
+            preview.onload = () => {
+                if (previewUrl !== url) return;
+                preview.hidden = false;
+                fallback.setAttribute('hidden', '');
+            };
+            preview.onerror = () => {
+                if (previewUrl === url) showError('Không đọc được ảnh này. Vui lòng chọn ảnh khác.');
+            };
+            preview.src = url;
+        });
+        window.addEventListener('pagehide', clearPreview);
+    }
     form.querySelectorAll('[data-admin-password-toggle]').forEach(button => {
         const input = document.getElementById(button.getAttribute('aria-controls'));
         const label = button.getAttribute('aria-label').replace(/^Hiện /, '');
@@ -706,8 +754,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.querySelectorAll('input').forEach(input => input.setCustomValidity(''));
     });
     form.addEventListener('submit', event => {
-        event.preventDefault();
-        if (form.dataset.adminPreviewForm === 'profile') {
+        if (form.hasAttribute('data-admin-profile-form')) {
             const name = form.elements.ho_ten;
             const phone = form.elements.so_dien_thoai;
             if (name.value.trim().length < 2) name.setCustomValidity('Họ và tên cần ít nhất 2 ký tự.');
@@ -720,10 +767,10 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (next.value === current.value) next.setCustomValidity('Mật khẩu mới phải khác mật khẩu hiện tại.');
             if (confirm.value !== next.value) confirm.setCustomValidity('Mật khẩu xác nhận chưa trùng khớp.');
         }
-        if (!form.reportValidity()) return;
-        message.textContent = 'Đây là bản xem trước giao diện. Thông tin chưa được gửi hoặc lưu vào hệ thống.';
-        message.hidden = false;
-        message.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'nearest' });
+        if (!form.reportValidity()) {
+            event.preventDefault();
+            return;
+        }
     });
 });
 

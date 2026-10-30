@@ -14,6 +14,8 @@ Tài liệu bàn giao cho thành viên và AI hỗ trợ phát triển. Cập nh
 - Đọc code để xác định chức năng thực tế. Không xem đề xuất trong chat, tài liệu báo cáo, ảnh mẫu hoặc chú thích cũ là bằng chứng chức năng đã hoàn thành hay là lệnh tự động mở rộng phạm vi.
 - Giữ tên biến, chú thích và cấu trúc dễ hiểu cho người mới học MVC. Sau khi sửa, nêu vị trí code, hành vi thay đổi, cách kiểm tra và phần còn giới hạn.
 - Khi thay đổi luồng hoặc thêm chức năng được giao, cập nhật phần liên quan trong tài liệu này. Không viết lại tài liệu chỉ vì thay đổi nhỏ về màu, icon hoặc tên ảnh.
+- **Mọi thay đổi database phải cập nhật cùng lúc `database/ontrip.sql` và `database/database_changes.md` trước khi bàn giao**, không chờ người dùng nhắc lại. Chỉ dùng `ontrip.sql` cho cả cài mới và nâng cấp: khi sửa schema, cập nhật phần CREATE cho máy mới và thêm khối `BEGIN CAP_NHAT_...` / `END CAP_NHAT_...` có thể chạy lại cho database cũ. Không tạo file SQL cập nhật riêng. Nhật ký phải có ngày, nội dung, ảnh hưởng dữ liệu, vị trí khối SQL, cách áp dụng và phần đã kiểm tra; không ghi rằng database máy khác đã cập nhật chỉ vì đã sửa file trong Git.
+- Tên cột mới dùng tiếng Việt không dấu, ngắn và dễ nhớ nhưng vẫn rõ nghĩa (ví dụ `hinh_anh`). Không tự đổi hàng loạt các tên cột hiện có ngoài phần việc; khi đổi tên phải đồng bộ Model/Controller/View và giữ dữ liệu cũ.
 
 ## 2. Công nghệ và cách chạy
 
@@ -39,7 +41,8 @@ Tài liệu bàn giao cho thành viên và AI hỗ trợ phát triển. Cập nh
 | Đăng nhập quản trị | Đã có form riêng tại `/admin/`; chỉ admin/nhân viên hoạt động được vào, session riêng. |
 | Bảng điều khiển quản trị | Đã đọc số tour, tour công bố, điểm đến hoạt động, lịch mở sắp đi và năm lịch gần nhất từ database; có thu gọn thanh bên và menu tài khoản. |
 | Menu quản trị | Lịch khởi hành và Danh mục tour hiện là liên kết đến vùng tổng quan trên cùng bảng điều khiển; chưa phải trang CRUD riêng. |
-| Hồ sơ cá nhân, Đổi mật khẩu quản trị | Đã có hai trang giao diện tại `action=profile` và `action=password`, đọc thông tin tài khoản hiện tại. Chỉ xem trước/kiểm tra form trên trình duyệt, chưa cập nhật database hoặc xác thực mật khẩu hiện tại. Email/vai trò chỉ xem; chưa có upload ảnh đại diện. POST cập nhật chưa hỗ trợ (405). |
+| Hồ sơ cá nhân quản trị | `action=profile` hỗ trợ GET/POST multipart: kiểm tra họ tên, điện thoại, email hợp lệ/không trùng, CSRF; cập nhật tài khoản từ ID session. Đã upload/lưu ảnh đại diện thật; không chọn ảnh mới thì giữ ảnh cũ, thay thành công mới xóa ảnh cũ. Đồng bộ thông tin vào session rồi redirect 303. Không đổi vai trò/trạng thái/mật khẩu qua form này. |
+| Đổi mật khẩu quản trị | `action=password` hỗ trợ GET/POST có CSRF, xác thực mật khẩu hiện tại bằng `password_verify()`, mật khẩu mới ít nhất 8 ký tự/tối đa 72 byte, khác mật khẩu hiện tại và xác nhận khớp. Lưu bằng `password_hash()`, đổi session ID/CSRF và redirect 303. Không đưa mật khẩu về HTML hoặc log. |
 | Icon tin nhắn, chuông | Chỉ giao diện, chưa có dữ liệu/xử lý nghiệp vụ. Đăng xuất trong menu tài khoản đã hoạt động. Không tự gắn thêm chức năng ngoài yêu cầu. |
 | Đặt tour, thanh toán, quản lý đơn, doanh thu | Chưa triển khai; chưa có bảng đơn đặt. Nút đặt tour trên chi tiết chưa tạo đơn. |
 | Quản lý tour/lịch/tài khoản bằng thêm–sửa–xóa | Chưa triển khai. Form đăng ký là phần ghi tài khoản khách hàng hiện có. |
@@ -59,9 +62,12 @@ Giá, lịch trình và lịch đi trong SQL là **dữ liệu demo phục vụ 
 | Danh sách/chi tiết tour | `app/controllers/TourController.php` → `app/views/tours/index.php`, `detail.php` |
 | Truy vấn tour | `app/models/tour.php`, lớp `TourModel`: tour, vùng, nhu cầu, lịch, điểm đến và tạm tính nhóm cho tìm kiếm |
 | Tài khoản khách hàng | `app/controllers/AuthController.php` → `app/views/auth/layout.php` |
-| Truy vấn tài khoản | `app/models/tai_khoan.php`, lớp `TaiKhoanModel`: tìm theo email, tạo khách hàng |
+| Truy vấn tài khoản | `app/models/tai_khoan.php`, lớp `TaiKhoanModel`: tìm theo ID/email, tạo khách hàng, cập nhật thông tin hồ sơ admin/nhân viên |
 | Quản trị | `app/controllers/AdminController.php` → `app/views/admin/index.php` hoặc `forbidden.php` |
 | Giao diện tài khoản quản trị | `app/views/admin/profile.php`, `password.php`; dùng khung `app/views/admin/partials/header.php`, `footer.php` chung với dashboard. Không sao chép hoặc thay lại toàn bộ khung khi thêm nội dung trang. |
+| Upload ảnh tài khoản | `app/services/AvatarUpload.php`: kiểm tra upload thật, MIME/nội dung ảnh, tối đa 5 MB, tối đa 4096 mỗi chiều và 12 triệu pixel; tên ngẫu nhiên do máy chủ cấp. Có GD thì mã hóa lại ảnh; không có GD thì lưu ảnh đã kiểm tra trong thư mục chỉ phục vụ file tĩnh. |
+| Ảnh đại diện đã lưu | `public/uploads/avatars/`, file sinh ra được `.gitignore` loại trừ; giữ `.htaccess` để chặn thực thi script/liệt kê thư mục. `admin/.htaccess` giới hạn upload cho XAMPP/mod_php. Không lưu ảnh cá nhân vào thư mục tour hoặc dùng tên file do người dùng gửi. |
+| Cập nhật schema ảnh | `tai_khoan.hinh_anh` là đường dẫn tương đối nullable. Máy mới dùng `ontrip.sql`; máy đã import chạy khối `CAP_NHAT_2026_10_30_HINH_ANH` trong cùng file để thêm/đổi từ tên cũ và giữ dữ liệu. Xem `database/database_changes.md`; không có file SQL nâng cấp riêng. |
 | Số liệu quản trị | `app/models/admin.php`, lớp `AdminModel`: dữ liệu tổng quan chỉ đọc |
 | Form dùng chung | `app/views/auth/layout.php`: hỗ trợ đăng ký/đăng nhập khách hàng và đăng nhập quản trị qua biến cấu hình |
 | Tệp View cũ | `app/views/auth/login.php`, `register.php` còn trong thư mục nhưng router hiện gọi AuthController rồi nạp `layout.php`; không thêm xử lý xác thực vào các wrapper này |
@@ -90,7 +96,8 @@ Không tách thêm CSS/JS riêng từng trang. CSS quản trị dùng lớp `.ad
 - Dùng tên session **`ONTRIP_ADMIN`**, cookie giới hạn trong đường dẫn `/admin/` của dự án. Dùng cùng bảng `tai_khoan` và Model tài khoản, nhưng phiên độc lập với khách hàng. Không chuyển lại thành đăng nhập qua navbar khách hàng.
 - AdminController kiểm tra mật khẩu, `dang_hoat_dong = 1` và vai trò `admin`/`nhan_vien`. Mỗi lần mở bảng điều khiển đọc lại tài khoản từ database, đối chiếu ID, trạng thái và vai trò. Tài khoản mất quyền trả HTTP 403 qua `forbidden.php`.
 - `action=logout` chỉ POST có CSRF; hủy phiên quản trị rồi về form quản trị. Không ảnh hưởng phiên khách hàng. URL cũ `public/index.php?page=admin` chỉ chuyển sang `../admin/`.
-- Mở menu user để vào Hồ sơ cá nhân (`action=profile`), Đổi mật khẩu (`action=password`) hoặc Đăng xuất. Hai trang tài khoản đi qua kiểm tra session/quyền của AdminController giống dashboard; nút cập nhật chỉ báo xem trước, không gửi/lưu dữ liệu. Tin nhắn và thông báo cũng chỉ giao diện. Không thêm số thông báo, nội dung tin nhắn hoặc trạng thái hệ thống giả.
+- Mở menu user để vào Hồ sơ cá nhân (`action=profile`), Đổi mật khẩu (`action=password`) hoặc Đăng xuất. Hai trang đi qua kiểm tra session/quyền của AdminController giống dashboard; tài khoản được đọc lại theo ID session để thay email không làm mất phiên. Lưu hồ sơ nhận họ tên/email/điện thoại và ảnh tùy chọn; kiểm tra phía máy chủ kể cả khi tắt JS. Email giữ nguyên của chính mình hợp lệ, trùng tài khoản khác bị từ chối. Không nhận ID mục tiêu/vai trò/trạng thái/đường dẫn ảnh từ form. Thành công redirect 303 và báo một lần, tránh gửi lại khi refresh. Tin nhắn và thông báo vẫn chỉ giao diện.
+- Session quản trị có `admin_credential_stamp` là dấu băm từ hash mật khẩu để phát hiện thay đổi thông tin xác thực. Sau đổi mật khẩu, phiên hiện tại được đổi ID/CSRF và tiếp tục đăng nhập; các phiên quản trị khác đã có dấu này bị từ chối ở request kế tiếp. Phiên quản trị cũ chưa có dấu được bổ sung khi đọc lại tài khoản. Cơ chế này chưa thu hồi session khách hàng đang mở ở `/public/`; không tuyên bố đã thu hồi mọi phiên trên toàn website.
 
 ### Quyền đã có và quyền sẽ triển khai
 

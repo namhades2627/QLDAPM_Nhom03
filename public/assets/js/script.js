@@ -685,6 +685,48 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+/* ===== QUẢN TRỊ: XEM TRƯỚC FORM HỒ SƠ VÀ ĐỔI MẬT KHẨU ===== */
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('[data-admin-preview-form]');
+    if (!form) return;
+    const message = form.querySelector('[data-admin-preview-message]');
+    form.querySelector('[data-admin-preview-submit]').disabled = false;
+    form.querySelectorAll('[data-admin-password-toggle]').forEach(button => {
+        const input = document.getElementById(button.getAttribute('aria-controls'));
+        const label = button.getAttribute('aria-label').replace(/^Hiện /, '');
+        button.addEventListener('click', () => {
+            const reveal = input.type === 'password';
+            input.type = reveal ? 'text' : 'password';
+            button.setAttribute('aria-pressed', String(reveal));
+            button.setAttribute('aria-label', `${reveal ? 'Ẩn' : 'Hiện'} ${label}`);
+        });
+    });
+    form.addEventListener('input', () => {
+        message.hidden = true;
+        form.querySelectorAll('input').forEach(input => input.setCustomValidity(''));
+    });
+    form.addEventListener('submit', event => {
+        event.preventDefault();
+        if (form.dataset.adminPreviewForm === 'profile') {
+            const name = form.elements.ho_ten;
+            const phone = form.elements.so_dien_thoai;
+            if (name.value.trim().length < 2) name.setCustomValidity('Họ và tên cần ít nhất 2 ký tự.');
+            if (!/^\+?[0-9]{9,15}$/.test(phone.value.replace(/[\s().-]/g, ''))) phone.setCustomValidity('Số điện thoại cần từ 9 đến 15 chữ số.');
+        } else {
+            const current = form.elements.mat_khau_hien_tai;
+            const next = form.elements.mat_khau_moi;
+            const confirm = form.elements.xac_nhan_mat_khau;
+            if (next.value.length < 8 || new TextEncoder().encode(next.value).length > 72) next.setCustomValidity('Mật khẩu mới cần ít nhất 8 ký tự và tối đa 72 byte.');
+            else if (next.value === current.value) next.setCustomValidity('Mật khẩu mới phải khác mật khẩu hiện tại.');
+            if (confirm.value !== next.value) confirm.setCustomValidity('Mật khẩu xác nhận chưa trùng khớp.');
+        }
+        if (!form.reportValidity()) return;
+        message.textContent = 'Đây là bản xem trước giao diện. Thông tin chưa được gửi hoặc lưu vào hệ thống.';
+        message.hidden = false;
+        message.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'nearest' });
+    });
+});
+
 /* ===== TÀI KHOẢN: KIỂM TRA FORM TRƯỚC KHI GỬI ===== */
 // Menu tài khoản quản trị: chỉ xử lý đóng/mở giao diện.
 document.addEventListener('DOMContentLoaded', () => {

@@ -72,9 +72,15 @@ class AdminController
         require __DIR__ . '/../views/auth/layout.php';
     }
 
-    public function index(): void
+    public function index(string $section = 'dashboard'): void
     {
         header('Cache-Control: no-store');
+        // Hai form tài khoản hiện chỉ xem giao diện, chưa xử lý cập nhật.
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            http_response_code(405);
+            header('Allow: GET');
+            return;
+        }
         if (!isset($_SESSION['tai_khoan'])) {
             header('Location: index.php?action=login', true, 303);
             return;
@@ -94,6 +100,11 @@ class AdminController
         }
         $roleName = $account['vai_tro'] === 'admin' ? 'Quản trị viên' : 'Nhân viên';
         $csrfToken = $_SESSION['csrf_token'];
+        $adminSection = in_array($section, ['profile', 'password'], true) ? $section : 'dashboard';
+        if ($adminSection === 'profile' || $adminSection === 'password') {
+            require __DIR__ . '/../views/admin/' . $adminSection . '.php';
+            return;
+        }
         $now = new DateTimeImmutable('now', new DateTimeZone('Asia/Ho_Chi_Minh'));
         $dashboard = (new AdminModel(getDatabaseConnection()))->getOverview($now);
         $todayLabel = $now->format('d/m/Y');

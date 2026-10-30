@@ -39,7 +39,8 @@ Tài liệu bàn giao cho thành viên và AI hỗ trợ phát triển. Cập nh
 | Đăng nhập quản trị | Đã có form riêng tại `/admin/`; chỉ admin/nhân viên hoạt động được vào, session riêng. |
 | Bảng điều khiển quản trị | Đã đọc số tour, tour công bố, điểm đến hoạt động, lịch mở sắp đi và năm lịch gần nhất từ database; có thu gọn thanh bên và menu tài khoản. |
 | Menu quản trị | Lịch khởi hành và Danh mục tour hiện là liên kết đến vùng tổng quan trên cùng bảng điều khiển; chưa phải trang CRUD riêng. |
-| Icon tin nhắn, chuông; Hồ sơ cá nhân, Đổi mật khẩu | Chỉ giao diện, chưa có dữ liệu/xử lý nghiệp vụ. Đăng xuất trong menu tài khoản đã hoạt động. Không tự gắn thêm chức năng ngoài yêu cầu. |
+| Hồ sơ cá nhân, Đổi mật khẩu quản trị | Đã có hai trang giao diện tại `action=profile` và `action=password`, đọc thông tin tài khoản hiện tại. Chỉ xem trước/kiểm tra form trên trình duyệt, chưa cập nhật database hoặc xác thực mật khẩu hiện tại. Email/vai trò chỉ xem; chưa có upload ảnh đại diện. POST cập nhật chưa hỗ trợ (405). |
+| Icon tin nhắn, chuông | Chỉ giao diện, chưa có dữ liệu/xử lý nghiệp vụ. Đăng xuất trong menu tài khoản đã hoạt động. Không tự gắn thêm chức năng ngoài yêu cầu. |
 | Đặt tour, thanh toán, quản lý đơn, doanh thu | Chưa triển khai; chưa có bảng đơn đặt. Nút đặt tour trên chi tiết chưa tạo đơn. |
 | Quản lý tour/lịch/tài khoản bằng thêm–sửa–xóa | Chưa triển khai. Form đăng ký là phần ghi tài khoản khách hàng hiện có. |
 | Đánh giá tour | Mới có giao diện trạng thái trống, chưa có bảng và chức năng gửi đánh giá. |
@@ -60,6 +61,7 @@ Giá, lịch trình và lịch đi trong SQL là **dữ liệu demo phục vụ 
 | Tài khoản khách hàng | `app/controllers/AuthController.php` → `app/views/auth/layout.php` |
 | Truy vấn tài khoản | `app/models/tai_khoan.php`, lớp `TaiKhoanModel`: tìm theo email, tạo khách hàng |
 | Quản trị | `app/controllers/AdminController.php` → `app/views/admin/index.php` hoặc `forbidden.php` |
+| Giao diện tài khoản quản trị | `app/views/admin/profile.php`, `password.php`; dùng khung `app/views/admin/partials/header.php`, `footer.php` chung với dashboard. Không sao chép hoặc thay lại toàn bộ khung khi thêm nội dung trang. |
 | Số liệu quản trị | `app/models/admin.php`, lớp `AdminModel`: dữ liệu tổng quan chỉ đọc |
 | Form dùng chung | `app/views/auth/layout.php`: hỗ trợ đăng ký/đăng nhập khách hàng và đăng nhập quản trị qua biến cấu hình |
 | Tệp View cũ | `app/views/auth/login.php`, `register.php` còn trong thư mục nhưng router hiện gọi AuthController rồi nạp `layout.php`; không thêm xử lý xác thực vào các wrapper này |
@@ -88,7 +90,7 @@ Không tách thêm CSS/JS riêng từng trang. CSS quản trị dùng lớp `.ad
 - Dùng tên session **`ONTRIP_ADMIN`**, cookie giới hạn trong đường dẫn `/admin/` của dự án. Dùng cùng bảng `tai_khoan` và Model tài khoản, nhưng phiên độc lập với khách hàng. Không chuyển lại thành đăng nhập qua navbar khách hàng.
 - AdminController kiểm tra mật khẩu, `dang_hoat_dong = 1` và vai trò `admin`/`nhan_vien`. Mỗi lần mở bảng điều khiển đọc lại tài khoản từ database, đối chiếu ID, trạng thái và vai trò. Tài khoản mất quyền trả HTTP 403 qua `forbidden.php`.
 - `action=logout` chỉ POST có CSRF; hủy phiên quản trị rồi về form quản trị. Không ảnh hưởng phiên khách hàng. URL cũ `public/index.php?page=admin` chỉ chuyển sang `../admin/`.
-- Mở menu user để thấy Hồ sơ cá nhân, Đổi mật khẩu, Đăng xuất. Hai mục đầu chỉ giao diện; tin nhắn và thông báo cũng chỉ giao diện. Không thêm số thông báo, nội dung tin nhắn hoặc trạng thái hệ thống giả.
+- Mở menu user để vào Hồ sơ cá nhân (`action=profile`), Đổi mật khẩu (`action=password`) hoặc Đăng xuất. Hai trang tài khoản đi qua kiểm tra session/quyền của AdminController giống dashboard; nút cập nhật chỉ báo xem trước, không gửi/lưu dữ liệu. Tin nhắn và thông báo cũng chỉ giao diện. Không thêm số thông báo, nội dung tin nhắn hoặc trạng thái hệ thống giả.
 
 ### Quyền đã có và quyền sẽ triển khai
 

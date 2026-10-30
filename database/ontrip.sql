@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS `lich_khoi_hanh` (
     `id_lich_khoi_hanh` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     `id_tour` BIGINT UNSIGNED NOT NULL,
     `ngay_khoi_hanh` DATE NOT NULL,
+    `ngay_ve` DATE DEFAULT NULL COMMENT 'NULL thì suy ra từ ngày đi + số ngày của tour',
     `diem_khoi_hanh` VARCHAR(120) NOT NULL,
     `gia_nguoi_lon` DECIMAL(12,0) NOT NULL,
     `gia_tre_em` DECIMAL(12,0) NOT NULL,
@@ -104,6 +105,11 @@ CREATE TABLE IF NOT EXISTS `lich_khoi_hanh` (
         REFERENCES `tour` (`id_tour`) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Bổ sung cột cho database cũ đã import trước 30/10/2026 (chạy lại an toàn).
+ALTER TABLE `lich_khoi_hanh`
+    ADD COLUMN IF NOT EXISTS `ngay_ve` DATE DEFAULT NULL
+    COMMENT 'NULL thì suy ra từ ngày đi + số ngày của tour' AFTER `ngay_khoi_hanh`;
+
 -- Tài khoản: email dùng đăng nhập; xác nhận mật khẩu chỉ dùng kiểm tra trên form.
 -- Đăng ký công khai mặc định là khách hàng; không nhận vai trò admin/nhân viên từ form.
 CREATE TABLE IF NOT EXISTS `tai_khoan` (
@@ -118,6 +124,45 @@ CREATE TABLE IF NOT EXISTS `tai_khoan` (
     `cap_nhat_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id_tai_khoan`),
     UNIQUE KEY `uq_tai_khoan_email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 8. Đơn đặt tour
+-- Mỗi đơn thuộc một lịch khởi hành và giữ chỗ theo số khách.
+-- Chỗ còn = lich_khoi_hanh.so_cho − tổng khách của các đơn đang giữ chỗ
+-- (trang_thai IN ('cho_xac_nhan', 'da_xac_nhan')).
+-- Đơn giá và số tiền được lưu tại thời điểm đặt để đổi giá sau này
+-- không làm thay đổi đơn cũ.
+CREATE TABLE IF NOT EXISTS `don_dat_tour` (
+    `id_don_dat` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `ma_don` VARCHAR(24) NOT NULL,
+    `id_lich_khoi_hanh` BIGINT UNSIGNED NOT NULL,
+    `id_tai_khoan` BIGINT UNSIGNED NOT NULL,
+    `ho_ten` VARCHAR(120) NOT NULL,
+    `email` VARCHAR(254) NOT NULL,
+    `so_dien_thoai` VARCHAR(20) NOT NULL,
+    `so_nguoi_lon` TINYINT UNSIGNED NOT NULL,
+    `so_tre_em` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `gia_nguoi_lon` DECIMAL(12,0) NOT NULL COMMENT 'Đơn giá tại thời điểm đặt',
+    `gia_tre_em` DECIMAL(12,0) NOT NULL COMMENT 'Đơn giá tại thời điểm đặt',
+    `tong_goc` DECIMAL(14,0) NOT NULL,
+    `muc_giam` TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Phần trăm ưu đãi nhóm',
+    `tien_giam` DECIMAL(14,0) NOT NULL DEFAULT 0,
+    `tong_thanh_toan` DECIMAL(14,0) NOT NULL,
+    `ghi_chu` VARCHAR(500) DEFAULT NULL,
+    `trang_thai` ENUM('cho_xac_nhan', 'da_xac_nhan', 'da_huy', 'hoan_thanh')
+        NOT NULL DEFAULT 'cho_xac_nhan',
+    `tao_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `cap_nhat_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id_don_dat`),
+    UNIQUE KEY `uq_don_dat_ma_don` (`ma_don`),
+    KEY `idx_don_dat_lich_trang_thai` (`id_lich_khoi_hanh`, `trang_thai`),
+    KEY `idx_don_dat_tai_khoan` (`id_tai_khoan`, `tao_luc`),
+    CONSTRAINT `chk_don_dat_nguoi_lon` CHECK (`so_nguoi_lon` >= 1),
+    CONSTRAINT `chk_don_dat_tong_tien` CHECK (`tong_thanh_toan` >= 0),
+    CONSTRAINT `fk_don_dat_lich` FOREIGN KEY (`id_lich_khoi_hanh`)
+        REFERENCES `lich_khoi_hanh` (`id_lich_khoi_hanh`) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT `fk_don_dat_tai_khoan` FOREIGN KEY (`id_tai_khoan`)
+        REFERENCES `tai_khoan` (`id_tai_khoan`) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT IGNORE INTO `khu_vuc_tour` (`ma_khu_vuc`, `ten_khu_vuc`, `loai_tour`, `thu_tu`) VALUES
@@ -136,7 +181,7 @@ INSERT IGNORE INTO `nhu_cau` (`ma_nhu_cau`, `ten_nhu_cau`, `thu_tu`) VALUES
     ('entertainment', 'Vui chơi – giải trí', 5),
     ('adventure', 'Vận động – trải nghiệm', 6);
 
--- 8. Dữ liệu demo: 48 tour, mỗi khu vực 8 tour.
+-- 9. Dữ liệu demo: 48 tour, mỗi khu vực 8 tour.
 -- Giá, lịch trình, ngày đi và sức chứa phục vụ học tập, chưa xác nhận dịch vụ.
 -- Bổ sung ảnh tương ứng tại public/assets/images/tours/.
 -- Mỗi dòng VALUES là một bản ghi; các nhóm được phân chia bằng chú thích.
@@ -145,7 +190,7 @@ INSERT IGNORE INTO `nhu_cau` (`ma_nhu_cau`, `ten_nhu_cau`, `thu_tu`) VALUES
 
 START TRANSACTION;
 
--- 8.1. Điểm đến
+-- 9.1. Điểm đến
 INSERT INTO diem_den (ma_khu_vuc, ten_diem_den, duong_dan_anh) VALUES
     -- Miền Bắc
     ('north', 'Hà Nội', 'assets/images/tours/mb01.jpg'),
@@ -203,7 +248,7 @@ INSERT INTO diem_den (ma_khu_vuc, ten_diem_den, duong_dan_anh) VALUES
     ('americas-oceania', 'New Zealand', 'assets/images/tours/us08.jpg')
 ON DUPLICATE KEY UPDATE id_diem_den = id_diem_den;
 
--- 8.2. Thông tin tour
+-- 9.2. Thông tin tour
 INSERT INTO tour (ma_tour, id_diem_den_chinh, ten_tour, gioi_thieu, so_ngay, duong_dan_anh, trang_thai, noi_bat) VALUES
     -- Miền Bắc
 
@@ -294,7 +339,7 @@ INSERT INTO tour (ma_tour, id_diem_den_chinh, ten_tour, gioi_thieu, so_ngay, duo
     ('us08', (SELECT id_diem_den FROM diem_den WHERE ma_khu_vuc = 'americas-oceania' AND ten_diem_den = 'New Zealand'), 'New Zealand – Auckland – Rotorua', 'Hành trình 7 ngày theo tuyến New Zealand – Auckland – Rotorua. Chương trình tập trung vào các điểm tham quan trong tuyến, kết hợp tìm hiểu cảnh quan, văn hóa và ẩm thực địa phương. Ngày di chuyển có thời gian nghỉ ngơi phù hợp. Nội dung, giá và lịch đi là dữ liệu demo của OnTrip, chưa phải chương trình kinh doanh đã xác nhận.', 7, 'assets/images/tours/us08.jpg', 'published', 0)
 ON DUPLICATE KEY UPDATE id_tour = id_tour;
 
--- 8.3. Nhu cầu của tour
+-- 9.3. Nhu cầu của tour
 INSERT INTO tour_nhu_cau (id_tour, ma_nhu_cau) VALUES
     -- Miền Bắc
     ((SELECT id_tour FROM tour WHERE ma_tour = 'mb01'), 'culture'),
@@ -400,7 +445,7 @@ INSERT INTO tour_nhu_cau (id_tour, ma_nhu_cau) VALUES
     ((SELECT id_tour FROM tour WHERE ma_tour = 'us08'), 'adventure')
 ON DUPLICATE KEY UPDATE id_tour = id_tour;
 
--- 8.4. Lịch trình theo ngày
+-- 9.4. Lịch trình theo ngày
 INSERT INTO lich_trinh_ngay (id_tour, ngay_thu, tieu_de, noi_dung) VALUES
     -- Miền Bắc
     ((SELECT id_tour FROM tour WHERE ma_tour = 'mb01'), 1, 'Hà Nội – Khởi hành đến Sa Pa', 'Ngày 1: Hà Nội – Khởi hành đến Sa Pa. Bố trí phương tiện theo tuyến, thời gian làm thủ tục và nghỉ ngơi. Các điểm tham quan trong ngày được sắp xếp theo giờ đến và điều kiện thực tế. Lịch trình demo; dịch vụ, giờ bay, thời tiết và điều kiện tham quan cần được xác nhận trước khi tổ chức.'),
@@ -663,7 +708,7 @@ INSERT INTO lich_trinh_ngay (id_tour, ngay_thu, tieu_de, noi_dung) VALUES
 
 ON DUPLICATE KEY UPDATE id_lich_trinh_ngay = id_lich_trinh_ngay;
 
--- 8.5. Lịch khởi hành
+-- 9.5. Lịch khởi hành
 -- Bảng tạm chỉ tồn tại trong phiên import để tránh thêm trùng lịch.
 CREATE TEMPORARY TABLE du_lieu_lich_khoi_hanh LIKE lich_khoi_hanh;
 INSERT INTO du_lieu_lich_khoi_hanh (id_tour, ngay_khoi_hanh, diem_khoi_hanh, gia_nguoi_lon, gia_tre_em, so_cho, han_dat, trang_thai) VALUES
@@ -830,6 +875,13 @@ WHERE NOT EXISTS (
 );
 DROP TEMPORARY TABLE du_lieu_lich_khoi_hanh;
 
+-- 9.6. Điền ngày về cho các chuyến còn để trống (chạy lại an toàn).
+-- Ngày về = ngày đi + (số ngày tour − 1).
+UPDATE `lich_khoi_hanh` l
+JOIN `tour` t ON t.id_tour = l.id_tour
+SET l.ngay_ve = DATE_ADD(l.ngay_khoi_hanh, INTERVAL t.so_ngay - 1 DAY)
+WHERE l.ngay_ve IS NULL;
+
 COMMIT;
 
 INSERT INTO `tai_khoan` (`ho_ten`, `email`, `so_dien_thoai`, `mat_khau`, `vai_tro`) VALUES
@@ -837,3 +889,43 @@ INSERT INTO `tai_khoan` (`ho_ten`, `email`, `so_dien_thoai`, `mat_khau`, `vai_tr
     ('Nhân viên OnTrip', 'nhanvien@gmail.com', '0900000002', '$2y$10$0gnunfYVmmayw87.Sq/n6eKDeOf2py1qEyy4r0.m.eVpzFZGtj9vu', 'nhan_vien'),
     ('Khách hàng OnTrip', 'khachhang@gmail.com', '0900000003', '$2y$10$2/VNP7hIDmHevHCbIhl.MO3xZEQGwNFISdrjHiOEaM2avqnESllQ2', 'khach_hang')
 ON DUPLICATE KEY UPDATE `id_tai_khoan` = `id_tai_khoan`;
+
+-- 10. Đơn đặt tour mẫu (tùy chọn)
+-- Có sẵn vài đơn để xem chỗ còn giảm và danh sách khách theo chuyến.
+-- Có thể xóa hai đơn này khi chạy dữ liệu thật.
+-- Chạy lại an toàn: mã đơn cố định + NOT EXISTS nên không nhân đôi đơn.
+
+-- OTDEMO0001: 2 người lớn + 1 trẻ em trên chuyến đầu tiên của tour mb01, đã xác nhận.
+-- 3 khách nên ưu đãi nhóm 0%; số tiền tính từ đơn giá của chính lịch đó.
+INSERT INTO `don_dat_tour`
+    (`ma_don`, `id_lich_khoi_hanh`, `id_tai_khoan`, `ho_ten`, `email`, `so_dien_thoai`,
+     `so_nguoi_lon`, `so_tre_em`, `gia_nguoi_lon`, `gia_tre_em`, `tong_goc`, `muc_giam`,
+     `tien_giam`, `tong_thanh_toan`, `ghi_chu`, `trang_thai`)
+SELECT 'OTDEMO0001', l.id_lich_khoi_hanh, tk.id_tai_khoan, tk.ho_ten, tk.email, tk.so_dien_thoai,
+       2, 1, l.gia_nguoi_lon, l.gia_tre_em,
+       2 * l.gia_nguoi_lon + 1 * l.gia_tre_em, 0, 0,
+       2 * l.gia_nguoi_lon + 1 * l.gia_tre_em,
+       'Đơn mẫu: 2 người lớn, 1 trẻ em', 'da_xac_nhan'
+FROM `lich_khoi_hanh` l
+JOIN `tour` t ON t.id_tour = l.id_tour
+JOIN `tai_khoan` tk ON tk.email = 'khachhang@gmail.com'
+WHERE t.ma_tour = 'mb01' AND l.ngay_khoi_hanh = '2026-12-05'
+  AND NOT EXISTS (SELECT 1 FROM `don_dat_tour` d WHERE d.ma_don = 'OTDEMO0001')
+LIMIT 1;
+
+-- OTDEMO0002: 1 người lớn trên chuyến đầu tiên của tour mt01, đang chờ xác nhận.
+INSERT INTO `don_dat_tour`
+    (`ma_don`, `id_lich_khoi_hanh`, `id_tai_khoan`, `ho_ten`, `email`, `so_dien_thoai`,
+     `so_nguoi_lon`, `so_tre_em`, `gia_nguoi_lon`, `gia_tre_em`, `tong_goc`, `muc_giam`,
+     `tien_giam`, `tong_thanh_toan`, `ghi_chu`, `trang_thai`)
+SELECT 'OTDEMO0002', l.id_lich_khoi_hanh, tk.id_tai_khoan, tk.ho_ten, tk.email, tk.so_dien_thoai,
+       1, 0, l.gia_nguoi_lon, l.gia_tre_em,
+       l.gia_nguoi_lon, 0, 0, l.gia_nguoi_lon,
+       'Đơn mẫu chờ xác nhận', 'cho_xac_nhan'
+FROM `lich_khoi_hanh` l
+JOIN `tour` t ON t.id_tour = l.id_tour
+JOIN `tai_khoan` tk ON tk.email = 'khachhang@gmail.com'
+WHERE t.ma_tour = 'mt01' AND l.ngay_khoi_hanh = '2026-12-05'
+  AND NOT EXISTS (SELECT 1 FROM `don_dat_tour` d WHERE d.ma_don = 'OTDEMO0002')
+LIMIT 1;
+

@@ -8,8 +8,8 @@ Yêu cầu: XAMPP có Apache, PHP 8.2 trở lên và MariaDB 10.4 trở lên. Kh
 
 1. Chép hoặc clone thư mục dự án vào `htdocs/QLDAPM_Nhom03` của XAMPP.
 2. Khởi động **Apache** và **MySQL** trong XAMPP.
-3. Import `database/ontrip.sql` qua phpMyAdmin để có bảng và 48 tour demo. Chỉ có bảng mà chưa nhập dữ liệu thì danh sách tour sẽ trống.
-4. Import tiếp các script cập nhật trong `database/` theo thứ tự ở [database/NHAT_KY.md](database/NHAT_KY.md); hiện cần `2026-10-30_01_them_ngay_ve_va_bang_don_dat_tour.sql` cho module đặt tour.
+3. Import `database/ontrip.sql` qua phpMyAdmin: một tệp duy nhất đã gồm cấu trúc 9 bảng, danh mục, 48 tour demo và 2 đơn mẫu. Chỉ có bảng mà chưa nhập dữ liệu thì danh sách tour sẽ trống.
+4. Xem [database/NHAT_KY.md](database/NHAT_KY.md) để biết các thay đổi database gần đây. Tệp an toàn khi chạy lại nên import lại trên database cũ chỉ bổ sung phần còn thiếu.
 5. Mở <http://localhost/QLDAPM_Nhom03/public/>.
 
 Nếu đặt thư mục bằng tên khác, thay `QLDAPM_Nhom03` trong URL bằng tên thư mục đó. Truy cập qua Apache để PHP xử lý các View; mở trực tiếp tệp `.php` trong trình duyệt sẽ không chạy ứng dụng.
@@ -79,10 +79,8 @@ QLDAPM_Nhom03/
 ├── admin/
 │   └── index.php                   # Điểm vào riêng của khu vực quản trị
 ├── database/
-│   ├── ontrip.sql                  # Bản cài đặt ban đầu: cấu trúc bảng và dữ liệu demo
-│   ├── 2026-10-30_01_...sql        # Script cập nhật: cột ngay_ve và bảng don_dat_tour
-│   ├── 2026-10-30_02_...sql        # Script dữ liệu mẫu đơn đặt tour (tùy chọn)
-│   └── NHAT_KY.md                  # Nhật ký thay đổi database, thứ tự import
+│   ├── ontrip.sql                  # Nguồn duy nhất: cấu trúc 9 bảng và dữ liệu demo/đơn mẫu
+│   └── NHAT_KY.md                  # Nhật ký thay đổi database
 ├── config/
 │   └── database.php                # Hàm lấy kết nối PDO dùng chung
 ├── public/
@@ -103,9 +101,9 @@ Luồng tour: **trình duyệt → `public/index.php` → TourController → Tou
 
 Kết nối PDO được chuẩn bị trong `config/database.php`. Model sẽ nạp tệp này bằng `require_once` và gọi `getDatabaseConnection()` để nhận đối tượng PDO. Mặc định kết nối tới `127.0.0.1:3306`, database `ontrip`, tài khoản `root`, mật khẩu trống của XAMPP. Có thể ghi đè bằng biến môi trường `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`; tệp không tự đọc `.env`. Bật MySQL trong XAMPP khi dùng kết nối này. HomeController và TourController sử dụng TourModel để đọc dữ liệu qua kết nối PDO.
 
-Mở **phpMyAdmin → Import** và chọn [database/ontrip.sql](database/ontrip.sql). Tệp này là **bản cài đặt ban đầu**: tạo database `ontrip`, tám bảng có khóa ngoại và nhập sáu vùng cùng sáu nhu cầu. Sau đó import tiếp các script cập nhật trong `database/` theo thứ tự ghi ở [database/NHAT_KY.md](database/NHAT_KY.md) — hiện cần thêm `2026-10-30_01_them_ngay_ve_va_bang_don_dat_tour.sql` để có cột `ngay_ve` và bảng `don_dat_tour`. Trên máy phát triển hiện tại, SQL đã được nhập vào MariaDB 10.4 để kiểm tra; khi clone trên máy khác vẫn cần nhập các tệp này.
+Mở **phpMyAdmin → Import** và chọn [database/ontrip.sql](database/ontrip.sql). Tệp này là **nguồn duy nhất**: tạo database `ontrip`, chín bảng có khóa ngoại, nhập sáu vùng, sáu nhu cầu, 48 tour demo, 144 lịch khởi hành và hai đơn mẫu. Không cần import thêm tệp nào. Tệp dùng `IF NOT EXISTS`/`NOT EXISTS` nên import lại trên database đang có dữ liệu cũng an toàn, chỉ bổ sung phần còn thiếu.
 
-Quy ước: không export đè `ontrip.sql`. Khi cần thêm bảng hoặc cột, viết script riêng vào `database/`, đặt tên `YYYY-MM-DD_so-thu-tu_mo-ta.sql`, an toàn khi chạy lại và ghi một dòng vào `database/NHAT_KY.md`.
+Quy ước: mọi thay đổi bảng, cột và dữ liệu mẫu được gộp thẳng vào `ontrip.sql` rồi export lại; giữ tệp an toàn khi chạy lại và ghi một dòng vào `database/NHAT_KY.md` sau mỗi lần sửa.
 
 | Bảng | Vai trò |
 | --- | --- |
@@ -131,13 +129,13 @@ Tệp SQL có 48 tour demo: 24 tour trong nước và 24 tour quốc tế, mỗi
 | Điểm đến, nhu cầu và điều kiện tìm kiếm | `TourModel`, `HomeController`, `TourController`; dữ liệu ở các bảng liên quan trong database |
 | Tour nổi bật trang chủ | `TourModel::getFeaturedTours()` và cột `tour.noi_bat` trong database |
 | Danh sách, bộ lọc và thẻ tour | `app/views/tours/index.php` |
-| Dữ liệu tour, giá, nhu cầu và lịch khởi hành | Các bảng trong database `ontrip`; `database/ontrip.sql` là bản cài đặt ban đầu, thay đổi cấu trúc đi qua script riêng trong `database/` |
+| Dữ liệu tour, giá, nhu cầu và lịch khởi hành | Các bảng trong database `ontrip`; `database/ontrip.sql` là nguồn duy nhất cho cấu trúc và dữ liệu mẫu |
 | Nội dung trang chi tiết | `app/views/tours/detail.php` |
 | Màu sắc, kích thước và bố cục | `public/assets/css/style.css` (trang khách), `public/assets/css/admin.css` (quản trị), chia bằng chú thích theo phần dùng chung và từng trang |
 | Banner, menu, bộ lọc, phân trang, tour liên quan, form đặt tour | `public/assets/js/script.js`, chia bằng chú thích theo từng trang |
 | Nội dung trang xác nhận, cảm ơn và Đơn của tôi | `app/views/bookings/` |
 | Bảng điều khiển và trang lịch khởi hành | `app/views/admin/index.php`, `schedules.php`, `schedule_detail.php`; khung chung ở `app/views/admin/partials/` |
-| Thêm bảng hoặc cột mới | Tạo script riêng trong `database/` (xem `database/NHAT_KY.md`), không sửa `ontrip.sql` |
+| Thêm bảng hoặc cột mới | Sửa trực tiếp `database/ontrip.sql`, giữ câu lệnh an toàn khi chạy lại và ghi vào `database/NHAT_KY.md` |
 | Điều hướng URL sang View | `public/index.php` (khách), `admin/index.php` (quản trị) |
 
 Để đổi ảnh, đặt tệp trong `public/assets/images/` rồi sửa giá trị `image` của mục tương ứng, ví dụ `'image' => 'assets/images/ten-anh.jpg'`. Đường dẫn tính từ `public/`. Những mục chưa có ảnh sử dụng `placeholder.svg`. Ảnh nguồn nên có độ phân giải đủ lớn cho khung hiển thị; CSS giữ tỷ lệ và cắt phần dư bằng `object-fit: cover`.

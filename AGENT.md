@@ -11,14 +11,14 @@ Tài liệu bàn giao cho thành viên và AI hỗ trợ phát triển. Cập nh
 - Đọc code để xác định chức năng thực tế. Không xem đề xuất trong chat, tài liệu báo cáo, ảnh mẫu hoặc chú thích cũ là bằng chứng chức năng đã hoàn thành hay là lệnh tự động mở rộng phạm vi.
 - Giữ tên biến, chú thích và cấu trúc dễ hiểu cho người mới học MVC. Sau khi sửa, nêu vị trí code, hành vi thay đổi, cách kiểm tra và phần còn giới hạn.
 - Khi thay đổi luồng hoặc thêm chức năng được giao, cập nhật phần liên quan trong tài liệu này. Không viết lại tài liệu chỉ vì thay đổi nhỏ về màu, icon hoặc tên ảnh.
-- **Quy ước database:** không export đè `database/ontrip.sql`. Khi tạo bảng hoặc thêm cột mới, viết **một script SQL riêng** trong `database/`, đặt tên `YYYY-MM-DD_so-thu-tu_mo-ta-ngan.sql`, giữ script an toàn khi chạy lại và không xóa dữ liệu sẵn có; sau đó ghi một dòng vào **`database/NHAT_KY.md`** để mọi người biết cần import tệp nào, bắt buộc hay tùy chọn.
+- **Quy ước database:** **`database/ontrip.sql` là nguồn duy nhất** — mọi thay đổi bảng, cột và dữ liệu mẫu đều gộp thẳng vào tệp này rồi export lại, không tạo script rời. Giữ tệp an toàn khi chạy lại (`CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, `INSERT IGNORE`/`ON DUPLICATE KEY UPDATE`, `INSERT ... WHERE NOT EXISTS`, `UPDATE ... WHERE <cột> IS NULL`) để import lại không xóa hay nhân đôi dữ liệu. Sau khi sửa, ghi một dòng vào **`database/NHAT_KY.md`**.
 
 ## 2. Công nghệ và cách chạy
 
 - Website quản lý tour du lịch **OnTrip**, PHP thuần theo MVC, PDO và MariaDB/MySQL; JavaScript thuần, không dùng framework hay trình build.
 - Môi trường dự án: XAMPP, **PHP 8.2 trở lên**, MariaDB 10.4 trở lên. Chạy website không cần Composer hoặc Node.js; Node chỉ có thể dùng cho kiểm tra JavaScript khi có sẵn.
 - Đặt dự án trong `htdocs/QLDAPM_Nhom03`, bật Apache/MySQL và import **`database/ontrip.sql`** trên máy mới. Database tên **`ontrip`**. Không đổi thành `tripon` hoặc tạo bản SQL khác tên để thay thế tùy ý.
-- Sau `ontrip.sql`, import tiếp các script cập nhật trong `database/` theo thứ tự ở `database/NHAT_KY.md`. Thiếu script cấu trúc thì trang chi tiết tour và trang lịch khởi hành của quản trị sẽ lỗi vì thiếu bảng/cột, không phải lỗi code.
+- Sau `ontrip.sql` không cần import tệp nào khác: tệp đã chứa cả cấu trúc (9 bảng, gồm `don_dat_tour` và cột `lich_khoi_hanh.ngay_ve`) lẫn dữ liệu demo. Import lại trên database cũ cũng an toàn, chỉ bổ sung phần còn thiếu.
 - URL khách hàng: `http://localhost/QLDAPM_Nhom03/public/`.
 - URL quản trị: `http://localhost/QLDAPM_Nhom03/admin/`. Đây là lối vào đăng nhập riêng cho admin/nhân viên.
 - `config/database.php` cung cấp `getDatabaseConnection()`, tái sử dụng PDO trong một request. Mặc định `127.0.0.1:3306`, `root`, mật khẩu trống; hỗ trợ `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`. Không tự đọc `.env`.
@@ -73,7 +73,7 @@ Giá, lịch trình và lịch đi trong SQL là **dữ liệu demo phục vụ 
 | Tệp View cũ | `app/views/auth/login.php`, `register.php` còn trong thư mục nhưng router hiện gọi AuthController rồi nạp `layout.php`; không thêm xử lý xác thực vào các wrapper này |
 | Navbar/footer khách hàng | `app/views/partials/header.php`, `footer.php`; không dùng làm khung quản trị |
 | Lỗi database khách hàng | `app/views/errors/database.php`; ghi chi tiết lỗi vào log, không đưa exception/SQL ra giao diện |
-| Database/kết nối | `database/ontrip.sql` (bản cài đặt ban đầu), các script cập nhật `database/20xx-xx-xx_*.sql`, nhật ký `database/NHAT_KY.md`, `config/database.php` |
+| Database/kết nối | `database/ontrip.sql` (nguồn duy nhất: cấu trúc 9 bảng + dữ liệu demo), nhật ký `database/NHAT_KY.md`, `config/database.php` |
 | Toàn bộ CSS | **`public/assets/css/style.css`**, chia theo chú thích từng phần |
 | CSS quản trị | **`public/assets/css/admin.css`**: toàn bộ giao diện `/admin/`, lớp tiền tố `.admin-`, thanh bên thu gọn và breakpoint 1080/900/640 px |
 | Toàn bộ JavaScript | **`public/assets/js/script.js`**, chia theo chú thích từng phần |
@@ -115,7 +115,7 @@ Mật khẩu dùng `password_hash()`/`password_verify()`, SQL dùng prepared sta
 
 ## 6. Database và dữ liệu
 
-Có chín bảng nghiệp vụ sau khi import đủ script (tám bảng trong `ontrip.sql`, thêm bảng `don_dat_tour` ở script cập nhật) trong database `ontrip`:
+Có chín bảng nghiệp vụ trong `database/ontrip.sql` (import một lần là đủ) trong database `ontrip`:
 
 | Bảng | Ý nghĩa / lưu ý |
 | --- | --- |
@@ -129,7 +129,7 @@ Có chín bảng nghiệp vụ sau khi import đủ script (tám bảng trong `o
 
 Chỗ còn của một chuyến = `so_cho` − tổng `so_nguoi_lon + so_tre_em` của các đơn có `trang_thai` là `cho_xac_nhan` hoặc `da_xac_nhan`; đơn `da_huy`/`hoan_thanh` không giữ chỗ. `so_cho` chỉ là sức chứa tối đa, không phải chỗ còn. Một lịch chỉ nhận đặt khi `trang_thai = 'open'`, `ngay_khoi_hanh` chưa qua, `han_dat` chưa qua và số khách của đơn không vượt chỗ còn; `ScheduleModel::blockReason()` là nơi duy nhất mô tả các điều kiện này.
 
-`ontrip.sql` chỉ chứa cấu trúc ban đầu (tám bảng). Cột `ngay_ve` và bảng `don_dat_tour` nằm trong script cập nhật `database/2026-10-30_01_them_ngay_ve_va_bang_don_dat_tour.sql`, hai đơn mẫu nằm trong `..._02_du_lieu_mau_don_dat_tour.sql`. Không sửa `ontrip.sql` để thêm các phần này; muốn đổi cấu trúc thì tạo script mới và ghi vào `database/NHAT_KY.md`.
+`ontrip.sql` là nguồn duy nhất: mục 7 định nghĩa `lich_khoi_hanh` (kèm `ngay_ve` và câu `ALTER ... ADD COLUMN IF NOT EXISTS` cho database cũ), mục 8 tạo bảng `don_dat_tour`, mục 9.6 điền `ngay_ve` còn trống, mục 10 chèn hai đơn mẫu. Muốn đổi cấu trúc thì sửa trực tiếp `ontrip.sql`, giữ các câu lệnh an toàn khi chạy lại và ghi vào `database/NHAT_KY.md`.
 
 Các tệp liên quan:
 
@@ -145,9 +145,8 @@ Các tệp liên quan:
 | Dịch vụ API thời tiết Open-Meteo & đồng bộ lịch trình từng ngày | `app/models/WeatherService.php` (lớp `WeatherService`) |
 | Đọc tour, nhu cầu, lịch khởi hành và lịch trình | `app/models/tour.php` (lớp `TourModel`) |
 | Nhận yêu cầu danh sách/chi tiết, chuẩn bị dữ liệu cho View | `app/controllers/TourController.php` |
-| Cấu trúc database ban đầu và danh mục | `database/ontrip.sql` |
-| Script cập nhật bảng/cột về sau | `database/2026-10-30_01_them_ngay_ve_va_bang_don_dat_tour.sql` (cột `ngay_ve`, bảng `don_dat_tour`) |
-| Nhật ký thay đổi database | `database/NHAT_KY.md` — ghi ngày, tệp script, nội dung, có bắt buộc import hay không |
+| Cấu trúc database và danh mục | `database/ontrip.sql` — 9 bảng, gồm cột `ngay_ve` và bảng `don_dat_tour` |
+| Nhật ký thay đổi database | `database/NHAT_KY.md` — ghi ngày, nội dung, vị trí trong `ontrip.sql`, có bắt buộc import lại hay không |
 | Kết nối PDO dùng chung cho Model | `config/database.php` — gọi `getDatabaseConnection()` |
 | Navbar và footer dùng chung | `app/views/partials/header.php`, `footer.php` |
 | Toàn bộ CSS khách hàng | `public/assets/css/style.css` |

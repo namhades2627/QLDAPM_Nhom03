@@ -610,3 +610,6 @@ class WeatherService
         return "Thời tiết tại $location rất thuận lợi ({$tempMin}°C - {$tempMax}°C), khô ráo, tuyệt vời cho các hoạt động tham quan ngoài trời.";
     }
 }
+
+class_alias(WeatherService::class, "ThoiTietModel");
+class_alias(WeatherService::class, "ThoiTiet");

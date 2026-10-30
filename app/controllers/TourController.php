@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../models/tour.php';
-require_once __DIR__ . '/../models/WeatherService.php';
+require_once __DIR__ . '/../models/thoi_tiet.php';
 
 /** Nhận tham số URL, gọi Model và truyền dữ liệu vào View. */
 class TourController

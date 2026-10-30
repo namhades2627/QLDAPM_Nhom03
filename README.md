@@ -46,7 +46,7 @@ QLDAPM_Nhom03/
 │   ├── models/
 │   │   ├── tour.php                # Lớp TourModel truy vấn dữ liệu bằng PDO
 │   │   ├── SmartRecommendation.php # Lớp SmartRecommendationModel xếp hạng, mùa vụ, thời tiết, ±3 ngày
-│   │   └── WeatherService.php      # Lớp WeatherService gọi Open-Meteo API & dự báo thời tiết theo lịch trình
+│   │   └── thoi_tiet.php           # Lớp WeatherService (dịch vụ thời tiết) gọi Open-Meteo API & dự báo thời tiết theo lịch trình
 │   └── views/
 │       ├── home/index.php          # Trang chủ và dữ liệu mẫu của trang chủ
 │       ├── tours/

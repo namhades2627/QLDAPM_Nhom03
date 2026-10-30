@@ -61,36 +61,7 @@ if (!empty($itineraryWeather)) {
                     <p><?= nl2br($escape($tour['introduction'] ?: 'Giới thiệu tour đang được cập nhật.')) ?></p>
                 </section>
                 <section class="detail-section" id="lich-trinh">
-                    <div class="detail-section-header">
-                        <span class="detail-section-label">2 / LỊCH TRÌNH &amp; THỜI TIẾT DỰ BÁO</span>
-                        <h2>Lịch trình chi tiết theo ngày</h2>
-                    </div>
-
-                    <?php if ($selectedSchedule): ?>
-                    <div class="itinerary-weather-bar" data-weather-overview>
-                        <div class="weather-bar-header">
-                            <div class="weather-bar-icon-wrap" aria-hidden="true">
-                                <span class="weather-pulse-icon">🌤️</span>
-                            </div>
-                            <div class="weather-bar-content">
-                                <div class="weather-bar-kicker">
-                                    <span>THÔNG TIN THỜI TIẾT TỰ ĐỘNG THEO LỊCH TRÌNH</span>
-                                    <span class="weather-live-indicator" data-weather-live-pill>
-                                        <span class="pulse-dot"></span>
-                                        <span data-weather-source-text>API Open-Meteo &amp; Khí tượng du lịch</span>
-                                    </span>
-                                </div>
-                                <div class="weather-bar-title">
-                                    Khởi hành dự kiến: <strong data-weather-start-date><?= WeatherService::formatVietnameseDate($selectedSchedule['date']) ?></strong>
-                                    <span class="weather-origin-tag">từ <span data-weather-origin><?= $escape($selectedSchedule['origin']) ?></span></span>
-                                </div>
-                            </div>
-                        </div>
-                        <p class="weather-bar-note">
-                            💡 Thời tiết và nhiệt độ dưới đây được tự động tính toán chính xác theo từng ngày và địa điểm của hành trình. Khi quý khách bấm đổi lịch khởi hành bên phải, dự báo từng ngày sẽ tự động cập nhật ngay.
-                        </p>
-                    </div>
-                    <?php endif; ?>
+                    <span class="detail-section-label">2 / LỊCH TRÌNH</span>
 
                     <?php if (!$tour['itinerary']): ?><p>Lịch trình đang được cập nhật.</p><?php endif; ?>
                     <div class="detail-days" data-detail-days>

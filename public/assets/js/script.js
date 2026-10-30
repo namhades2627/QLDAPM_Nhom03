@@ -537,15 +537,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function updateWeatherForecast(startDate, origin) {
             if (!startDate) return;
-            const weatherOverview = document.querySelector('[data-weather-overview]');
             const tourId = document.body.dataset.tourId;
-            if (!weatherOverview || !tourId) return;
+            if (!tourId) return;
 
-            const originEl = weatherOverview.querySelector('[data-weather-origin]');
-            if (originEl && origin) originEl.textContent = origin;
-
-            const sourceText = weatherOverview.querySelector('[data-weather-source-text]');
-            if (sourceText) sourceText.textContent = 'Đang đồng bộ API thời tiết...';
+            const weatherOverview = document.querySelector('[data-weather-overview]');
+            if (weatherOverview) {
+                const originEl = weatherOverview.querySelector('[data-weather-origin]');
+                if (originEl && origin) originEl.textContent = origin;
+                const sourceText = weatherOverview.querySelector('[data-weather-source-text]');
+                if (sourceText) sourceText.textContent = 'Đang đồng bộ API thời tiết...';
+            }
 
             document.querySelectorAll('[data-weather-card]').forEach(card => card.classList.add('is-loading'));
 
@@ -553,12 +554,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(res => res.json())
                 .then(data => {
                     if (data && data.success && Array.isArray(data.weather)) {
-                        const startDateEl = weatherOverview.querySelector('[data-weather-start-date]');
-                        if (startDateEl && data.departure_formatted) {
-                            startDateEl.textContent = data.departure_formatted;
-                        }
-                        if (sourceText) {
-                            sourceText.textContent = 'API Open-Meteo & Khí tượng du lịch';
+                        if (weatherOverview) {
+                            const startDateEl = weatherOverview.querySelector('[data-weather-start-date]');
+                            if (startDateEl && data.departure_formatted) {
+                                startDateEl.textContent = data.departure_formatted;
+                            }
+                            const sourceText = weatherOverview.querySelector('[data-weather-source-text]');
+                            if (sourceText) sourceText.textContent = 'API Open-Meteo & Khí tượng du lịch';
                         }
 
                         data.weather.forEach(w => {
@@ -605,7 +607,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 .catch(err => {
                     console.warn('Lỗi đồng bộ thời tiết:', err);
                     document.querySelectorAll('[data-weather-card]').forEach(card => card.classList.remove('is-loading'));
-                    if (sourceText) sourceText.textContent = 'Khí hậu dự báo theo mùa';
                 });
         }
 

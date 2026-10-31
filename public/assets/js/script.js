@@ -616,6 +616,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 adultPrice = Number(selected.dataset.adultPrice);
                 childPrice = Number(selected.dataset.childPrice);
                 preview.querySelector('[data-schedule-origin]').textContent = selected.dataset.origin;
+                const seatsEl = preview.querySelector('[data-schedule-seats]');
+                if (seatsEl && selected.dataset.seatsLeft !== undefined) seatsEl.textContent = selected.dataset.seatsLeft;
+                const bookLink = preview.querySelector('[data-book-link]');
+                if (bookLink && selected.value) bookLink.href = bookLink.href.replace(/schedule=\d*/, `schedule=${selected.value}`);
                 if (selected.dataset.date && selected.dataset.date !== lastSelectedDate) {
                     lastSelectedDate = selected.dataset.date;
                     updateWeatherForecast(selected.dataset.date, selected.dataset.origin);
@@ -915,4 +919,109 @@ document.addEventListener('DOMContentLoaded', () => {
             invalid[0].focus();
         }
     });
+});
+
+/* ===== ĐẶT TOUR: THÊM NGƯỜI THAM GIA VÀ ĐỒNG BỘ TẠM TÍNH ===== */
+// Tạm tính chỉ để khách hình dung; máy chủ kiểm tra lại số chỗ và đơn giá khi lưu đơn.
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('[data-booking-form]');
+    const money = value => `${new Intl.NumberFormat('vi-VN').format(value)} ₫`;
+
+    // Trang đơn đặt: xác nhận trước khi hủy đơn.
+    document.querySelectorAll('[data-confirm]').forEach(element => {
+        element.addEventListener('submit', event => {
+            if (!window.confirm(element.dataset.confirm)) event.preventDefault();
+        });
+    });
+
+    if (!form) return;
+    const list = form.querySelector('[data-participant-list]');
+    const summary = document.querySelector('[data-booking-summary]');
+    if (!list) return;
+    const rows = () => [...list.querySelectorAll('[data-participant]')];
+    const typeOf = row => (row.dataset.type === 'tre_em' ? 'tre_em' : 'nguoi_lon');
+
+    function renumber() {
+        const counts = { nguoi_lon: 0, tre_em: 0 };
+        rows().forEach(row => {
+            const type = typeOf(row);
+            counts[type] += 1;
+            const label = row.querySelector('[data-participant-label]');
+            if (label) label.textContent = `${type === 'tre_em' ? 'Trẻ em' : 'Người lớn'} ${counts[type]}`;
+            const remove = row.querySelector('[data-remove-participant]');
+            if (remove) remove.disabled = type !== 'tre_em' && counts.nguoi_lon <= 1;
+        });
+        return counts;
+    }
+
+    function renderSummary() {
+        if (!summary) return;
+        const schedule = form.querySelector('input[name="id_lich_khoi_hanh"]:checked');
+        const adultPrice = Number((schedule && schedule.dataset.adultPrice) || form.dataset.adultPrice || 0);
+        const childPrice = Number((schedule && schedule.dataset.childPrice) || form.dataset.childPrice || 0);
+        let adults = 0;
+        let children = 0;
+        rows().forEach(row => { if (typeOf(row) === 'tre_em') children += 1; else adults += 1; });
+        const adultTotal = adults * adultPrice;
+        const childTotal = children * childPrice;
+        const subtotal = adultTotal + childTotal;
+        const guests = adults + children;
+        const rate = guests >= 10 ? 8 : guests >= 5 ? 5 : 0;
+        const discount = Math.round(subtotal * rate / 100);
+        const setText = (selector, value) => {
+            const element = summary.querySelector(selector);
+            if (element) element.textContent = value;
+        };
+
+        setText('[data-summary-adult-count]', adults);
+        setText('[data-summary-adult-total]', money(adultTotal));
+        setText('[data-summary-child-count]', children);
+        setText('[data-summary-child-total]', money(childTotal));
+        const childLine = summary.querySelector('[data-summary-child-line]');
+        if (childLine) childLine.hidden = children === 0;
+        setText('[data-summary-subtotal]', money(subtotal));
+        const discountLine = summary.querySelector('[data-summary-discount-line]');
+        if (discountLine) discountLine.hidden = rate === 0;
+        setText('[data-summary-discount-rate]', `${rate}%`);
+        setText('[data-summary-discount-amount]', `−${money(discount)}`);
+        setText('[data-summary-total]', money(subtotal - discount));
+        const meta = summary.querySelector('[data-summary-schedule]');
+        if (meta) {
+            meta.textContent = schedule
+                ? `Khởi hành ${schedule.dataset.date} · ${schedule.dataset.origin}`
+                : 'Chưa chọn lịch khởi hành';
+        }
+    }
+
+    form.querySelectorAll('[data-add-participant]').forEach(button => {
+        button.addEventListener('click', () => {
+            const type = button.dataset.addParticipant === 'tre_em' ? 'tre_em' : 'nguoi_lon';
+            const template = form.querySelector(`[data-participant-template="${type}"]`);
+            if (!template) return;
+            list.appendChild(template.content.cloneNode(true));
+            renumber();
+            renderSummary();
+            const added = rows().pop();
+            const input = added && added.querySelector('input[name="khach[ho_ten][]"]');
+            if (input) input.focus();
+        });
+    });
+
+    list.addEventListener('click', event => {
+        const button = event.target.closest('[data-remove-participant]');
+        if (!button) return;
+        const row = button.closest('[data-participant]');
+        if (!row) return;
+        if (typeOf(row) !== 'tre_em' && rows().filter(item => typeOf(item) !== 'tre_em').length <= 1) return;
+        row.remove();
+        renumber();
+        renderSummary();
+    });
+
+    form.querySelectorAll('input[name="id_lich_khoi_hanh"]').forEach(input => {
+        input.addEventListener('change', renderSummary);
+    });
+
+    renumber();
+    renderSummary();
 });

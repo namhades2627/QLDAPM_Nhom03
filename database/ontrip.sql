@@ -149,6 +149,80 @@ CALL `_ontrip_cap_nhat_hinh_anh`();
 DROP PROCEDURE `_ontrip_cap_nhat_hinh_anh`;
 -- END CAP_NHAT_2026_10_30_HINH_ANH
 
+-- 8. Đặt tour: đơn đặt, người tham gia và thanh toán mô phỏng.
+-- Đơn giá, tổng tiền và mức giảm được chụp lại tại thời điểm đặt nên đổi giá
+-- hoặc đổi chính sách sau này không làm thay đổi đơn đã lập.
+-- BEGIN CAP_NHAT_2026_10_31_DON_DAT_TOUR
+CREATE TABLE IF NOT EXISTS `don_dat_tour` (
+    `id_don_dat` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `ma_don` VARCHAR(20) NOT NULL,
+    `id_tai_khoan` BIGINT UNSIGNED NOT NULL,
+    `id_lich_khoi_hanh` BIGINT UNSIGNED NOT NULL,
+    `ma_tour` VARCHAR(20) NOT NULL COMMENT 'Chụp lại từ tour tại thời điểm đặt',
+    `ten_tour` VARCHAR(255) NOT NULL COMMENT 'Chụp lại từ tour tại thời điểm đặt',
+    `ngay_khoi_hanh` DATE NOT NULL COMMENT 'Chụp lại từ lịch khởi hành',
+    `diem_khoi_hanh` VARCHAR(120) NOT NULL COMMENT 'Chụp lại từ lịch khởi hành',
+    `gia_nguoi_lon` DECIMAL(12,0) NOT NULL COMMENT 'Đơn giá người lớn tại thời điểm đặt',
+    `gia_tre_em` DECIMAL(12,0) NOT NULL COMMENT 'Đơn giá trẻ em tại thời điểm đặt',
+    `so_nguoi_lon` TINYINT UNSIGNED NOT NULL,
+    `so_tre_em` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `tong_goc` DECIMAL(14,0) NOT NULL COMMENT 'Tổng trước ưu đãi nhóm',
+    `muc_giam` TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Phần trăm ưu đãi nhóm đã áp dụng',
+    `tien_giam` DECIMAL(14,0) NOT NULL DEFAULT 0,
+    `tong_thanh_toan` DECIMAL(14,0) NOT NULL,
+    `ho_ten` VARCHAR(120) NOT NULL,
+    `email` VARCHAR(254) NOT NULL,
+    `so_dien_thoai` VARCHAR(20) NOT NULL,
+    `dia_chi` VARCHAR(255) DEFAULT NULL,
+    `ghi_chu` VARCHAR(500) DEFAULT NULL,
+    `trang_thai` ENUM('cho_xac_nhan', 'da_xac_nhan', 'hoan_thanh', 'da_huy') NOT NULL DEFAULT 'cho_xac_nhan',
+    `tao_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `cap_nhat_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id_don_dat`),
+    UNIQUE KEY `uq_don_dat_ma_don` (`ma_don`),
+    KEY `idx_don_dat_tai_khoan` (`id_tai_khoan`, `tao_luc`),
+    KEY `idx_don_dat_lich_trang_thai` (`id_lich_khoi_hanh`, `trang_thai`),
+    CONSTRAINT `chk_don_dat_so_khach` CHECK (`so_nguoi_lon` >= 1),
+    CONSTRAINT `chk_don_dat_so_tien` CHECK (`tong_goc` >= 0 AND `tien_giam` >= 0 AND `tong_thanh_toan` >= 0),
+    CONSTRAINT `fk_don_dat_tai_khoan` FOREIGN KEY (`id_tai_khoan`)
+        REFERENCES `tai_khoan` (`id_tai_khoan`) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT `fk_don_dat_lich_khoi_hanh` FOREIGN KEY (`id_lich_khoi_hanh`)
+        REFERENCES `lich_khoi_hanh` (`id_lich_khoi_hanh`) ON UPDATE RESTRICT ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Danh sách người tham gia của từng đơn; mỗi khách chiếm một chỗ.
+CREATE TABLE IF NOT EXISTS `chi_tiet_don_dat` (
+    `id_chi_tiet_don_dat` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_don_dat` BIGINT UNSIGNED NOT NULL,
+    `thu_tu` TINYINT UNSIGNED NOT NULL,
+    `ho_ten` VARCHAR(120) NOT NULL,
+    `loai_khach` ENUM('nguoi_lon', 'tre_em') NOT NULL,
+    `ngay_sinh` DATE DEFAULT NULL,
+    `ghi_chu` VARCHAR(255) DEFAULT NULL,
+    PRIMARY KEY (`id_chi_tiet_don_dat`),
+    UNIQUE KEY `uq_chi_tiet_don_dat_thu_tu` (`id_don_dat`, `thu_tu`),
+    CONSTRAINT `fk_chi_tiet_don_dat_don` FOREIGN KEY (`id_don_dat`)
+        REFERENCES `don_dat_tour` (`id_don_dat`) ON UPDATE RESTRICT ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Thanh toán mô phỏng: mỗi đơn chỉ ghi nhận một lần thanh toán thành công.
+CREATE TABLE IF NOT EXISTS `thanh_toan` (
+    `id_thanh_toan` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_don_dat` BIGINT UNSIGNED NOT NULL,
+    `phuong_thuc` ENUM('chuyen_khoan', 'the', 'vi_dien_tu') NOT NULL DEFAULT 'chuyen_khoan',
+    `so_tien` DECIMAL(14,0) NOT NULL,
+    `ma_giao_dich` VARCHAR(32) NOT NULL,
+    `trang_thai` ENUM('thanh_cong', 'that_bai') NOT NULL DEFAULT 'thanh_cong',
+    `tao_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id_thanh_toan`),
+    UNIQUE KEY `uq_thanh_toan_ma_giao_dich` (`ma_giao_dich`),
+    UNIQUE KEY `uq_thanh_toan_don_dat` (`id_don_dat`),
+    CONSTRAINT `chk_thanh_toan_so_tien` CHECK (`so_tien` > 0),
+    CONSTRAINT `fk_thanh_toan_don_dat` FOREIGN KEY (`id_don_dat`)
+        REFERENCES `don_dat_tour` (`id_don_dat`) ON UPDATE RESTRICT ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- END CAP_NHAT_2026_10_31_DON_DAT_TOUR
+
 INSERT IGNORE INTO `khu_vuc_tour` (`ma_khu_vuc`, `ten_khu_vuc`, `loai_tour`, `thu_tu`) VALUES
     ('north', 'Miền Bắc', 'domestic', 1),
     ('central', 'Miền Trung', 'domestic', 2),

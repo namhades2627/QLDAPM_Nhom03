@@ -124,20 +124,20 @@ if (!empty($itineraryWeather)) {
                 <div class="detail-booking" <?= $selectedSchedule ? 'data-booking-preview' : '' ?> data-adult-price="<?= $adultPrice ?>" data-child-price="<?= $childPrice ?>">
                     <span class="detail-booking-label">GIÁ TỪ / NGƯỜI LỚN</span>
                     <p class="detail-price"><?= $tour['price'] !== null ? number_format($tour['price'], 0, ',', '.') . ' <small>₫</small>' : 'Đang cập nhật' ?></p>
-                    <p class="detail-price-note">Giá lấy theo lịch khởi hành. Dữ liệu demo phục vụ học tập, chưa nhận đặt tour.</p>
+                    <p class="detail-price-note">Giá lấy theo lịch khởi hành đang mở nhận đặt. Tổng tiền được OnTrip tính lại khi lưu đơn.</p>
                     <div class="detail-booking-divider"></div><h2>Lịch khởi hành</h2>
                     <?php if (!$selectedSchedule): ?>
                         <p>Chưa có lịch khởi hành đang mở nhận đặt.</p>
                     <?php else: ?>
                         <div class="detail-date-list" role="radiogroup" aria-label="Chọn lịch khởi hành">
                             <?php foreach ($tour['schedules'] as $index => $schedule): ?>
-                            <label class="detail-date-option">
-                                <input type="radio" name="departure" value="<?= (int) $schedule['id'] ?>" data-date="<?= $escape($schedule['date']) ?>" data-adult-price="<?= $schedule['adult_price'] ?>" data-child-price="<?= $schedule['child_price'] ?>" data-origin="<?= $escape($schedule['origin']) ?>" <?= ($selectedSchedule && (int) $schedule['id'] === (int) $selectedSchedule['id']) ? 'checked' : '' ?>>
-                                <span><?= date('d/m/Y', strtotime($schedule['date'])) ?><small><?= $escape($schedule['origin']) ?></small></span>
+                            <label class="detail-date-option<?= (int) $schedule['seats_left'] < 1 ? ' is-sold-out' : '' ?>">
+                                <input type="radio" name="departure" value="<?= (int) $schedule['id'] ?>" data-date="<?= $escape($schedule['date']) ?>" data-adult-price="<?= $schedule['adult_price'] ?>" data-child-price="<?= $schedule['child_price'] ?>" data-origin="<?= $escape($schedule['origin']) ?>" data-seats-left="<?= (int) $schedule['seats_left'] ?>" <?= ($selectedSchedule && (int) $schedule['id'] === (int) $selectedSchedule['id']) ? 'checked' : '' ?>>
+                                <span><?= date('d/m/Y', strtotime($schedule['date'])) ?><small><?= $escape($schedule['origin']) ?></small><small class="detail-date-seats"><?= (int) $schedule['seats_left'] < 1 ? 'Đã hết chỗ' : 'Còn ' . (int) $schedule['seats_left'] . ' chỗ' ?></small></span>
                             </label>
                             <?php endforeach; ?>
                         </div>
-                        <p class="detail-seat-note">Khởi hành từ <span data-schedule-origin><?= $escape($selectedSchedule['origin']) ?></span>. Số chỗ còn lại sẽ được xử lý khi triển khai đặt tour.</p>
+                        <p class="detail-seat-note">Khởi hành từ <span data-schedule-origin><?= $escape($selectedSchedule['origin']) ?></span>. Còn <span data-schedule-seats><?= (int) $selectedSchedule['seats_left'] ?></span> chỗ cho lịch đang chọn.</p>
                         <div class="detail-booking-divider"></div><h2>Số người</h2>
                         <div class="detail-quantity-row" data-quantity="adult"><div><strong>Người lớn</strong><small><span data-unit-price><?= number_format($adultPrice, 0, ',', '.') ?> ₫</span> / khách</small></div><div class="detail-stepper"><button type="button" data-step="-1" aria-label="Giảm số người lớn">−</button><output data-count>1</output><button type="button" data-step="1" aria-label="Tăng số người lớn">+</button></div></div>
                         <div class="detail-quantity-row" data-quantity="child"><div><strong>Trẻ em</strong><small><span data-unit-price><?= number_format($childPrice, 0, ',', '.') ?> ₫</span> / khách</small></div><div class="detail-stepper"><button type="button" data-step="-1" aria-label="Giảm số trẻ em">−</button><output data-count>0</output><button type="button" data-step="1" aria-label="Tăng số trẻ em">+</button></div></div>
@@ -151,7 +151,7 @@ if (!empty($itineraryWeather)) {
                             <div class="detail-estimate-total"><span>Tổng cộng tạm tính</span><strong data-total><?= number_format($adultPrice, 0, ',', '.') ?> ₫</strong></div>
                         </div>
                     <?php endif; ?>
-                    <button class="button button-primary detail-book-button" type="button" disabled>Đặt tour ngay</button><p class="detail-static-note">Chưa nhận đặt tour. Tổng tiền chỉ là tạm tính trên trình duyệt.</p>
+                    <a class="button button-primary detail-book-button" href="index.php?page=booking&amp;type=<?= $tourType ?>&amp;id=<?= $escape($tour['id']) ?>&amp;schedule=<?= (int) $selectedSchedule['id'] ?>" data-book-link>Đặt tour ngay</a><p class="detail-static-note">Tổng tiền trên đây chỉ là tạm tính; OnTrip kiểm tra lại số chỗ và đơn giá khi bạn gửi yêu cầu.</p>
                 </div>
             </aside>
         </div>

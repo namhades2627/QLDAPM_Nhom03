@@ -1,4 +1,4 @@
-            <footer class="admin-footer"><span>OnTrip · Hệ thống quản trị tour du lịch</span><span>Dữ liệu được cập nhật khi tải trang</span></footer>
+            <footer class="admin-footer"><span>OnTrip ©️2026 · Hệ thống quản trị tour du lịch</span></footer>
         </main>
     </div>
 </div>

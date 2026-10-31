@@ -1,6 +1,6 @@
 # Hướng dẫn làm việc với dự án OnTrip
 
-Tài liệu bàn giao cho thành viên và AI hỗ trợ phát triển. Cập nhật theo code ngày **30/10/2026**. Đọc tài liệu này trước khi sửa dự án, sau đó kiểm tra lại các tệp thuộc phần việc được giao. Tên tệp hướng dẫn của nhóm là **`AGENT.md`**; khi giao việc cho AI khác, yêu cầu đọc đúng tệp này.
+Tài liệu bàn giao cho thành viên và AI hỗ trợ phát triển. Cập nhật theo code ngày **31/10/2026**. Đọc tài liệu này trước khi sửa dự án, sau đó kiểm tra lại các tệp thuộc phần việc được giao. Tên tệp hướng dẫn của nhóm là **`AGENT.md`**; khi giao việc cho AI khác, yêu cầu đọc đúng tệp này.
 
 ## 1. Nguyên tắc phối hợp nhóm
 
@@ -16,6 +16,20 @@ Tài liệu bàn giao cho thành viên và AI hỗ trợ phát triển. Cập nh
 - Khi thay đổi luồng hoặc thêm chức năng được giao, cập nhật phần liên quan trong tài liệu này. Không viết lại tài liệu chỉ vì thay đổi nhỏ về màu, icon hoặc tên ảnh.
 - **Mọi thay đổi database phải cập nhật cùng lúc `database/ontrip.sql` và `database/database_changes.md` trước khi bàn giao**, không chờ người dùng nhắc lại. Chỉ dùng `ontrip.sql` cho cả cài mới và nâng cấp: khi sửa schema, cập nhật phần CREATE cho máy mới và thêm khối `BEGIN CAP_NHAT_...` / `END CAP_NHAT_...` có thể chạy lại cho database cũ. Không tạo file SQL cập nhật riêng. Nhật ký phải có ngày, nội dung, ảnh hưởng dữ liệu, vị trí khối SQL, cách áp dụng và phần đã kiểm tra; không ghi rằng database máy khác đã cập nhật chỉ vì đã sửa file trong Git.
 - Tên cột mới dùng tiếng Việt không dấu, ngắn và dễ nhớ nhưng vẫn rõ nghĩa (ví dụ `hinh_anh`). Không tự đổi hàng loạt các tên cột hiện có ngoài phần việc; khi đổi tên phải đồng bộ Model/Controller/View và giữ dữ liệu cũ.
+
+Phần ảnh đại diện hiện được xử lý trong `AdminController` bằng `avatarUrl()`, `isManagedAvatar()`, `saveAvatar()`, `deleteAvatar()`; không còn file `tai_anh_dai_dien.php` hay thư mục `app/services/`. Giữ đầy đủ kiểm tra ảnh khi sửa các hàm này.
+
+### Quy ước đặt tên file, thư mục và lớp
+
+- Giữ các từ tiếng Anh quen thuộc như `admin`, `home`, `tour`, `login`, `register`, `profile`, `password`, `detail`, `forbidden`; không dịch máy móc thành `QuanTri`, `TrangChu` hoặc tên tiếng Việt tương ứng. Tên riêng OnTrip giữ nguyên.
+- Các tên nghiệp vụ còn lại dùng tiếng Việt không dấu, rõ nghĩa; không trộn các dạng `tai_khoan`, `taikhoan`, `accounts` để đặt tên file cho cùng một phần. Dùng `tai_khoan` cho file/thư mục và `TaiKhoan` làm phần tên lớp.
+- File/thư mục nghiệp vụ dùng `snake_case`: `tai_khoan.php`, `thoi_tiet.php`, `de_xuat_thong_minh.php`; khi triển khai phần mới có thể dùng `khach_hang`, `lich_khoi_hanh`. Các tên tiếng Anh quen thuộc giữ cách viết thông dụng, như `admin/`, `home/`, `profile.php`, `detail.php`; thư mục View tour thống nhất là `tour/`.
+- Controller dùng `PascalCase` và giữ hậu tố `Controller`; tên file trùng tên lớp: `HomeController.php`, `TaiKhoanController.php`, `AdminController.php`, `TourController.php`. Lớp Model dùng `PascalCase` với hậu tố tương ứng: `TaiKhoanModel`, `AdminModel`, `ThoiTietModel`; file Model vẫn dùng `snake_case`, ví dụ `admin.php`.
+- Thành phần kỹ thuật dùng tên tiếng Anh thông dụng: `app`, `controllers`, `models`, `views`, `config`, `public`, `assets`, `partials`, `errors`; các file `index.php`, `header.php`, `footer.php`, `layout.php`, `database.php`, `style.css`, `script.js` giữ nguyên. Thư mục gốc `admin/` là lối vào quản trị và giữ URL hiện có.
+- Bảng/cột database tiếp tục dùng tiếng Việt không dấu, `snake_case`. Tên tài nguyên ảnh đang được database tham chiếu giữ nguyên; không đổi schema, dữ liệu hoặc tên ảnh chỉ để đồng bộ tên file PHP.
+- Đã chuẩn hóa tên file/thư mục/lớp ngày 31/10/2026. Các route GET (`page`, `action`), tên phương thức/biến hiện có, session và selector CSS/JS giữ nguyên trong lần đổi tên này để bảo toàn hành vi. Route là mã điều hướng, không bắt buộc trùng tên file View; ví dụ `action=profile` nạp `admin/profile.php`.
+- Mỗi lần đổi tên phải cập nhật đầy đủ `require`/`require_once`, tên lớp/nơi khởi tạo, tham chiếu trong tài liệu và kiểm tra luồng chạy. Không tạo bản sao tên cũ hoặc đổi tên ngoài phạm vi được giao.
+- Hai trang quản lý nhân sự/khách hàng hiện dùng chung `app/views/admin/tai_khoan.php`; không tạo thêm `khach_hang.php` chỉ để có đủ tên khi chưa cần tách giao diện/xử lý. Model đề xuất thông minh `de_xuat_thong_minh.php` đang trống; đổi tên không có nghĩa chức năng đề xuất đã hoạt động.
 
 ## 2. Công nghệ và cách chạy
 
@@ -45,7 +59,9 @@ Tài liệu bàn giao cho thành viên và AI hỗ trợ phát triển. Cập nh
 | Đổi mật khẩu quản trị | `action=password` hỗ trợ GET/POST có CSRF, xác thực mật khẩu hiện tại bằng `password_verify()`, mật khẩu mới ít nhất 8 ký tự/tối đa 72 byte, khác mật khẩu hiện tại và xác nhận khớp. Lưu bằng `password_hash()`, đổi session ID/CSRF và redirect 303. Không đưa mật khẩu về HTML hoặc log. |
 | Icon tin nhắn, chuông | Chỉ giao diện, chưa có dữ liệu/xử lý nghiệp vụ. Đăng xuất trong menu tài khoản đã hoạt động. Không tự gắn thêm chức năng ngoài yêu cầu. |
 | Đặt tour, thanh toán, quản lý đơn, doanh thu | Chưa triển khai; chưa có bảng đơn đặt. Nút đặt tour trên chi tiết chưa tạo đơn. |
-| Quản lý tour/lịch/tài khoản bằng thêm–sửa–xóa | Chưa triển khai. Form đăng ký là phần ghi tài khoản khách hàng hiện có. |
+| Quản lý tài khoản | `action=accounts` trong HỆ THỐNG chỉ liệt kê admin/nhân viên. Chỉ admin truy cập: tìm/lọc/phân trang, tạo nhân viên, sửa liên hệ, đổi vai trò admin↔nhân viên, khóa/mở và xóa có xác nhận. Không đặt lại mật khẩu người khác. |
+| Quản lý khách hàng | `action=customers` trong DỮ LIỆU ĐIỀU HÀNH chỉ liệt kê `khach_hang`. Chỉ admin truy cập: tìm theo họ tên/email/điện thoại, lọc trạng thái, phân trang, sửa liên hệ, khóa/mở và xóa có xác nhận; vai trò khách hàng cố định. Khách hàng vẫn tự đăng ký ở website; chưa có lịch sử đơn hoặc chi tiêu. |
+| Quản lý tour/lịch bằng thêm–sửa–xóa | Chưa triển khai. |
 | Đánh giá tour | Mới có giao diện trạng thái trống, chưa có bảng và chức năng gửi đánh giá. |
 | Google, quên mật khẩu/OTP | Chưa triển khai. |
 | Điều chỉnh lịch trình theo thời tiết/mùa vụ | Là hướng nghiệp vụ dự kiến, chưa có API hoặc xử lý. Chỉ bổ sung khi được giao và đã chốt quy tắc. |
@@ -59,18 +75,19 @@ Giá, lịch trình và lịch đi trong SQL là **dữ liệu demo phục vụ 
 | Điểm vào khách hàng | `public/index.php`: khởi tạo session, chọn route và gọi Controller |
 | Điểm vào quản trị | `admin/index.php`: khởi tạo session riêng, chọn action và gọi AdminController |
 | Trang chủ | `app/controllers/HomeController.php` → `app/views/home/index.php` |
-| Danh sách/chi tiết tour | `app/controllers/TourController.php` → `app/views/tours/index.php`, `detail.php` |
+| Danh sách/chi tiết tour | `app/controllers/TourController.php` → `app/views/tour/index.php`, `detail.php` |
 | Truy vấn tour | `app/models/tour.php`, lớp `TourModel`: tour, vùng, nhu cầu, lịch, điểm đến và tạm tính nhóm cho tìm kiếm |
-| Tài khoản khách hàng | `app/controllers/AuthController.php` → `app/views/auth/layout.php` |
+| Tài khoản khách hàng | `app/controllers/TaiKhoanController.php` → `app/views/tai_khoan/layout.php` |
 | Truy vấn tài khoản | `app/models/tai_khoan.php`, lớp `TaiKhoanModel`: tìm theo ID/email, tạo khách hàng, cập nhật thông tin hồ sơ admin/nhân viên |
 | Quản trị | `app/controllers/AdminController.php` → `app/views/admin/index.php` hoặc `forbidden.php` |
 | Giao diện tài khoản quản trị | `app/views/admin/profile.php`, `password.php`; dùng khung `app/views/admin/partials/header.php`, `footer.php` chung với dashboard. Không sao chép hoặc thay lại toàn bộ khung khi thêm nội dung trang. |
-| Upload ảnh tài khoản | `app/services/AvatarUpload.php`: kiểm tra upload thật, MIME/nội dung ảnh, tối đa 5 MB, tối đa 4096 mỗi chiều và 12 triệu pixel; tên ngẫu nhiên do máy chủ cấp. Có GD thì mã hóa lại ảnh; không có GD thì lưu ảnh đã kiểm tra trong thư mục chỉ phục vụ file tĩnh. |
+| Upload ảnh tài khoản | Các hàm ảnh đại diện trong `app/controllers/AdminController.php`: kiểm tra upload thật, MIME/nội dung ảnh, tối đa 5 MB, tối đa 4096 mỗi chiều và 12 triệu pixel; tên ngẫu nhiên do máy chủ cấp. Có GD thì mã hóa lại ảnh; không có GD thì lưu ảnh đã kiểm tra trong thư mục chỉ phục vụ file tĩnh. |
 | Ảnh đại diện đã lưu | `public/uploads/avatars/`, file sinh ra được `.gitignore` loại trừ; giữ `.htaccess` để chặn thực thi script/liệt kê thư mục. `admin/.htaccess` giới hạn upload cho XAMPP/mod_php. Không lưu ảnh cá nhân vào thư mục tour hoặc dùng tên file do người dùng gửi. |
 | Cập nhật schema ảnh | `tai_khoan.hinh_anh` là đường dẫn tương đối nullable. Máy mới dùng `ontrip.sql`; máy đã import chạy khối `CAP_NHAT_2026_10_30_HINH_ANH` trong cùng file để thêm/đổi từ tên cũ và giữ dữ liệu. Xem `database/database_changes.md`; không có file SQL nâng cấp riêng. |
 | Số liệu quản trị | `app/models/admin.php`, lớp `AdminModel`: dữ liệu tổng quan chỉ đọc |
-| Form dùng chung | `app/views/auth/layout.php`: hỗ trợ đăng ký/đăng nhập khách hàng và đăng nhập quản trị qua biến cấu hình |
-| Tệp View cũ | `app/views/auth/login.php`, `register.php` còn trong thư mục nhưng router hiện gọi AuthController rồi nạp `layout.php`; không thêm xử lý xác thực vào các wrapper này |
+| Quản lý tài khoản/khách hàng | Hai route `accounts` và `customers` đi qua `AdminController::accounts()` và dùng chung `app/views/admin/tai_khoan.php`, với tiêu đề, biểu mẫu, thống kê và URL theo nhóm. `TaiKhoanModel::getManagedAccounts()`, `findManagedAccount()`, `createEmployee()`, `updateManagedAccount()`, `deleteManagedAccount()` xử lý dữ liệu; hai menu chỉ hiện cho admin. |
+| Form dùng chung | `app/views/tai_khoan/layout.php`: hỗ trợ đăng ký/đăng nhập khách hàng và đăng nhập quản trị qua biến cấu hình |
+| Tệp View cũ | `app/views/tai_khoan/login.php`, `register.php` còn trong thư mục nhưng router hiện gọi TaiKhoanController rồi nạp `layout.php`; không thêm xử lý xác thực vào các wrapper này |
 | Navbar/footer khách hàng | `app/views/partials/header.php`, `footer.php`; không dùng làm khung quản trị |
 | Lỗi database khách hàng | `app/views/errors/database.php`; ghi chi tiết lỗi vào log, không đưa exception/SQL ra giao diện |
 | Database/kết nối | `database/ontrip.sql`, `config/database.php` |
@@ -78,7 +95,7 @@ Giá, lịch trình và lịch đi trong SQL là **dữ liệu demo phục vụ 
 | Toàn bộ JavaScript | **`public/assets/js/script.js`**, chia theo chú thích từng phần |
 | Ảnh | `public/assets/images/`, tour tại `images/tours/`, placeholder cục bộ |
 
-Không tách thêm CSS/JS riêng từng trang. CSS quản trị dùng lớp `.admin-*`; JS kiểm tra phần tử tồn tại trước khi gắn sự kiện vì một file dùng cho cả trang chủ, tour, tài khoản và quản trị. Không đổi tên các Model chỉ để đồng nhất phong cách.
+Không tách thêm CSS/JS riêng từng trang. CSS quản trị dùng lớp `.admin-*`; JS kiểm tra phần tử tồn tại trước khi gắn sự kiện vì một file dùng cho cả trang chủ, tour, tài khoản và quản trị. Tên Model tuân theo quy ước ở mục 1; không tự đổi tên ngoài phạm vi được giao.
 
 ## 5. Route, session và phân quyền
 
@@ -86,7 +103,7 @@ Không tách thêm CSS/JS riêng từng trang. CSS quản trị dùng lớp `.ad
 
 - `public/index.php` mặc định trang chủ; `page=tours&type=domestic|international|all`; chi tiết `page=tour-detail&type=domestic|international&id=mb01` (id trên URL này là **mã tour nghiệp vụ**, không phải `id_tour`).
 - Tài khoản: `page=login`, `page=register`, `page=logout` (đăng xuất bằng POST có CSRF).
-- AuthController kiểm tra form, gọi TaiKhoanModel. Đăng ký thành công chuyển sang đăng nhập; đăng nhập thành công về trang chủ. Navbar hiển thị tên và Đăng xuất, **không có mục Quản lý**.
+- TaiKhoanController kiểm tra form, gọi TaiKhoanModel. Đăng ký thành công chuyển sang đăng nhập; đăng nhập thành công về trang chủ. Navbar hiển thị tên và Đăng xuất, **không có mục Quản lý**.
 - Session PHP mặc định dùng cookie `PHPSESSID`; thông tin đăng nhập ở `$_SESSION['tai_khoan']`, gồm `id_tai_khoan`, `ho_ten`, `email`, `vai_tro`; không đưa hash/mật khẩu vào session.
 - Form công khai luôn tạo vai trò `khach_hang`, hoạt động. Không nhận vai trò hoặc trạng thái đặc quyền từ POST. Public login hiện kiểm tra tài khoản hoạt động mà không giới hạn vai trò; đăng nhập ở đây không tạo phiên quản trị.
 
@@ -101,7 +118,7 @@ Không tách thêm CSS/JS riêng từng trang. CSS quản trị dùng lớp `.ad
 
 ### Quyền đã có và quyền sẽ triển khai
 
-Hiện admin/nhân viên đều xem được bảng điều khiển; khách hàng bị từ chối đăng nhập quản trị. Chưa có CRUD để áp dụng các quyền chi tiết sau:
+Hiện admin/nhân viên đều xem được bảng điều khiển; khách hàng bị từ chối đăng nhập quản trị. Quản lý tài khoản và Quản lý khách hàng hiện chỉ admin; các quyền tour/đơn dưới đây sẽ bổ sung khi triển khai module tương ứng:
 
 - Admin quản lý toàn hệ thống, gồm tài khoản nhân viên, vai trò và khóa/mở tài khoản.
 - Nhân viên vận hành tour, lịch và xử lý đơn theo chức năng được giao; không được cấp quyền hoặc quản lý tài khoản nhân sự.
@@ -109,6 +126,20 @@ Hiện admin/nhân viên đều xem được bảng điều khiển; khách hàn
 - Chặn quyền tại Controller cho **mọi trang và thao tác**, không chỉ ẩn menu. Không cần tự tạo bảng phân quyền khi ba vai trò hiện tại đã đủ.
 
 Mật khẩu dùng `password_hash()`/`password_verify()`, SQL dùng prepared statements, đầu ra HTML có escape. Cả hai luồng đổi session ID sau đăng nhập; form POST dùng `$_SESSION['csrf_token']`. Không bỏ các kiểm tra này khi sửa giao diện.
+
+### Quản lý tài khoản và khách hàng — bổ sung 31/10/2026
+
+- URL: `/admin/index.php?action=accounts`. GET hiển thị danh sách hoặc form (`mode=create`, `edit=<id>`, `delete=<id>`); POST chỉ nhận `operation=create|update|status|delete`, có CSRF. Nhân viên bị trả 403 cho cả GET/POST; không chỉ ẩn menu.
+- Menu Quản lý tài khoản nằm ngay dưới Bảng điều khiển trong HỆ THỐNG và chỉ hiển thị admin/nhân viên. Menu Quản lý khách hàng nằm trong DỮ LIỆU ĐIỀU HÀNH, URL `action=customers`, chỉ hiển thị khách hàng; không có nút tạo nhân viên hoặc bộ lọc vai trò ở trang này. POST khách hàng chỉ nhận `update|status|delete`; vai trò cố định `khach_hang`. Nhân viên hiện bị chặn ở cả hai mục, không tự mở quyền xem/sửa ngoài phạm vi đã giao.
+- Nhóm `staff`/`customers` do Controller chọn từ route, không nhận từ POST. Model áp dụng nhóm ngay trong truy vấn danh sách, thống kê, tải form và kiểm tra lại trên dòng đích đã khóa trước mỗi thao tác ghi. Không thể dùng ID/form của mục này để đọc hoặc sửa/khóa/xóa tài khoản thuộc mục kia; không đổi khách hàng thành nhân sự hoặc nhân sự thành khách hàng qua hai form này.
+- Thống kê tài khoản chỉ tính nhân sự (tổng, admin, nhân viên, đang khóa); thống kê khách hàng chỉ tính khách hàng (tổng, hoạt động, khóa, đăng ký trong tháng). Tìm/lọc/phân trang và thông báo sau lưu giữ đúng route, không quay khách hàng về trang nhân sự. Hai mục dùng chung View/CSS/JS để giữ bố cục hiện tại; không tạo bảng khách hàng trùng với `tai_khoan` và không thay schema/seed.
+- Dùng bảng `tai_khoan` hiện có, không đổi schema/seed. Tạo mới tại đây luôn là nhân viên hoạt động, bỏ qua vai trò/trạng thái đặc quyền gửi kèm; khách hàng vẫn tự đăng ký ở website.
+- Sửa họ tên, email duy nhất, số điện thoại, vai trò và trạng thái; không sửa mật khẩu hoặc ảnh người khác. Mật khẩu tạo nhân viên được kiểm tra/băm ở máy chủ, không đưa lại vào HTML. Thành công redirect 303 và thông báo một lần.
+- Dòng tài khoản hiện tại mở Hồ sơ của tôi; Model cũng chặn chỉnh/khóa chính mình qua module này. Luôn giữ ít nhất một admin hoạt động. Các thao tác ghi dùng transaction, khóa các dòng admin theo thứ tự ID bằng `FOR UPDATE`, đọc lại quyền/trạng thái/dấu mật khẩu của admin thao tác rồi khóa tài khoản đích trước khi cập nhật; tránh hai admin đồng thời vô hiệu hóa nhau.
+- Khóa hoặc hạ quyền admin/nhân viên làm phiên quản trị mất quyền ở request tiếp theo theo kiểm tra sẵn có. Khóa chặn các lần đăng nhập mới ở cả hai lối vào. Phiên khách hàng đang mở chưa có cơ chế thu hồi toàn website.
+- Danh sách chỉ truy vấn các trường cần hiển thị, không lấy hash mật khẩu. Tìm/lọc/phân trang xử lý phía máy chủ; URL giữ bộ lọc khi chuyển trang/sửa/khóa. Chỉ thêm các khối `.admin-accounts*`, `.admin-managed-*` và handler liên quan trong CSS/JS dùng chung, giữ nguyên các khối module khác.
+- Hai trang Quản lý tài khoản/khách hàng cùng dùng lớp body `admin-accounts-page`; màn hình ≤700px dùng sidebar dạng trượt, mặc định thu gọn, đóng bằng nền phủ hoặc Escape. Các trang quản trị khác giữ hành vi sidebar hiện có.
+- Xóa: nút thùng rác mở vùng xác nhận tên/email; cần tích checkbox `confirm_delete=1` và gửi POST. GET không xóa dữ liệu, xác nhận vẫn dùng được khi tắt JavaScript. `TaiKhoanModel::deleteManagedAccount()` dùng cùng khóa admin/transaction để chặn xóa chính mình, giữ admin hoạt động và đọc lại quyền của người thao tác. Kiểm tra bản ghi liên quan qua các khóa ngoại đã khai báo đến `tai_khoan.id_tai_khoan`, kể cả CASCADE/SET NULL; nếu có dữ liệu thì yêu cầu khóa thay vì xóa. Khi thêm module đơn đặt phải khai báo khóa ngoại tương ứng, không dựa vào quan hệ ngầm. Controller cũng xử lý lỗi FK 1451. Chỉ sau commit mới dọn ảnh đại diện do ứng dụng quản lý và không còn được tài khoản khác dùng. Không đổi schema/seed.
 
 ## 6. Database và dữ liệu
 
@@ -119,11 +150,11 @@ Có tám bảng nghiệp vụ hiện tại:
 | Điểm vào và chọn trang | `public/index.php` |
 | Trang chủ | `app/views/home/index.php` |
 | Chuẩn bị tour nổi bật từ database cho trang chủ | `app/controllers/HomeController.php` |
-| Danh sách tour trong nước/quốc tế | `app/views/tours/index.php` |
-| Chi tiết tour | `app/views/tours/detail.php` |
-| Tra cứu và đề xuất tour thông minh chuyên sâu | `app/views/tours/smart_search.php` |
-| Thuật toán xếp hạng, mùa vụ, thời tiết và gợi ý ±3 ngày | `app/models/SmartRecommendation.php` (lớp `SmartRecommendationModel`) |
-| Dịch vụ API thời tiết Open-Meteo & đồng bộ lịch trình từng ngày | `app/models/thoi_tiet.php` (lớp `WeatherService`) |
+| Danh sách tour trong nước/quốc tế | `app/views/tour/index.php` |
+| Chi tiết tour | `app/views/tour/detail.php` |
+| Tra cứu và đề xuất tour thông minh chuyên sâu | `app/views/tour/de_xuat_thong_minh.php` |
+| Thuật toán xếp hạng, mùa vụ, thời tiết và gợi ý ±3 ngày | `app/models/de_xuat_thong_minh.php` (lớp `DeXuatThongMinhModel`) |
+| Dịch vụ API thời tiết Open-Meteo & đồng bộ lịch trình từng ngày | `app/models/thoi_tiet.php` (lớp `ThoiTietModel`) |
 | Đọc tour, nhu cầu, lịch khởi hành và lịch trình | `app/models/tour.php` (lớp `TourModel`) |
 | Nhận yêu cầu danh sách/chi tiết, chuẩn bị dữ liệu cho View | `app/controllers/TourController.php` |
 | Cấu trúc database và danh mục ban đầu | `database/ontrip.sql` |

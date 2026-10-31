@@ -677,12 +677,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const layout = document.querySelector('[data-admin-layout]');
     const toggle = document.querySelector('[data-admin-toggle]');
     if (!layout || !toggle) return;
-    toggle.addEventListener('click', () => {
-        const collapsed = layout.classList.toggle('is-sidebar-collapsed');
+    const backdrop = layout.querySelector('[data-admin-accounts-backdrop]');
+    const accountMobile = backdrop ? matchMedia('(max-width: 700px)') : null;
+    function setSidebarCollapsed(collapsed) {
+        layout.classList.toggle('is-sidebar-collapsed', collapsed);
         layout.querySelector('.admin-sidebar').inert = collapsed;
         toggle.setAttribute('aria-expanded', String(!collapsed));
         toggle.setAttribute('aria-label', collapsed ? 'Mở thanh bên' : 'Thu gọn thanh bên');
-    });
+        if (backdrop) backdrop.hidden = collapsed || !accountMobile.matches;
+    }
+    toggle.addEventListener('click', () => setSidebarCollapsed(!layout.classList.contains('is-sidebar-collapsed')));
+    if (accountMobile) {
+        setSidebarCollapsed(accountMobile.matches);
+        accountMobile.addEventListener('change', event => setSidebarCollapsed(event.matches));
+        backdrop.addEventListener('click', () => { setSidebarCollapsed(true); toggle.focus(); });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && accountMobile.matches && !backdrop.hidden) {
+                setSidebarCollapsed(true);
+                toggle.focus();
+            }
+        });
+    }
 });
 
 /* ===== QUẢN TRỊ: FORM HỒ SƠ VÀ ĐỔI MẬT KHẨU ===== */
@@ -771,6 +786,27 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             return;
         }
+    });
+});
+
+/* ===== QUẢN TRỊ: QUẢN LÝ TÀI KHOẢN ===== */
+document.addEventListener('DOMContentLoaded', () => {
+    const root = document.querySelector('.admin-accounts');
+    if (!root) return;
+    root.querySelectorAll('[data-account-confirm]').forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!window.confirm(form.dataset.accountConfirm)) event.preventDefault();
+        });
+    });
+    root.querySelectorAll('[data-account-password-toggle]').forEach(button => {
+        const input = document.getElementById(button.getAttribute('aria-controls'));
+        const label = button.getAttribute('aria-label').replace(/^Hiện /, '');
+        button.addEventListener('click', () => {
+            const reveal = input.type === 'password';
+            input.type = reveal ? 'text' : 'password';
+            button.setAttribute('aria-pressed', String(reveal));
+            button.setAttribute('aria-label', `${reveal ? 'Ẩn' : 'Hiện'} ${label}`);
+        });
     });
 });
 

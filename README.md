@@ -41,17 +41,23 @@ Có thể chọn vùng từ menu **Tour** trên navbar. Ví dụ URL danh sách 
 QLDAPM_Nhom03/
 ├── app/
 │   ├── controllers/
-│   │   ├── HomeController.php      # Chuẩn bị tour nổi bật cho trang chủ
+│   │   ├── HomeController.php  # Chuẩn bị tour nổi bật cho trang chủ
+│   │   ├── TaiKhoanController.php  # Đăng ký, đăng nhập khách hàng
+│   │   ├── AdminController.php   # Khu vực quản trị và quản lý tài khoản/khách hàng
 │   │   └── TourController.php      # Chuẩn bị danh sách và chi tiết tour
 │   ├── models/
 │   │   ├── tour.php                # Lớp TourModel truy vấn dữ liệu bằng PDO
-│   │   ├── SmartRecommendation.php # Lớp SmartRecommendationModel xếp hạng, mùa vụ, thời tiết, ±3 ngày
-│   │   └── thoi_tiet.php           # Lớp WeatherService (dịch vụ thời tiết) gọi Open-Meteo API & dự báo thời tiết theo lịch trình
+│   │   ├── tai_khoan.php          # Lớp TaiKhoanModel
+│   │   ├── admin.php           # Lớp AdminModel: số liệu tổng quan
+│   │   ├── de_xuat_thong_minh.php  # Tệp dự kiến cho đề xuất thông minh, hiện trống
+│   │   └── thoi_tiet.php           # Lớp ThoiTietModel (dịch vụ thời tiết) gọi Open-Meteo API & dự báo thời tiết theo lịch trình
 │   └── views/
-│       ├── home/index.php          # Trang chủ và dữ liệu mẫu của trang chủ
-│       ├── tours/
+│       ├── home/index.php     # Trang chủ
+│       ├── tai_khoan/             # layout.php, login.php, register.php
+│       ├── admin/              # index.php, tai_khoan.php, profile.php, password.php
+│       ├── tour/
 │       │   ├── index.php           # Danh sách tour trong nước/quốc tế
-│       │   └── detail.php          # Chi tiết một tour
+│       │   └── detail.php        # Chi tiết một tour
 │       ├── errors/database.php     # Thông báo khi không tải được dữ liệu
 │       └── partials/
 │           ├── header.php          # Navbar và biểu tượng dùng chung
@@ -100,9 +106,9 @@ Tệp SQL có 48 tour demo: 24 tour trong nước và 24 tour quốc tế, mỗi
 | Banner, tin tức trang chủ | Các mảng `$banners`, `$articles` ở đầu `app/views/home/index.php` |
 | Điểm đến, nhu cầu và điều kiện tìm kiếm | `TourModel`, `HomeController`, `TourController`; dữ liệu ở các bảng liên quan trong database |
 | Tour nổi bật trang chủ | `TourModel::getFeaturedTours()` và cột `tour.noi_bat` trong database |
-| Danh sách, bộ lọc và thẻ tour | `app/views/tours/index.php` |
+| Danh sách, bộ lọc và thẻ tour | `app/views/tour/index.php` |
 | Dữ liệu tour, giá, nhu cầu và lịch khởi hành | Các bảng trong database `ontrip`; `database/ontrip.sql` là dữ liệu cài đặt ban đầu |
-| Nội dung trang chi tiết | `app/views/tours/detail.php` |
+| Nội dung trang chi tiết | `app/views/tour/detail.php` |
 | Màu sắc, kích thước và bố cục | `public/assets/css/style.css`, chia bằng chú thích theo phần dùng chung và từng trang |
 | Banner, menu, bộ lọc, phân trang, tour liên quan | `public/assets/js/script.js`, chia bằng chú thích theo từng trang |
 | Điều hướng URL sang View | `public/index.php` |

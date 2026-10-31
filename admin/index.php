@@ -18,7 +18,7 @@ if ($action === 'logout') {
     $controller->login();
 } else {
     try {
-        $section = in_array($action, ['profile', 'password'], true) ? $action : 'dashboard';
+        $section = in_array($action, ['profile', 'password', 'accounts', 'customers'], true) ? $action : 'dashboard';
         $controller->index($section);
     } catch (PDOException $exception) {
         error_log('OnTrip admin database error: ' . $exception->getMessage());

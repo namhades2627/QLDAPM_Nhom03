@@ -4,7 +4,7 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../models/tai_khoan.php';
 
 /** Kiểm tra form, xác thực và quản lý phiên tài khoản. */
-class AuthController
+class TaiKhoanController
 {
     private function input(string $name): string
     {
@@ -97,7 +97,7 @@ class AuthController
             }
         }
         $csrfToken = $_SESSION['csrf_token'];
-        require __DIR__ . '/../views/auth/layout.php';
+        require __DIR__ . '/../views/tai_khoan/layout.php';
     }
 
     public function logout(): void

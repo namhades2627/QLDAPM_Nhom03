@@ -14,10 +14,10 @@ if ($page === 'admin') {
     header('Location: ../admin/', true, 303);
     return;
 }
-// Các yêu cầu tài khoản được xử lý qua AuthController.
+// Các yêu cầu tài khoản được xử lý qua TaiKhoanController.
 if (in_array($page, ['login', 'register', 'logout'], true)) {
-    require_once __DIR__ . '/../app/controllers/AuthController.php';
-    $authController = new AuthController();
+    require_once __DIR__ . '/../app/controllers/TaiKhoanController.php';
+    $authController = new TaiKhoanController();
     if ($page === 'logout') $authController->logout();
     else $authController->form($page);
     return;

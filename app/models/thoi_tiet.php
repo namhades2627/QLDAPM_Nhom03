@@ -2,10 +2,10 @@
 declare(strict_types=1);
 
 /**
- * WeatherService: Tích hợp Open-Meteo Weather API và mô hình khí hậu du lịch theo ngày.
+ * ThoiTietModel: Tích hợp Open-Meteo Weather API và mô hình khí hậu du lịch theo ngày.
  * Cung cấp dự báo thời tiết chi tiết từng ngày cho lịch trình tour dựa trên ngày khởi hành đã chọn.
  */
-class WeatherService
+class ThoiTietModel
 {
     /**
      * Tọa độ địa lý (vĩ độ, kinh độ) của các điểm đến phổ biến và chặng tour
@@ -611,5 +611,4 @@ class WeatherService
     }
 }
 
-class_alias(WeatherService::class, "ThoiTietModel");
-class_alias(WeatherService::class, "ThoiTiet");
+class_alias(ThoiTietModel::class, "ThoiTiet");

@@ -107,7 +107,7 @@ class TourController
         }
         if ($hasGroupSearch) $searchSummary[] = $adults . ' người lớn, ' . $children . ' trẻ em';
         if ($filters['budget'] > 0) $searchSummary[] = 'Ngân sách nhóm: ' . number_format($filters['budget'], 0, ',', '.') . ' ₫ (sau ưu đãi)';
-        require __DIR__ . '/../views/tours/index.php';
+        require __DIR__ . '/../views/tour/index.php';
     }
 
     public function detail(): void
@@ -142,10 +142,10 @@ class TourController
                 $selectedSchedule = $tour['schedules'][0] ?? null;
             }
 
-            // Tích hợp WeatherService: Dự báo thời tiết chi tiết theo từng ngày theo ngày bắt đầu đã chọn
+            // Tích hợp ThoiTietModel: Dự báo thời tiết chi tiết theo từng ngày theo ngày bắt đầu đã chọn
             $startDate = $selectedSchedule ? $selectedSchedule['date'] : ($requestedDate ?: date('Y-m-d'));
             if (!empty($tour['itinerary'])) {
-                $itineraryWeather = WeatherService::getItineraryWeather(
+                $itineraryWeather = ThoiTietModel::getItineraryWeather(
                     $tour['itinerary'],
                     $startDate,
                     $tour['destination'] ?? ''
@@ -159,7 +159,7 @@ class TourController
                     'success' => true,
                     'tour_id' => $tour['id'],
                     'departure_date' => $startDate,
-                    'departure_formatted' => WeatherService::formatVietnameseDate($startDate),
+                    'departure_formatted' => ThoiTietModel::formatVietnameseDate($startDate),
                     'origin' => $selectedSchedule['origin'] ?? '',
                     'weather' => $itineraryWeather
                 ], JSON_UNESCAPED_UNICODE);
@@ -175,6 +175,6 @@ class TourController
             );
             $relatedTours = array_map($this->prepareImage(...), array_slice($relatedTours, 0, 6));
         }
-        require __DIR__ . '/../views/tours/detail.php';
+        require __DIR__ . '/../views/tour/detail.php';
     }
 }

@@ -9,7 +9,7 @@
  */
 $adminSection = $adminSection ?? 'dashboard';
 $avatarUrl = $avatarUrl ?? '';
-$adminTitle = ['dashboard' => 'Bảng điều khiển', 'profile' => 'Hồ sơ cá nhân', 'password' => 'Đổi mật khẩu'][$adminSection] ?? 'Bảng điều khiển';
+$adminTitle = ['dashboard' => 'Bảng điều khiển', 'accounts' => 'Quản lý tài khoản', 'customers' => 'Quản lý khách hàng', 'profile' => 'Hồ sơ cá nhân', 'password' => 'Đổi mật khẩu'][$adminSection] ?? 'Bảng điều khiển';
 $escape = static function ($value): string { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); };
 ?>
 <!doctype html>
@@ -22,12 +22,18 @@ $escape = static function ($value): string { return htmlspecialchars((string) $v
     <link rel="stylesheet" href="../public/assets/css/style.css">
     <script src="../public/assets/js/script.js" defer></script>
 </head>
-<body class="admin-page">
+<body class="admin-page<?= in_array($adminSection, ['accounts', 'customers'], true) ? ' admin-accounts-page' : '' ?>">
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <symbol id="a-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
     <symbol id="a-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
     <symbol id="a-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
     <symbol id="a-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></symbol>
+    <symbol id="a-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2 21v-3a7 7 0 0 1 14 0v3M16 5a3 3 0 0 1 0 6m3 4a5 5 0 0 1 3 5v1"/></symbol>
+    <symbol id="a-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="a-edit" viewBox="0 0 24 24"><path d="m16 3 5 5-12 12-6 1 1-6L16 3Zm-3 3 5 5"/></symbol>
+    <symbol id="a-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/></symbol>
+    <symbol id="a-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+    <symbol id="a-unlock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0m-4 9v2"/></symbol>
     <symbol id="a-exit" viewBox="0 0 24 24"><path d="M9 4H4v16h5m5-14 6 6-6 6M9 12h11"/></symbol>
     <symbol id="a-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
     <symbol id="a-message" viewBox="0 0 24 24"><path d="M21 14a3 3 0 0 1-3 3H8l-5 4V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v8Z"/><path d="M7 8h10M7 12h6"/></symbol>
@@ -41,6 +47,7 @@ $escape = static function ($value): string { return htmlspecialchars((string) $v
 </svg>
 <a class="skip-link" href="#admin-content">Đi đến nội dung</a>
 <div class="admin-layout" data-admin-layout>
+    <?php if (in_array($adminSection, ['accounts', 'customers'], true)): ?><button class="admin-accounts-backdrop" type="button" data-admin-accounts-backdrop aria-label="Đóng menu quản trị" hidden></button><?php endif; ?>
     <aside class="admin-sidebar" id="admin-sidebar" aria-label="Thanh bên quản trị">
         <a class="brand admin-brand" href="index.php" aria-label="OnTrip quản trị">
             <svg class="brand-mark" viewBox="0 0 44 50" aria-hidden="true"><path d="M22 3C11.8 3 5 10.2 5 19c0 12 17 27 17 27s17-15 17-27C39 10.2 32.2 3 22 3Z"/><circle cx="22" cy="19" r="6.5"/></svg>
@@ -50,7 +57,13 @@ $escape = static function ($value): string { return htmlspecialchars((string) $v
         <nav aria-label="Điều hướng quản trị" class="admin-navigation">
             <p class="admin-sidebar-label">HỆ THỐNG</p>
             <a class="admin-nav-link<?= $adminSection === 'dashboard' ? ' is-active' : '' ?>" href="index.php" <?= $adminSection === 'dashboard' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-grid"/></svg><span>Bảng điều khiển</span></a>
+            <?php if ($account['vai_tro'] === 'admin'): ?>
+            <a class="admin-nav-link<?= $adminSection === 'accounts' ? ' is-active' : '' ?>" href="index.php?action=accounts" <?= $adminSection === 'accounts' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-users"/></svg><span>Quản lý tài khoản</span></a>
+            <?php endif; ?>
             <p class="admin-sidebar-label">DỮ LIỆU ĐIỀU HÀNH</p>
+            <?php if ($account['vai_tro'] === 'admin'): ?>
+            <a class="admin-nav-link<?= $adminSection === 'customers' ? ' is-active' : '' ?>" href="index.php?action=customers" <?= $adminSection === 'customers' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-user"/></svg><span>Quản lý khách hàng</span></a>
+            <?php endif; ?>
             <a class="admin-nav-link" href="index.php#admin-schedules"><svg class="icon"><use href="#a-calendar"/></svg><span>Lịch khởi hành</span></a>
             <a class="admin-nav-link" href="index.php#admin-catalog"><svg class="icon"><use href="#a-tour"/></svg><span>Danh mục tour</span></a>
         </nav>

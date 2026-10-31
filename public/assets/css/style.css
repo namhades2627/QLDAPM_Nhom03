@@ -1065,6 +1065,122 @@ a, button, input, select { outline-offset: 5px; }
     .admin-form-grid { grid-template-columns:1fr; gap:20px; }
 }
 
+/* ===== QUẢN TRỊ: QUẢN LÝ TÀI KHOẢN ===== */
+.admin-accounts { min-width:0; }
+.admin-accounts-backdrop { display:none; }
+.admin-accounts-heading { gap:20px; }
+.admin-create-account { gap:9px; min-height:42px; padding:10px 16px; font-size:12px; border-radius:6px; flex-shrink:0; }
+.admin-create-account>span { font-size:22px; font-weight:400; line-height:1; }
+.admin-accounts .admin-stats { margin-bottom:24px; }
+.admin-accounts .admin-stat { align-items:flex-start; }
+.admin-accounts .admin-stat-icon { margin-top:4px; }
+.admin-accounts-panel { overflow:hidden; }
+.admin-accounts-filters { display:flex; align-items:flex-end; flex-wrap:wrap; gap:14px; padding:21px 23px; border-bottom:1px solid #eef0f4; background:#fdfdfe; }
+.admin-accounts-filters>label { min-width:145px; flex:1; }
+.admin-accounts-filters>label>span { display:block; margin-bottom:7px; font-size:11px; font-weight:600; color:#7d8899; }
+.admin-accounts-filters .admin-accounts-search { flex:2.2; min-width:210px; }
+.admin-accounts-search>div { position:relative; }
+.admin-accounts-search .icon { position:absolute; left:12px; top:12px; width:17px; height:17px; color:#9aa3b2; }
+.admin-accounts-filters input,.admin-accounts-filters select,.admin-managed-fields select { width:100%; height:42px; padding:0 12px; border:1px solid #e0e5ed; border-radius:6px; background:#fff; color:#556174; font-size:12px; }
+.admin-accounts-filters input { padding-left:38px; }
+.admin-accounts-filters input::placeholder { color:#a0a8b5; }
+.admin-accounts-filters .button { min-height:42px; padding:10px 17px; border-radius:6px; font-size:12px; }
+.admin-filter-clear { padding:11px 2px; color:#8c96a5; font-size:12px; }
+.admin-filter-clear:hover { color:var(--orange); }
+.admin-accounts-table { min-width:830px; }
+.admin-accounts-table th { padding:14px 23px; font-size:11px; }
+.admin-accounts-table td { padding:20px 23px; }
+.admin-accounts-table td:first-child { width:auto; min-width:210px; }
+.admin-account-cell { display:flex; align-items:center; gap:12px; }
+.admin-list-avatar { display:grid; place-items:center; width:40px; height:40px; flex-shrink:0; overflow:hidden; border:1px solid #f2dfd0; border-radius:50%; color:#b97545; background:#fff4eb; font-size:16px; font-weight:600; }
+.admin-list-avatar img { width:100%; height:100%; object-fit:cover; }
+.admin-accounts-table .admin-account-cell strong { font-size:12px; font-weight:600; overflow-wrap:anywhere; min-width:130px; }
+.admin-accounts-table .admin-account-cell small { margin:2px 0 0; font-size:10px; color:#9ba4b2; }
+.admin-self-tag { display:inline-block; margin-left:5px; padding:1px 6px; color:#9a8069; border:1px solid #ecdccc; border-radius:4px; font-size:9px; font-weight:400; }
+.admin-contact-email { display:block; color:#59667a; overflow-wrap:anywhere; }
+.admin-contact-phone { display:block; margin-top:4px; font-size:11px; color:#9aa3b0; }
+.admin-role-badge { display:inline-block; padding:4px 10px; border-radius:5px; background:#f2f4f7; color:#7e8a9b; font-size:10px; white-space:nowrap; }
+.admin-role-admin { background:#fff1e5; color:#bd743c; }
+.admin-role-nhan_vien { background:#edf2ff; color:#647fc0; }
+.admin-role-khach_hang { background:#f2f4f7; color:#7b8798; }
+.admin-status-badge { display:inline-flex; align-items:center; gap:6px; font-size:11px; white-space:nowrap; }
+.admin-status-badge>span { width:6px; height:6px; border-radius:50%; background:currentColor; }
+.admin-status-badge.is-active { color:#558b70; }
+.admin-status-badge.is-locked { color:#c16d58; }
+.admin-account-created { white-space:nowrap; font-size:11px; }
+.admin-row-actions { display:flex; align-items:center; gap:7px; white-space:nowrap; }
+.admin-row-actions form { margin:0; }
+.admin-row-button { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-width:31px; height:31px; padding:5px 8px; border:1px solid #e4e8ee; border-radius:5px; color:#7c8ba0; background:#fff; font-size:11px; }
+.admin-row-button .icon { width:14px; height:14px; }
+.admin-row-button:hover { border-color:#e6c5ad; background:#fff7f1; color:#c27c4b; }
+.admin-row-button.is-lock { color:#bd7c69; }
+.admin-row-button.is-unlock { color:#588b72; background:#f5fbf7; }
+.admin-row-button.is-delete { color:#bd6259; }
+.admin-row-button.is-delete:hover { border-color:#e7bab6; background:#fff4f2; color:#a63d34; }
+.admin-delete-confirm .admin-panel-heading { background:#fff9f7; }
+.admin-delete-confirm .admin-panel-heading>.icon { color:#bf6c60; }
+.admin-delete-confirm .admin-account-form>p { overflow-wrap:anywhere; }
+.admin-delete-note { margin-top:9px; color:#939dab; font-size:12px; }
+.admin-delete-check { display:flex; align-items:center; gap:9px; margin-top:20px; font-size:12px; color:#637086; cursor:pointer; }
+.admin-delete-check input { width:16px; height:16px; margin:0; accent-color:#bc493e; flex-shrink:0; }
+.admin-delete-submit { color:#fff; background:#bc493e; }
+.admin-delete-submit:hover { background:#a43830; }
+.admin-delete-submit .icon { width:16px; height:16px; }
+.admin-row-profile { color:#b58159; font-size:11px; }
+.admin-row-profile:hover { color:var(--orange-dark); }
+.admin-accounts-table .admin-empty { padding:55px 23px; }
+.admin-accounts-table .admin-empty>.icon { color:#a9b2c1; width:27px; height:27px; margin-bottom:12px; }
+.admin-accounts-table .admin-empty strong { display:block; font-weight:500; }
+.admin-accounts-table .admin-empty p { color:#98a2b1; margin-top:5px; font-size:12px; }
+.admin-accounts-list-footer { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:18px 23px; border-top:1px solid #eef0f4; }
+.admin-accounts-list-footer>p { color:#949eac; font-size:11px; }
+.admin-accounts-pagination { display:flex; align-items:center; gap:5px; }
+.admin-accounts-pagination a { display:grid; place-items:center; min-width:30px; height:30px; padding:0 7px; border:1px solid #e5e8ef; border-radius:4px; color:#8995a5; font-size:11px; }
+.admin-accounts-pagination a[aria-current] { color:#fff; background:var(--orange); border-color:var(--orange); }
+.admin-accounts-pagination a:hover { border-color:var(--orange); }
+.admin-accounts-pagination>span { color:#9aa3b1; }
+.admin-accounts-help { display:flex; align-items:center; gap:8px; margin-top:17px; color:#99a2af; font-size:10px; }
+.admin-accounts-help .icon { width:14px; height:14px; }
+.admin-managed-editor { margin-bottom:24px; }
+.admin-editor-close { padding:2px 7px; font-size:23px; color:#98a3b2; line-height:1; }
+.admin-editor-close:hover { color:var(--orange); }
+.admin-managed-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:23px 20px; }
+.admin-managed-fields select { height:46px; font-size:13px; }
+.admin-managed-fields select[aria-invalid="true"] { border-color:#d78e79; }
+.admin-new-staff-note { display:flex; gap:10px; align-items:center; color:#8f9aab; font-size:11px; }
+.admin-new-staff-note>.icon { color:#ba8659; width:24px; height:24px; }
+.admin-new-staff-note strong { display:block; color:#738196; font-size:12px; font-weight:500; }
+.admin-new-staff-note p { margin-top:3px; }
+@media (max-width:1200px) {
+    .admin-accounts .admin-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .admin-managed-fields { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:700px) {
+    .admin-accounts-page .admin-layout { grid-template-columns:0 minmax(0,1fr); }
+    .admin-accounts-page .admin-workspace { grid-column:2; }
+    .admin-accounts-page .admin-sidebar { position:fixed; z-index:65; width:min(258px,85vw); }
+    .admin-accounts-backdrop { display:block; position:fixed; inset:0; z-index:60; background:#19223466; }
+    .admin-accounts-page .admin-topbar { height:72px; padding:0 16px; }
+    .admin-accounts-page .admin-topbar-start>span,.admin-accounts-page .admin-user>span:nth-child(2) { display:none; }
+    .admin-accounts-page .admin-topbar-actions { gap:8px; }
+    .admin-accounts-page .admin-account-dropdown { padding-left:12px; }
+    .admin-accounts-page .admin-content { padding:23px 16px; }
+    .admin-accounts-page .admin-footer { flex-wrap:wrap; gap:6px; }
+    .admin-accounts-heading { align-items:flex-start; flex-direction:column; }
+    .admin-accounts .admin-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .admin-accounts .admin-stat { padding:16px 13px; gap:7px; }
+    .admin-accounts .admin-stat p { display:none; }
+    .admin-accounts .admin-stat h2 { font-size:11px; }
+    .admin-accounts .admin-stat strong { font-size:25px; }
+    .admin-accounts .admin-stat-icon { width:30px; height:30px; }
+    .admin-accounts .admin-stat-icon .icon { width:18px; height:18px; }
+    .admin-managed-fields { grid-template-columns:minmax(0,1fr); }
+    .admin-accounts-filters { padding:16px; }
+    .admin-accounts-filters>label,.admin-accounts-filters .admin-accounts-search { min-width:0; flex-basis:100%; }
+    .admin-accounts-list-footer { align-items:flex-start; flex-direction:column; }
+    .admin-accounts .admin-account-form { padding:20px; }
+}
+
 /* ===== DỰ BÁO THỜI TIẾT THEO LỊCH TRÌNH TOUR ===== */
 .itinerary-weather-bar {
     margin-top: 18px;

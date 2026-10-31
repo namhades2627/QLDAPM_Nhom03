@@ -121,9 +121,6 @@ CREATE TABLE IF NOT EXISTS `tai_khoan` (
     UNIQUE KEY `uq_tai_khoan_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- BEGIN CAP_NHAT_2026_10_30_HINH_ANH
--- Database đã import có thể chạy riêng khối này, không cần nhập lại dữ liệu demo.
--- Đổi tên cột cũ và giữ nguyên đường dẫn ảnh; chạy lại không làm mất dữ liệu.
 DROP PROCEDURE IF EXISTS `_ontrip_cap_nhat_hinh_anh`;
 DELIMITER $$
 CREATE PROCEDURE `_ontrip_cap_nhat_hinh_anh`()

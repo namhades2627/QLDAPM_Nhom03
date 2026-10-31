@@ -58,7 +58,7 @@ Phần ảnh đại diện hiện được xử lý trong `AdminController` bằ
 | Hồ sơ cá nhân quản trị | `action=profile` hỗ trợ GET/POST multipart: kiểm tra họ tên, điện thoại, email hợp lệ/không trùng, CSRF; cập nhật tài khoản từ ID session. Đã upload/lưu ảnh đại diện thật; không chọn ảnh mới thì giữ ảnh cũ, thay thành công mới xóa ảnh cũ. Đồng bộ thông tin vào session rồi redirect 303. Không đổi vai trò/trạng thái/mật khẩu qua form này. |
 | Đổi mật khẩu quản trị | `action=password` hỗ trợ GET/POST có CSRF, xác thực mật khẩu hiện tại bằng `password_verify()`, mật khẩu mới ít nhất 8 ký tự/tối đa 72 byte, khác mật khẩu hiện tại và xác nhận khớp. Lưu bằng `password_hash()`, đổi session ID/CSRF và redirect 303. Không đưa mật khẩu về HTML hoặc log. |
 | Icon tin nhắn, chuông | Chỉ giao diện, chưa có dữ liệu/xử lý nghiệp vụ. Đăng xuất trong menu tài khoản đã hoạt động. Không tự gắn thêm chức năng ngoài yêu cầu. |
-| Đặt tour, thanh toán, quản lý đơn, doanh thu | Chưa triển khai; chưa có bảng đơn đặt. Nút đặt tour trên chi tiết chưa tạo đơn. |
+| Đặt tour, thanh toán, quản lý đơn, doanh thu | **Đã triển khai (31/10/2026).** Khách đăng nhập chọn lịch, nhập liên hệ và người tham gia; máy chủ kiểm tra chỗ còn, tính lại tiền và **chụp giá vào đơn**. Đơn có bốn trạng thái `cho_xac_nhan → da_xac_nhan → hoan_thanh` và `da_huy`. Thanh toán mô phỏng ghi một dòng `thanh_toan` cho mỗi đơn. Quản trị xử lý trạng thái tại `action=orders`. Chưa có cổng thanh toán thật, hoàn tiền, email xác nhận hoặc báo cáo doanh thu theo kỳ. |
 | Quản lý tài khoản | `action=accounts` trong HỆ THỐNG chỉ liệt kê admin/nhân viên. Chỉ admin truy cập: tìm/lọc/phân trang, tạo nhân viên, sửa liên hệ, đổi vai trò admin↔nhân viên, khóa/mở và xóa có xác nhận. Không đặt lại mật khẩu người khác. |
 | Quản lý khách hàng | `action=customers` trong DỮ LIỆU ĐIỀU HÀNH chỉ liệt kê `khach_hang`. Chỉ admin truy cập: tìm theo họ tên/email/điện thoại, lọc trạng thái, phân trang, sửa liên hệ, khóa/mở và xóa có xác nhận; vai trò khách hàng cố định. Khách hàng vẫn tự đăng ký ở website; chưa có lịch sử đơn hoặc chi tiêu. |
 | Quản lý tour/lịch bằng thêm–sửa–xóa | Chưa triển khai. |
@@ -77,6 +77,8 @@ Giá, lịch trình và lịch đi trong SQL là **dữ liệu demo phục vụ 
 | Trang chủ | `app/controllers/HomeController.php` → `app/views/home/index.php` |
 | Danh sách/chi tiết tour | `app/controllers/TourController.php` → `app/views/tour/index.php`, `detail.php` |
 | Truy vấn tour | `app/models/tour.php`, lớp `TourModel`: tour, vùng, nhu cầu, lịch, điểm đến và tạm tính nhóm cho tìm kiếm |
+| Đặt tour và đơn của tôi | `app/controllers/DonDatController.php` → `app/views/don_dat/dat_tour.php`, `danh_sach.php`, `chi_tiet.php` |
+| Truy vấn đơn đặt | `app/models/don_dat.php`, lớp `DonDatModel`: bảng giá/ưu đãi, chỗ còn, tạo đơn có transaction, thanh toán mô phỏng, trạng thái và truy vấn quản trị. Đây là **nguồn duy nhất** tính tiền; `TourModel::addGroupEstimates()` và View chỉ hiển thị lại kết quả |
 | Tài khoản khách hàng | `app/controllers/TaiKhoanController.php` → `app/views/tai_khoan/layout.php` |
 | Truy vấn tài khoản | `app/models/tai_khoan.php`, lớp `TaiKhoanModel`: tìm theo ID/email, tạo khách hàng, cập nhật thông tin hồ sơ admin/nhân viên |
 | Quản trị | `app/controllers/AdminController.php` → `app/views/admin/index.php` hoặc `forbidden.php` |
@@ -86,6 +88,7 @@ Giá, lịch trình và lịch đi trong SQL là **dữ liệu demo phục vụ 
 | Cập nhật schema ảnh | `tai_khoan.hinh_anh` là đường dẫn tương đối nullable. Máy mới dùng `ontrip.sql`; máy đã import chạy khối `CAP_NHAT_2026_10_30_HINH_ANH` trong cùng file để thêm/đổi từ tên cũ và giữ dữ liệu. Xem `database/database_changes.md`; không có file SQL nâng cấp riêng. |
 | Số liệu quản trị | `app/models/admin.php`, lớp `AdminModel`: dữ liệu tổng quan chỉ đọc |
 | Quản lý tài khoản/khách hàng | Hai route `accounts` và `customers` đi qua `AdminController::accounts()` và dùng chung `app/views/admin/tai_khoan.php`, với tiêu đề, biểu mẫu, thống kê và URL theo nhóm. `TaiKhoanModel::getManagedAccounts()`, `findManagedAccount()`, `createEmployee()`, `updateManagedAccount()`, `deleteManagedAccount()` xử lý dữ liệu; hai menu chỉ hiện cho admin. |
+| Quản lý đơn đặt | Route `orders` đi qua `AdminController::donDat()` → `app/views/admin/don_dat.php`. `DonDatModel::getAdminOrders()`, `getAdminSummary()`, `updateStatus()` xử lý danh sách, thống kê và chuyển trạng thái; admin và nhân viên đều dùng được. |
 | Form dùng chung | `app/views/tai_khoan/layout.php`: hỗ trợ đăng ký/đăng nhập khách hàng và đăng nhập quản trị qua biến cấu hình |
 | Tệp View cũ | `app/views/tai_khoan/login.php`, `register.php` còn trong thư mục nhưng router hiện gọi TaiKhoanController rồi nạp `layout.php`; không thêm xử lý xác thực vào các wrapper này |
 | Navbar/footer khách hàng | `app/views/partials/header.php`, `footer.php`; không dùng làm khung quản trị |
@@ -103,6 +106,7 @@ Không tách thêm CSS/JS riêng từng trang. CSS quản trị dùng lớp `.ad
 
 - `public/index.php` mặc định trang chủ; `page=tours&type=domestic|international|all`; chi tiết `page=tour-detail&type=domestic|international&id=mb01` (id trên URL này là **mã tour nghiệp vụ**, không phải `id_tour`).
 - Tài khoản: `page=login`, `page=register`, `page=logout` (đăng xuất bằng POST có CSRF).
+- Đặt tour: `page=booking&type=domestic|international&id=<mã tour>[&schedule=<id_lich_khoi_hanh>]`; đơn của tôi `page=orders`, chi tiết `page=orders&id=<ma_don>`. Cả hai đều yêu cầu đăng nhập khách hàng.
 - TaiKhoanController kiểm tra form, gọi TaiKhoanModel. Đăng ký thành công chuyển sang đăng nhập; đăng nhập thành công về trang chủ. Navbar hiển thị tên và Đăng xuất, **không có mục Quản lý**.
 - Session PHP mặc định dùng cookie `PHPSESSID`; thông tin đăng nhập ở `$_SESSION['tai_khoan']`, gồm `id_tai_khoan`, `ho_ten`, `email`, `vai_tro`; không đưa hash/mật khẩu vào session.
 - Form công khai luôn tạo vai trò `khach_hang`, hoạt động. Không nhận vai trò hoặc trạng thái đặc quyền từ POST. Public login hiện kiểm tra tài khoản hoạt động mà không giới hạn vai trò; đăng nhập ở đây không tạo phiên quản trị.
@@ -141,12 +145,29 @@ Mật khẩu dùng `password_hash()`/`password_verify()`, SQL dùng prepared sta
 - Hai trang Quản lý tài khoản/khách hàng cùng dùng lớp body `admin-accounts-page`; màn hình ≤700px dùng sidebar dạng trượt, mặc định thu gọn, đóng bằng nền phủ hoặc Escape. Các trang quản trị khác giữ hành vi sidebar hiện có.
 - Xóa: nút thùng rác mở vùng xác nhận tên/email; cần tích checkbox `confirm_delete=1` và gửi POST. GET không xóa dữ liệu, xác nhận vẫn dùng được khi tắt JavaScript. `TaiKhoanModel::deleteManagedAccount()` dùng cùng khóa admin/transaction để chặn xóa chính mình, giữ admin hoạt động và đọc lại quyền của người thao tác. Kiểm tra bản ghi liên quan qua các khóa ngoại đã khai báo đến `tai_khoan.id_tai_khoan`, kể cả CASCADE/SET NULL; nếu có dữ liệu thì yêu cầu khóa thay vì xóa. Khi thêm module đơn đặt phải khai báo khóa ngoại tương ứng, không dựa vào quan hệ ngầm. Controller cũng xử lý lỗi FK 1451. Chỉ sau commit mới dọn ảnh đại diện do ứng dụng quản lý và không còn được tài khoản khác dùng. Không đổi schema/seed.
 
+### Đặt tour, thanh toán mô phỏng và xử lý đơn — bổ sung 31/10/2026
+
+- URL khách hàng: `page=booking&type=...&id=<mã tour>` (GET hiển thị form, POST `operation` mặc định tạo đơn); `page=orders` (danh sách, POST `operation=pay|cancel`); `page=orders&id=<ma_don>` (chi tiết). URL quản trị: `admin/index.php?action=orders`, chi tiết `&id=<ma_don>`, POST chỉ nhận trạng thái đích hợp lệ cho đơn đang mở. Tất cả form POST đều có CSRF; sai token trả 403. Thành công redirect 303 để refresh không gửi lại.
+- Đơn được nhận diện bằng `ma_don` dạng `OD` + ngày + chuỗi ngẫu nhiên, không lộ `id_don_dat` tuần tự trên URL. Truy vấn chi tiết/hủy/thanh toán luôn lọc thêm `id_tai_khoan` của phiên, nên khách không đọc hay sửa đơn người khác dù đoán được mã. Không có `id_tai_khoan` nào đến từ form.
+- Chỉ nhận lịch khởi hành thuộc đúng tour trên URL, đang mở, chưa qua ngày đi và chưa hết hạn đặt. Số người lớn ≥ 1, tổng khách ≤ 99 và ≤ chỗ còn; người tham gia phải có họ tên và ngày sinh hợp lệ (nếu nhập). Thông tin liên hệ kiểm tra họ tên, email, điện thoại; mọi lỗi hiển thị lại form kèm dữ liệu đã nhập.
+- Tiền luôn tính lại ở máy chủ từ giá của lịch; trường `tong_goc`/`tien_giam`/`tong_thanh_toan` gửi kèm từ trình duyệt bị bỏ qua. Quy tắc giảm giá dùng chung `DonDatModel::calculateTotals()` với tìm kiếm và trang chi tiết.
+- Tạo đơn chạy trong transaction, khóa dòng lịch bằng `SELECT ... FOR UPDATE`, kiểm tra lại chỗ còn rồi mới ghi đơn và danh sách người tham gia; lỗi bất kỳ thì rollback. Nhờ vậy hai khách đặt cùng lúc không vượt sức chứa.
+- Đơn lưu **giá chụp tại thời điểm đặt** (`gia_nguoi_lon`, `gia_tre_em`, `tong_goc`, `muc_giam`, `tien_giam`, `tong_thanh_toan`) cùng `ten_tour`, `ngay_khoi_hanh`, `diem_khoi_hanh`. Đổi giá/chính sách sau này không làm thay đổi đơn cũ; không tính lại khi xem.
+- Trạng thái: `cho_xac_nhan` → `da_xac_nhan` → `hoan_thanh`; `da_huy` từ `cho_xac_nhan` hoặc `da_xac_nhan`. `hoan_thanh` và `da_huy` là trạng thái cuối. `DonDatModel::allowedTransitions()` là nguồn duy nhất; View chỉ hiện nút hợp lệ, Controller và Model kiểm tra lại. Chuyển sang chính trạng thái hiện tại trả về "không đổi" thay vì ghi log sai.
+- Khách chỉ tự hủy đơn đang `cho_xac_nhan`. Admin/nhân viên xử lý mọi bước còn lại tại `action=orders`; thao tác ghi đọc lại đơn đã khóa để không dựa vào trạng thái trên form.
+- Chỗ còn = `so_cho` − tổng khách của các đơn có `trang_thai <> 'da_huy'`, tính trong SQL. Hủy đơn tự trả chỗ vì không cần cập nhật cột đếm; không có cột `so_cho_con` để lệch.
+- Thanh toán mô phỏng: chọn `chuyen_khoan|the|vi_dien_tu`, ghi một dòng `thanh_toan` với `trang_thai = 'thanh_cong'` và `ma_giao_dich` do máy chủ sinh. Đơn đã có thanh toán, đã hủy hoặc đã hoàn thành thì không thanh toán lại; ràng buộc UNIQUE trên `thanh_toan.id_don_dat` chặn ở tầng dữ liệu. Không nhận số tiền từ form và **không phải giao dịch thật**.
+- Quản trị `action=orders` dùng được cho `admin` và `nhan_vien` (khác `accounts`/`customers` chỉ admin): thống kê trạng thái kèm doanh thu từ các đơn đã thanh toán, lọc theo trạng thái, tìm theo mã đơn/tên/email/điện thoại, phân trang 10 đơn/trang. URL giữ bộ lọc khi chuyển trang.
+- Đơn không xóa được tour/lịch (khóa ngoại `RESTRICT`); xóa đơn xóa kèm người tham gia và thanh toán (`CASCADE`). Nhờ vậy `TaiKhoanModel::deleteManagedAccount()` từ chối xóa khách hàng còn đơn thay vì làm mất dữ liệu.
+- Chỉ thêm các khối `.booking-*`, `.order-*`, `.admin-orders*` và handler liên quan trong CSS/JS dùng chung; không sửa khối của module khác.
+
 ## 6. Database và dữ liệu
 
 Có tám bảng nghiệp vụ hiện tại:
 
 | Bảng | Ý nghĩa / lưu ý |
 | --- | --- |
+| Xử lý đặt tour, thanh toán và trạng thái đơn | `app/models/don_dat.php` (lớp `DonDatModel`); ba bảng `don_dat_tour`, `chi_tiet_don_dat`, `thanh_toan` được tạo trong khối `CAP_NHAT_2026_10_31_DON_DAT_TOUR` của `database/ontrip.sql` |
 | Điểm vào và chọn trang | `public/index.php` |
 | Trang chủ | `app/views/home/index.php` |
 | Chuẩn bị tour nổi bật từ database cho trang chủ | `app/controllers/HomeController.php` |
@@ -176,7 +197,7 @@ Ngày thống nhất: 19/10/2026. Đây là phần bổ sung phạm vi cho nghi�
 
 #### 1. Trạng thái triển khai
 
-Đã hiển thị ưu đãi trên trang chủ; danh sách/chi tiết đọc database. Máy chủ tạm tính nhóm cho tìm kiếm và so ngân sách; trang chi tiết tạm tính trên trình duyệt theo lịch được chọn. Chưa có bảng đơn đặt hoặc tính tiền chính thức để tạo đơn ở máy chủ. Các yêu cầu bên dưới là căn cứ triển khai các bước tiếp theo.
+Đã hiển thị ưu đãi trên trang chủ; danh sách/chi tiết đọc database. Máy chủ tạm tính nhóm cho tìm kiếm và so ngân sách; trang chi tiết tạm tính trên trình duyệt theo lịch được chọn. Từ 31/10/2026 đã có bảng đơn đặt và luồng tạo đơn chính thức ở máy chủ: giá và mức giảm được tính lại và chụp vào đơn. Các yêu cầu bên dưới là căn cứ đã dùng khi triển khai.
 
 #### 2. Điều kiện và mức giảm
 
@@ -240,6 +261,9 @@ Chỉ bổ sung các tệp xử lý và bảng dữ liệu khi bắt đầu th�
 #### 7. Các ca kiểm tra dành cho bước triển khai tính tiền
 
 Các ca dưới đây là yêu cầu kiểm thử, chưa phải kết quả chạy chức năng. Giả sử mọi khách đều là người lớn, giá 6.000.000đ/người:
+
+Từ 31/10/2026, `DonDatModel::calculateTotals()` đã được kiểm tra bằng bộ test mô hình và bộ test HTTP end-to-end cho đúng các mốc 4→5 và 9→10, tổng có cả người lớn/trẻ em, tiền giả gửi từ trình duyệt bị bỏ qua và giá đơn cũ không đổi khi giá lịch thay đổi.
+
 
 | Số khách | Tổng gốc | Mức giảm | Tiền giảm | Thanh toán |
 | --- | ---: | ---: | ---: | ---: |

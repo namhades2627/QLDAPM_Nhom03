@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/don_dat.php';
+
 /** Đọc dữ liệu tour; không tạo HTML và không đọc trực tiếp $_GET. */
 class TourModel
 {
@@ -52,13 +54,17 @@ class TourModel
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $now = new DateTimeImmutable('now', new DateTimeZone('Asia/Ho_Chi_Minh'));
         $statement = $this->connection->prepare(
-            "SELECT id_lich_khoi_hanh AS id, id_tour, ngay_khoi_hanh AS date,
-                    diem_khoi_hanh AS origin, gia_nguoi_lon AS adult_price,
-                    gia_tre_em AS child_price, so_cho AS capacity
-             FROM lich_khoi_hanh
-             WHERE id_tour IN ($placeholders) AND trang_thai = 'open'
-               AND ngay_khoi_hanh >= ? AND (han_dat IS NULL OR han_dat >= ?)
-             ORDER BY ngay_khoi_hanh, id_lich_khoi_hanh"
+            "SELECT l.id_lich_khoi_hanh AS id, l.id_tour, l.ngay_khoi_hanh AS date,
+                    l.diem_khoi_hanh AS origin, l.gia_nguoi_lon AS adult_price,
+                    l.gia_tre_em AS child_price, l.so_cho AS capacity,
+                    GREATEST(l.so_cho - COALESCE((
+                        SELECT SUM(dd.so_nguoi_lon + dd.so_tre_em) FROM don_dat_tour dd
+                        WHERE dd.id_lich_khoi_hanh = l.id_lich_khoi_hanh AND dd.trang_thai <> 'da_huy'
+                    ), 0), 0) AS seats_left
+             FROM lich_khoi_hanh l
+             WHERE l.id_tour IN ($placeholders) AND l.trang_thai = 'open'
+               AND l.ngay_khoi_hanh >= ? AND (l.han_dat IS NULL OR l.han_dat >= ?)
+             ORDER BY l.ngay_khoi_hanh, l.id_lich_khoi_hanh"
         );
         $parameters = array_merge($ids, [
             $now->format('Y-m-d'),
@@ -69,6 +75,8 @@ class TourModel
         foreach ($statement->fetchAll() as $schedule) {
             $schedule['adult_price'] = (int) $schedule['adult_price'];
             $schedule['child_price'] = (int) $schedule['child_price'];
+            $schedule['capacity'] = (int) $schedule['capacity'];
+            $schedule['seats_left'] = (int) $schedule['seats_left'];
             $schedules[$schedule['id_tour']][] = $schedule;
         }
 
@@ -121,15 +129,13 @@ class TourModel
         return $statement->fetchAll();
     }
 
-    /** Tạm tính nhóm theo giá lịch đi; chưa phải xác nhận đặt tour hay chỗ còn. */
+    /** Tạm tính nhóm theo giá lịch đi; dùng chung quy tắc ưu đãi với DonDatModel. */
     public function addGroupEstimates(array $tours, int $adults, int $children): array
     {
-        $count = $adults + $children;
-        $rate = $count >= 10 ? 8 : ($count >= 5 ? 5 : 0);
         foreach ($tours as &$tour) {
             foreach ($tour['schedules'] as &$schedule) {
-                $subtotal = $adults * $schedule['adult_price'] + $children * $schedule['child_price'];
-                $schedule['group_total'] = $subtotal - (int) round($subtotal * $rate / 100);
+                $totals = DonDatModel::calculateTotals($adults, $children, $schedule['adult_price'], $schedule['child_price']);
+                $schedule['group_total'] = $totals['tong_thanh_toan'];
             }
             unset($schedule);
         }

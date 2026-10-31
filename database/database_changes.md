@@ -12,6 +12,24 @@ Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đ�
 - Lệnh `CREATE TABLE IF NOT EXISTS` không tự bổ sung/đổi cột của bảng cũ; phải có khối nâng cấp đi kèm khi thay schema.
 - Seed đang giữ dữ liệu đã tồn tại khi nhập lại; không dùng nhập lại seed để ép ghi đè dữ liệu người dùng đã chỉnh. Đối chiếu nhật ký trước khi chạy cập nhật.
 
+## 31/10/2026 — Bổ sung ba bảng đặt tour, người tham gia và thanh toán mô phỏng
+
+| Nội dung | Chi tiết |
+| --- | --- |
+| Bảng mới | `don_dat_tour` (đơn đặt tour), `chi_tiet_don_dat` (người tham gia), `thanh_toan` (thanh toán mô phỏng). |
+| Nguồn cập nhật | Khối `CAP_NHAT_2026_10_31_DON_DAT_TOUR` trong `ontrip.sql`, ngay sau khối `CAP_NHAT_2026_10_30_HINH_ANH`. |
+| Máy mới | Import toàn bộ `ontrip.sql`; ba bảng được tạo cùng các bảng khác. |
+| Máy đã import | Chạy khối `BEGIN CAP_NHAT_2026_10_31_DON_DAT_TOUR` … `END CAP_NHAT_2026_10_31_DON_DAT_TOUR`. |
+| Chạy lại | Khối chỉ dùng `CREATE TABLE IF NOT EXISTS`, không xóa và không ghi đè đơn đã có. |
+| Khóa ngoại | `don_dat_tour.id_tai_khoan` → `tai_khoan`, `don_dat_tour.id_lich_khoi_hanh` → `lich_khoi_hanh` (RESTRICT): không xóa được tài khoản hoặc lịch khởi hành đã có đơn. `chi_tiet_don_dat` và `thanh_toan` → `don_dat_tour` (CASCADE). |
+| Đơn giá tại thời điểm đặt | `gia_nguoi_lon`, `gia_tre_em`, `tong_goc`, `muc_giam`, `tien_giam`, `tong_thanh_toan`, `ma_tour`, `ten_tour`, `ngay_khoi_hanh`, `diem_khoi_hanh` là ảnh chụp dữ liệu; sửa bảng `tour` hoặc `lich_khoi_hanh` sau đó không làm đổi đơn cũ. |
+| Số chỗ còn lại | Không thêm cột vào `lich_khoi_hanh`. Chỗ còn lại = `so_cho` − tổng `so_nguoi_lon + so_tre_em` của các đơn không ở trạng thái `da_huy`, tính trong `DonDatModel`. |
+| Trạng thái đơn | `cho_xac_nhan`, `da_xac_nhan`, `hoan_thanh`, `da_huy`. |
+| Thanh toán | Mỗi đơn tối đa một bản ghi `thanh_toan` (`uq_thanh_toan_don_dat`); dữ liệu sinh ra bởi nút thanh toán mô phỏng, không kết nối cổng thanh toán thật. |
+| Các phần giữ nguyên | Bảng `tour`, `lich_khoi_hanh`, `tai_khoan` và toàn bộ dữ liệu seed hiện có; không đổi tên cột cũ. |
+
+Đã áp dụng cho database `ontrip` trên máy phát triển và kiểm tra lại bằng `SHOW TABLES` / `SHOW CREATE TABLE`. Các máy khác cần chạy khối trên khi pull code.
+
 ## 30/10/2026 — Chuẩn hóa cột ảnh tài khoản và gộp cập nhật SQL
 
 | Nội dung | Chi tiết |

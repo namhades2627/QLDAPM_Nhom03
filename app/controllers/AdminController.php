@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../models/tai_khoan.php';
 require_once __DIR__ . '/../models/admin.php';
+require_once __DIR__ . '/../models/don_dat.php';
 
 
 /** Đăng nhập, kiểm tra quyền và xử lý tài khoản của phiên quản trị. */
@@ -81,7 +82,7 @@ class AdminController
     public function index(string $section = 'dashboard'): void
     {
         header('Cache-Control: no-store');
-        $methods = in_array($section, ['profile', 'password', 'accounts', 'customers'], true) ? ['GET', 'POST'] : ['GET'];
+        $methods = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders'], true) ? ['GET', 'POST'] : ['GET'];
         if (!in_array($_SERVER['REQUEST_METHOD'], $methods, true)) {
             http_response_code(405);
             header('Allow: ' . implode(', ', $methods));
@@ -105,7 +106,11 @@ class AdminController
         $roleName = $account['vai_tro'] === 'admin' ? 'Quản trị viên' : 'Nhân viên';
         $csrfToken = $_SESSION['csrf_token'];
         $avatarUrl = self::avatarUrl($account['hinh_anh'] ?? null);
-        $adminSection = in_array($section, ['profile', 'password', 'accounts', 'customers'], true) ? $section : 'dashboard';
+        $adminSection = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders'], true) ? $section : 'dashboard';
+        if ($adminSection === 'orders') {
+            $this->donDat($account, $roleName, $csrfToken);
+            return;
+        }
         if (in_array($adminSection, ['accounts', 'customers'], true)) {
             // Kiểm tra phía máy chủ, kể cả khi gửi trực tiếp URL hoặc POST.
             if ($account['vai_tro'] !== 'admin') {
@@ -282,6 +287,71 @@ class AdminController
         }
         $accountList = $model->getManagedAccounts($accountFilters['q'], $accountFilters['role'], $accountFilters['status'], $pageNumber, $accountGroup);
         require __DIR__ . '/../views/admin/tai_khoan.php';
+    }
+
+    /** Danh sách, chi tiết và chuyển trạng thái đơn đặt tour. */
+    private function donDat(array $account, string $roleName, string $csrfToken): void
+    {
+        $adminSection = 'orders';
+        $avatarUrl = self::avatarUrl($account['hinh_anh'] ?? null);
+        $model = new DonDatModel(getDatabaseConnection());
+        $statusLabels = DonDatModel::STATUS_LABELS;
+        $paymentMethods = DonDatModel::PAYMENT_METHODS;
+        $query = static function (string $key): string {
+            return is_string($_GET[$key] ?? null) ? trim($_GET[$key]) : '';
+        };
+        $orderFilters = [
+            'status' => isset($statusLabels[$query('status')]) ? $query('status') : '',
+            'q' => mb_substr($query('q'), 0, 120, 'UTF-8'),
+        ];
+        $pageNumber = filter_var($query('p'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 1;
+        $ordersUrl = static function (array $extra = []) use ($orderFilters, $pageNumber): string {
+            $parameters = array_merge(['action' => 'orders'], $orderFilters, ['p' => $pageNumber], $extra);
+            return 'index.php?' . http_build_query(array_filter($parameters, static function ($value): bool {
+                return $value !== '' && $value !== null;
+            }));
+        };
+        $orderMessage = $_SESSION['admin_orders_message'] ?? '';
+        $orderSuccess = $orderMessage !== '';
+        unset($_SESSION['admin_orders_message']);
+        $orderDetail = null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $maDon = trim($this->input('ma_don'));
+            $targetStatus = $this->input('trang_thai');
+            if (!hash_equals($csrfToken, $this->input('csrf_token'))) {
+                http_response_code(403);
+                $orderMessage = 'Phiên gửi biểu mẫu không hợp lệ. Vui lòng tải lại trang và thử lại.';
+            } else {
+                try {
+                    $target = $maDon !== '' ? $model->findOrderByCode($maDon) : null;
+                    if ($target === null) throw new DomainException('Không tìm thấy đơn đặt cần cập nhật.');
+                    if (!$model->updateStatus((int) $target['id_don_dat'], $targetStatus)) {
+                        throw new DomainException('Đơn đang ở trạng thái này rồi.');
+                    }
+                    $_SESSION['admin_orders_message'] = 'Đã chuyển đơn ' . $maDon . ' sang “' . ($statusLabels[$targetStatus] ?? $targetStatus) . '”.';
+                    header('Location: index.php?action=orders&id=' . rawurlencode($maDon), true, 303);
+                    return;
+                } catch (DomainException $exception) {
+                    $orderMessage = $exception->getMessage();
+                }
+            }
+        }
+
+        $maDon = $query('id');
+        if ($maDon !== '' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+            $orderDetail = $model->findOrderByCode($maDon);
+            if ($orderDetail === null) {
+                http_response_code(404);
+                $orderMessage = 'Không tìm thấy đơn đặt “' . $maDon . '”.';
+                $orderSuccess = false;
+            }
+        }
+        $orderSummary = $model->getAdminSummary();
+        $orderList = $orderDetail === null
+            ? $model->getAdminOrders($orderFilters['status'], $orderFilters['q'], $pageNumber)
+            : ['items' => [], 'total' => 0, 'page' => 1, 'pages' => 0, 'per_page' => 10];
+        require __DIR__ . '/../views/admin/don_dat.php';
     }
 
     private function profile(TaiKhoanModel $model, array $account, string $roleName, string $csrfToken): void

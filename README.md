@@ -1,6 +1,6 @@
 # OnTrip
 
-OnTrip là dự án website quản lý tour du lịch, xây dựng bằng PHP thuần theo kiến trúc MVC và phát triển từng giai đoạn. Trang chủ đọc tour nổi bật, điểm đến và nhu cầu từ database; tìm kiếm dẫn sang danh sách tour với các điều kiện đã chọn. Danh sách và chi tiết cũng đọc database qua Model/Controller. Banner và tin tức vẫn dùng dữ liệu mẫu. Dự án chưa nhận đặt tour hoặc thanh toán.
+OnTrip là dự án website quản lý tour du lịch, xây dựng bằng PHP thuần theo kiến trúc MVC và phát triển từng giai đoạn. Trang chủ đọc tour nổi bật, điểm đến và nhu cầu từ database; tìm kiếm dẫn sang danh sách tour với các điều kiện đã chọn. Danh sách và chi tiết cũng đọc database qua Model/Controller. Khách hàng đã đăng ký/đăng nhập, đặt tour theo lịch khởi hành, xem và hủy đơn của mình; quản trị viên xử lý trạng thái đơn. Thanh toán được **xác nhận mô phỏng**, chưa nối cổng thanh toán thật. Banner và tin tức vẫn dùng dữ liệu mẫu.
 
 ## Chạy trên máy cá nhân
 
@@ -19,6 +19,10 @@ Nếu đặt thư mục bằng tên khác, thay `QLDAPM_Nhom03` trong URL bằng
 | Tour trong nước | <http://localhost/QLDAPM_Nhom03/public/index.php?page=tours&type=domestic> |
 | Tour quốc tế | <http://localhost/QLDAPM_Nhom03/public/index.php?page=tours&type=international> |
 | Chi tiết tour | <http://localhost/QLDAPM_Nhom03/public/index.php?page=tour-detail&type=domestic&id=mb01> |
+| Đặt tour | <http://localhost/QLDAPM_Nhom03/public/index.php?page=booking&type=domestic&id=mb01> |
+| Đơn đặt của tôi | <http://localhost/QLDAPM_Nhom03/public/index.php?page=orders> |
+| Chi tiết một đơn | <http://localhost/QLDAPM_Nhom03/public/index.php?page=orders&id=OD261031730A61> |
+| Quản lý đơn đặt (quản trị) | <http://localhost/QLDAPM_Nhom03/admin/index.php?action=orders> |
 | Đề xuất tour thông minh | <http://localhost/QLDAPM_Nhom03/public/index.php?page=smart-search> |
 
 Có thể chọn vùng từ menu **Tour** trên navbar. Ví dụ URL danh sách tour miền Bắc thêm `&region=north`. Trên trang danh sách, nhấn **Xem chi tiết** để mở đúng tour.
@@ -32,8 +36,12 @@ Có thể chọn vùng từ menu **Tour** trên navbar. Ví dụ URL danh sách 
 - Bộ lọc theo điểm đến, nơi khởi hành, ngày, mức giá và nhu cầu; tìm theo tên/điểm đến có hỗ trợ không dấu, sắp xếp giá và thời lượng. Bộ lọc và phân trang xử lý bằng JavaScript trên dữ liệu database đã tải. Ngày, nơi khởi hành và mức giá phải khớp cùng một lịch đi.
 - Trang chi tiết đọc giới thiệu, lịch trình, lịch khởi hành và giá người lớn/trẻ em từ database. Chọn lịch khác sẽ đổi giá tạm tính theo lịch đó. Có một ảnh lớn, khu vực đánh giá chưa có dữ liệu, cùng ba tour liên quan với hai nút chuyển. Tour không có lịch đang mở sẽ hiện thông báo và không có giá giả định.
 - Giao diện hiển thị **chính sách ưu đãi nhóm**: 5–9 khách giảm 5%, từ 10 khách giảm 8% cho một đơn cùng lịch khởi hành. Quy tắc đầy đủ nằm trong [AGENT.md](AGENT.md).
+- **Đặt tour:** khách chọn lịch khởi hành, nhập thông tin liên hệ và từng người tham gia (người lớn/trẻ em, ngày sinh, ghi chú), xem tổng tiền tạm tính rồi gửi yêu cầu. Máy chủ kiểm tra lại chỗ còn, số khách và tính tiền; giá của lịch được **chụp lại vào đơn** nên đổi giá sau này không làm sai đơn cũ. Đơn ở trạng thái chờ xác nhận sau khi gửi.
+- **Đơn đặt của tôi:** danh sách đơn kèm trạng thái, xem chi tiết người tham gia và thanh toán, tự hủy khi đơn còn chờ xác nhận.
+- **Thanh toán mô phỏng:** chọn phương thức (chuyển khoản/thẻ/ví điện tử), hệ thống ghi nhận một giao dịch thành công kèm mã giao dịch. Mỗi đơn chỉ thanh toán một lần; đơn đã hủy hoặc đã hoàn thành không thanh toán được. Đây không phải giao dịch thật.
+- **Quản lý đơn (quản trị):** `action=orders` cho admin và nhân viên — thống kê nhanh, lọc theo trạng thái, tìm theo mã đơn/tên/email/điện thoại, phân trang, xem chi tiết và chuyển trạng thái theo đúng luồng chờ xác nhận → đã xác nhận → hoàn thành, hoặc hủy.
 
-**Chưa triển khai:** đặt tour, xác nhận giá và giảm giá cho đơn đặt, đăng nhập/đăng ký, và đăng đánh giá. (API thời tiết theo từng ngày lịch trình đã hoàn thành tích hợp). Giá và lịch trình trong SQL là dữ liệu demo. Máy chủ đã tạm tính ngân sách nhóm cho tìm kiếm; trang chi tiết có tạm tính trên trình duyệt. Cả hai chưa dùng để nhận đặt tour thực tế.
+**Chưa triển khai:** cổng thanh toán thật, hoàn tiền, đăng đánh giá, và gửi email xác nhận đơn. (API thời tiết theo từng ngày lịch trình đã hoàn thành tích hợp). Giá và lịch trình trong SQL là dữ liệu demo. Tạm tính trên trang chi tiết chỉ để tham khảo; tổng tiền chính thức do máy chủ tính lại khi tạo đơn.
 
 ## Cấu trúc mã
 
@@ -43,18 +51,21 @@ QLDAPM_Nhom03/
 │   ├── controllers/
 │   │   ├── HomeController.php  # Chuẩn bị tour nổi bật cho trang chủ
 │   │   ├── TaiKhoanController.php  # Đăng ký, đăng nhập khách hàng
-│   │   ├── AdminController.php   # Khu vực quản trị và quản lý tài khoản/khách hàng
+│   │   ├── DonDatController.php  # Đặt tour, đơn của tôi, thanh toán, hủy đơn
+│   │   ├── AdminController.php   # Khu vực quản trị: tài khoản/khách hàng/đơn đặt
 │   │   └── TourController.php      # Chuẩn bị danh sách và chi tiết tour
 │   ├── models/
 │   │   ├── tour.php                # Lớp TourModel truy vấn dữ liệu bằng PDO
 │   │   ├── tai_khoan.php          # Lớp TaiKhoanModel
+│   │   ├── don_dat.php             # Lớp DonDatModel: giá, chỗ còn, đơn, thanh toán, trạng thái
 │   │   ├── admin.php           # Lớp AdminModel: số liệu tổng quan
 │   │   ├── de_xuat_thong_minh.php  # Tệp dự kiến cho đề xuất thông minh, hiện trống
 │   │   └── thoi_tiet.php           # Lớp ThoiTietModel (dịch vụ thời tiết) gọi Open-Meteo API & dự báo thời tiết theo lịch trình
 │   └── views/
 │       ├── home/index.php     # Trang chủ
 │       ├── tai_khoan/             # layout.php, login.php, register.php
-│       ├── admin/              # index.php, tai_khoan.php, profile.php, password.php
+│       ├── don_dat/            # dat_tour.php, danh_sach.php, chi_tiet.php
+│       ├── admin/              # index.php, tai_khoan.php, don_dat.php, profile.php, password.php
 │       ├── tour/
 │       │   ├── index.php           # Danh sách tour trong nước/quốc tế
 │       │   └── detail.php        # Chi tiết một tour
@@ -83,7 +94,7 @@ Luồng tour: **trình duyệt → `public/index.php` → TourController → Tou
 
 Kết nối PDO được chuẩn bị trong `config/database.php`. Model sẽ nạp tệp này bằng `require_once` và gọi `getDatabaseConnection()` để nhận đối tượng PDO. Mặc định kết nối tới `127.0.0.1:3306`, database `ontrip`, tài khoản `root`, mật khẩu trống của XAMPP. Có thể ghi đè bằng biến môi trường `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`; tệp không tự đọc `.env`. Bật MySQL trong XAMPP khi dùng kết nối này. HomeController và TourController sử dụng TourModel để đọc dữ liệu qua kết nối PDO.
 
-Mở **phpMyAdmin → Import** và chọn [database/ontrip.sql](database/ontrip.sql). Tệp tạo database `ontrip`, bảy bảng có khóa ngoại và nhập sáu vùng cùng sáu nhu cầu. Tệp không xóa bảng hay dữ liệu khi nhập lại. Trên máy phát triển hiện tại, SQL đã được nhập vào MariaDB 10.4 để kiểm tra; khi clone trên máy khác vẫn cần nhập tệp này.
+Mở **phpMyAdmin → Import** và chọn [database/ontrip.sql](database/ontrip.sql). Tệp tạo database `ontrip`, mười một bảng có khóa ngoại và nhập sáu vùng cùng sáu nhu cầu. Tệp không xóa bảng hay dữ liệu khi nhập lại. Trên máy phát triển hiện tại, SQL đã được nhập vào MariaDB 10.4 để kiểm tra; khi clone trên máy khác vẫn cần nhập tệp này.
 
 | Bảng | Vai trò |
 | --- | --- |
@@ -92,10 +103,14 @@ Mở **phpMyAdmin → Import** và chọn [database/ontrip.sql](database/ontrip.
 | `lich_trinh_ngay` | Nội dung từng ngày của một tour. |
 | `nhu_cau`, `tour_nhu_cau` | Danh mục nhu cầu và quan hệ nhiều-nhiều với tour. |
 | `lich_khoi_hanh` | Ngày đi, nơi xuất phát, giá người lớn/trẻ em, sức chứa, hạn nhận đặt và trạng thái theo **từng lịch**. |
+| `tai_khoan` | Tài khoản khách hàng và quản trị/nhân viên; mật khẩu lưu bằng `password_hash()`. |
+| `don_dat_tour` | Đơn đặt tour: mã đơn, tài khoản, lịch khởi hành, **giá chụp lại tại thời điểm đặt**, tổng gốc/giảm giá/thành tiền, số người lớn-trẻ em, thông tin liên hệ và `trang_thai` (`cho_xac_nhan`, `da_xac_nhan`, `hoan_thanh`, `da_huy`). |
+| `chi_tiet_don_dat` | Danh sách người tham gia của một đơn: họ tên, loại khách, ngày sinh, ghi chú. |
+| `thanh_toan` | Giao dịch **mô phỏng** của một đơn: phương thức, số tiền, mã giao dịch, trạng thái thành công/thất bại. |
 
 Tên bảng/cột dùng tiếng Việt không dấu theo dạng `snake_case`, ví dụ `ngay_khoi_hanh`, `gia_nguoi_lon`. Mã loại/vùng/nhu cầu và giá trị trạng thái trong dữ liệu giữ dạng mã ngắn để sau này đối chiếu với URL và bộ lọc hiện có.
 
-Tệp SQL có 48 tour demo: 24 tour trong nước và 24 tour quốc tế, mỗi khu vực 8 tour, kèm nhu cầu, lịch trình theo ngày và 3 lịch khởi hành cho mỗi tour. Giá, ngày đi, sức chứa và chương trình phục vụ học tập, chưa phải dữ liệu kinh doanh đã xác nhận. Chạy lại tệp chỉ bổ sung bản ghi còn thiếu, không cập nhật các bản ghi đã có. Danh sách, chi tiết và tour nổi bật trang chủ đọc database. Database chưa có bảng đặt tour, tài khoản, tin tức hay đánh giá vì các chức năng này chưa được triển khai. Khi làm đặt tour, số chỗ còn phải xét đơn đặt hợp lệ và sức chứa của lịch.
+Tệp SQL có 48 tour demo: 24 tour trong nước và 24 tour quốc tế, mỗi khu vực 8 tour, kèm nhu cầu, lịch trình theo ngày và 3 lịch khởi hành cho mỗi tour. Giá, ngày đi, sức chứa và chương trình phục vụ học tập, chưa phải dữ liệu kinh doanh đã xác nhận. Chạy lại tệp chỉ bổ sung bản ghi còn thiếu, không cập nhật các bản ghi đã có. Danh sách, chi tiết và tour nổi bật trang chủ đọc database. Chỗ còn của một lịch = `so_cho` trừ tổng số khách của các đơn **chưa hủy**; phép tính này chạy trong SQL mỗi lần hiển thị nên không có cột đếm dễ lệch. Đơn đặt **không** xóa tour/lịch (khóa ngoại `RESTRICT`); xóa đơn sẽ xóa kèm người tham gia và thanh toán (`CASCADE`).
 
 ## Sửa giao diện và dữ liệu mẫu
 
@@ -109,6 +124,8 @@ Tệp SQL có 48 tour demo: 24 tour trong nước và 24 tour quốc tế, mỗi
 | Danh sách, bộ lọc và thẻ tour | `app/views/tour/index.php` |
 | Dữ liệu tour, giá, nhu cầu và lịch khởi hành | Các bảng trong database `ontrip`; `database/ontrip.sql` là dữ liệu cài đặt ban đầu |
 | Nội dung trang chi tiết | `app/views/tour/detail.php` |
+| Form đặt tour, danh sách đơn, chi tiết đơn | `app/views/don_dat/` |
+| Quản lý đơn trong quản trị | `app/views/admin/don_dat.php` |
 | Màu sắc, kích thước và bố cục | `public/assets/css/style.css`, chia bằng chú thích theo phần dùng chung và từng trang |
 | Banner, menu, bộ lọc, phân trang, tour liên quan | `public/assets/js/script.js`, chia bằng chú thích theo từng trang |
 | Điều hướng URL sang View | `public/index.php` |
@@ -117,6 +134,6 @@ Tệp SQL có 48 tour demo: 24 tour trong nước và 24 tour quốc tế, mỗi
 
 ## Hướng phát triển tiếp theo
 
-Triển khai đăng ký/đăng nhập và các chức năng tài khoản theo tiến độ; cập nhật nội dung tour thực tế. Khi có luồng đặt tour, kiểm tra chỗ còn và tính lại giá/ưu đãi ở máy chủ theo [AGENT.md](AGENT.md). Các trang và chức năng khác được bổ sung theo tiến độ dự án, không tạo sẵn module chưa sử dụng.
+Triển khai cổng thanh toán thật và hoàn tiền khi hủy đơn đã thanh toán, gửi email xác nhận đơn, đăng đánh giá sau khi hoàn thành; cập nhật nội dung tour thực tế. Mọi thay đổi giá/ưu đãi phải tính lại ở máy chủ theo [AGENT.md](AGENT.md) và giữ nguyên giá đã chụp trong đơn cũ. Các trang và chức năng khác được bổ sung theo tiến độ dự án, không tạo sẵn module chưa sử dụng.
 
 Giao diện có tham khảo các trang du lịch công khai và hình mẫu trong quá trình thiết kế; nhận diện và bố cục OnTrip được xây dựng riêng.

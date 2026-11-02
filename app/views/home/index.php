@@ -43,7 +43,11 @@ $banners = [
     <meta name="theme-color" content="#df6024">
     <title>OnTrip — Đi một chuyến, thêm một câu chuyện</title>
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="assets/css/style.css?v=20261102">
     <script src="assets/js/script.js" defer></script>
 </head>
 <body>
@@ -208,11 +212,11 @@ $banners = [
         <div class="container">
             <div class="section-heading">
                 <div>
-                    <p class="eyebrow" style="color:#d9381e;"> CƠ HỘI ĐẶT TOUR GIÁ TỐT</p>
+                    <p class="eyebrow"> CƠ HỘI ĐẶT TOUR GIÁ TỐT</p>
                     <h2 id="promo-title">Tour khuyến mãi hôm nay</h2>
                     <p>Hành trình chất lượng với mức giá ưu đãi đặc biệt dành cho khách đặt sớm trong ngày.</p>
                 </div>
-                <a class="text-link" href="index.php?page=tours&amp;type=all" style="color:#d9381e;">Xem thêm ưu đãi <svg class="icon"><use href="#i-arrow"/></svg></a>
+                <a class="text-link" href="index.php?page=tours&amp;type=all">Xem thêm ưu đãi <svg class="icon"><use href="#i-arrow"/></svg></a>
             </div>
             <div class="tour-grid">
                 <?php foreach ($promoTours as $tour): ?>

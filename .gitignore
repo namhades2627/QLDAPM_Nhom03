@@ -18,5 +18,5 @@ desktop.ini
 *.bak
 
 # Ảnh tài khoản sinh ra khi sử dụng, không commit ảnh cá nhân.
-public/uploads/avatars/*
-!public/uploads/avatars/.htaccess
+public/assets/images/users/*
+!public/assets/images/users/.htaccess

@@ -1,6 +1,6 @@
 # Hướng dẫn làm việc với dự án OnTrip
 
-Tài liệu bàn giao cho thành viên và AI hỗ trợ phát triển. Cập nhật theo code ngày **31/10/2026**. Đọc tài liệu này trước khi sửa dự án, sau đó kiểm tra lại các tệp thuộc phần việc được giao. Tên tệp hướng dẫn của nhóm là **`AGENT.md`**; khi giao việc cho AI khác, yêu cầu đọc đúng tệp này.
+Tài liệu bàn giao cho thành viên và AI hỗ trợ phát triển. Cập nhật theo code ngày **02/11/2026**. Đọc tài liệu này trước khi sửa dự án, sau đó kiểm tra lại các tệp thuộc phần việc được giao. Tên tệp hướng dẫn của nhóm là **`AGENT.md`**; khi giao việc cho AI khác, yêu cầu đọc đúng tệp này.
 
 ## 1. Nguyên tắc phối hợp nhóm
 
@@ -31,12 +31,22 @@ Phần ảnh đại diện hiện được xử lý trong `AdminController` bằ
 - Mỗi lần đổi tên phải cập nhật đầy đủ `require`/`require_once`, tên lớp/nơi khởi tạo, tham chiếu trong tài liệu và kiểm tra luồng chạy. Không tạo bản sao tên cũ hoặc đổi tên ngoài phạm vi được giao.
 - Hai trang quản lý nhân sự/khách hàng hiện dùng chung `app/views/admin/tai_khoan.php`; không tạo thêm `khach_hang.php` chỉ để có đủ tên khi chưa cần tách giao diện/xử lý. Model đề xuất thông minh `de_xuat_thong_minh.php` đang trống; đổi tên không có nghĩa chức năng đề xuất đã hoạt động.
 
+### Giao diện OnTrip — cập nhật 02/11/2026
+
+- Theo yêu cầu người dùng, đã làm lại lớp trình bày trên bố cục hiện có: giữ thứ tự khu vực, nội dung, ảnh, route, biểu mẫu và nghiệp vụ. Tham khảo nguyên tắc thiết kế có chủ đích; không áp đặt template của dự án khác.
+- Font dùng chung là **Be Vietnam Pro**, tải qua Google Fonts và có `Segoe UI`/sans-serif dự phòng. Màu nhận diện vẫn là cam đất; biến `--orange` là `#c45226`, `--orange-dark` là `#a9441d`. Nền trắng/xám nhạt, sidebar quản trị slate tối. Chỉnh màu, font, viền và kích thước chung tại `:root` của `public/assets/css/style.css`.
+- Các View nạp **Bootstrap CSS 5.3.8 qua CDN trước `style.css`**; chưa dùng Bootstrap JS để giữ nguyên handler hiện có. Giữ CSS tương thích cho `.container`, `.navbar`, `.dropdown-menu`, caret và `[hidden]`; không bỏ các đoạn này khi sửa menu. Không cần npm/build hay thêm cấu trúc thư mục.
+- Thẻ tour, bộ lọc, đăng nhập/đăng ký, chi tiết/thời tiết, đặt tour, đơn khách và quản trị dùng cùng hệ chữ, khoảng cách, focus và trạng thái. CSS `.smart-*` chỉ trình bày View đề xuất sẵn có; không kích hoạt route hoặc bổ sung thuật toán.
+- Khung quản trị dùng backdrop và cơ chế sidebar đang có cho cả dashboard/hồ sơ trên màn hình nhỏ. Giữ `data-*`, ID, `name`, `action`, token CSRF và tất cả handler; thay đổi UI không được kéo theo sửa Controller/Model/database.
+- CSS phiên bản `v=20261102` trong View giúp tải bản giao diện mới sau khi pull. Khi đổi giao diện tiếp, cập nhật đồng bộ phiên bản cho các View; không dùng việc tắt cache làm giải pháp lâu dài.
+
 ## 2. Công nghệ và cách chạy
 
 - Website quản lý tour du lịch **OnTrip**, PHP thuần theo MVC, PDO và MariaDB/MySQL; JavaScript thuần, không dùng framework hay trình build.
 - Môi trường dự án: XAMPP, **PHP 8.2 trở lên**, MariaDB 10.4 trở lên. Chạy website không cần Composer hoặc Node.js; Node chỉ có thể dùng cho kiểm tra JavaScript khi có sẵn.
 - Đặt dự án trong `htdocs/QLDAPM_Nhom03`, bật Apache/MySQL và import **`database/ontrip.sql`** trên máy mới. Database tên **`ontrip`**. Không đổi thành `tripon` hoặc tạo bản SQL khác tên để thay thế tùy ý.
 - URL khách hàng: `http://localhost/QLDAPM_Nhom03/public/`.
+- Từ 02/11/2026, có thể mở `http://localhost/QLDAPM_Nhom03/`: `index.php` ở thư mục gốc chuyển hướng HTTP 302 đến `public/`, thay cho màn hình liệt kê thư mục. Dùng đường dẫn tương đối để vẫn chạy khi đổi tên thư mục dự án; phần điều hướng khách hàng tiếp tục nằm trong `public/index.php`.
 - URL quản trị: `http://localhost/QLDAPM_Nhom03/admin/`. Đây là lối vào đăng nhập riêng cho admin/nhân viên.
 - `config/database.php` cung cấp `getDatabaseConnection()`, tái sử dụng PDO trong một request. Mặc định `127.0.0.1:3306`, `root`, mật khẩu trống; hỗ trợ `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`. Không tự đọc `.env`.
 - Đường dẫn XAMPP trên máy người khác có thể khác; không sao chép đường dẫn tuyệt đối của máy hiện tại vào code. `.vscode/`, `.env`, log và tệp tạm đã được `.gitignore` loại trừ.
@@ -84,7 +94,7 @@ Giá, lịch trình và lịch đi trong SQL là **dữ liệu demo phục vụ 
 | Quản trị | `app/controllers/AdminController.php` → `app/views/admin/index.php` hoặc `forbidden.php` |
 | Giao diện tài khoản quản trị | `app/views/admin/profile.php`, `password.php`; dùng khung `app/views/admin/partials/header.php`, `footer.php` chung với dashboard. Không sao chép hoặc thay lại toàn bộ khung khi thêm nội dung trang. |
 | Upload ảnh tài khoản | Các hàm ảnh đại diện trong `app/controllers/AdminController.php`: kiểm tra upload thật, MIME/nội dung ảnh, tối đa 5 MB, tối đa 4096 mỗi chiều và 12 triệu pixel; tên ngẫu nhiên do máy chủ cấp. Có GD thì mã hóa lại ảnh; không có GD thì lưu ảnh đã kiểm tra trong thư mục chỉ phục vụ file tĩnh. |
-| Ảnh đại diện đã lưu | `public/uploads/avatars/`, file sinh ra được `.gitignore` loại trừ; giữ `.htaccess` để chặn thực thi script/liệt kê thư mục. `admin/.htaccess` giới hạn upload cho XAMPP/mod_php. Không lưu ảnh cá nhân vào thư mục tour hoặc dùng tên file do người dùng gửi. |
+| Ảnh đại diện đã lưu | Từ 02/11/2026 lưu tại `public/assets/images/users/`, đường dẫn trong `tai_khoan.hinh_anh` có dạng `assets/images/users/<32 ký tự hex>.<đuôi ảnh>`. File sinh ra được `.gitignore` loại trừ; giữ `.htaccess` để chặn thực thi script/liệt kê thư mục. `admin/.htaccess` giới hạn upload cho XAMPP/mod_php. Thư mục `public/uploads/` đã bỏ; trên máy hiện tại chưa có ảnh/đường dẫn ảnh cũ cần chuyển. Không lưu ảnh cá nhân vào thư mục tour hoặc dùng tên file do người dùng gửi. |
 | Cập nhật schema ảnh | `tai_khoan.hinh_anh` là đường dẫn tương đối nullable. Máy mới dùng `ontrip.sql`; máy đã import chạy khối `CAP_NHAT_2026_10_30_HINH_ANH` trong cùng file để thêm/đổi từ tên cũ và giữ dữ liệu. Xem `database/database_changes.md`; không có file SQL nâng cấp riêng. |
 | Số liệu quản trị | `app/models/admin.php`, lớp `AdminModel`: dữ liệu tổng quan chỉ đọc |
 | Quản lý tài khoản/khách hàng | Hai route `accounts` và `customers` đi qua `AdminController::accounts()` và dùng chung `app/views/admin/tai_khoan.php`, với tiêu đề, biểu mẫu, thống kê và URL theo nhóm. `TaiKhoanModel::getManagedAccounts()`, `findManagedAccount()`, `createEmployee()`, `updateManagedAccount()`, `deleteManagedAccount()` xử lý dữ liệu; hai menu chỉ hiện cho admin. |

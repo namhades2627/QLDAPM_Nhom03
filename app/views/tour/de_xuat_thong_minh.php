@@ -33,7 +33,11 @@ $currentDiscountRate = $currentGuests >= 10 ? 8 : ($currentGuests >= 5 ? 5 : 0);
     <meta name="description" content="Tra cứu và đề xuất tour thông minh OnTrip — Lọc lịch hợp lệ, tính chi phí nhóm, đối chiếu sở thích, mùa vụ, dự báo thời tiết và gợi ý lịch tiết kiệm ±3 ngày.">
     <title>Đề xuất tour thông minh | OnTrip — Đi & khám phá</title>
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="assets/css/style.css?v=20261102">
     <script src="assets/js/script.js" defer></script>
 </head>
 <body class="smart-search-page">

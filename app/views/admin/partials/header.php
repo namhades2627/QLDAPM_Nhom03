@@ -19,10 +19,14 @@ $escape = static function ($value): string { return htmlspecialchars((string) $v
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= $escape($adminTitle) ?> | OnTrip</title>
     <link rel="icon" type="image/svg+xml" href="../public/assets/images/favicon.svg">
-    <link rel="stylesheet" href="../public/assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="../public/assets/css/style.css?v=20261102">
     <script src="../public/assets/js/script.js" defer></script>
 </head>
-<body class="admin-page<?= in_array($adminSection, ['accounts', 'customers', 'orders'], true) ? ' admin-accounts-page' : '' ?>">
+<body class="admin-page admin-accounts-page">
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <symbol id="a-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
     <symbol id="a-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
@@ -47,7 +51,7 @@ $escape = static function ($value): string { return htmlspecialchars((string) $v
 </svg>
 <a class="skip-link" href="#admin-content">Đi đến nội dung</a>
 <div class="admin-layout" data-admin-layout>
-    <?php if (in_array($adminSection, ['accounts', 'customers', 'orders'], true)): ?><button class="admin-accounts-backdrop" type="button" data-admin-accounts-backdrop aria-label="Đóng menu quản trị" hidden></button><?php endif; ?>
+    <button class="admin-accounts-backdrop" type="button" data-admin-accounts-backdrop aria-label="Đóng menu quản trị" hidden></button>
     <aside class="admin-sidebar" id="admin-sidebar" aria-label="Thanh bên quản trị">
         <a class="brand admin-brand" href="index.php" aria-label="OnTrip quản trị">
             <svg class="brand-mark" viewBox="0 0 44 50" aria-hidden="true"><path d="M22 3C11.8 3 5 10.2 5 19c0 12 17 27 17 27s17-15 17-27C39 10.2 32.2 3 22 3Z"/><circle cx="22" cy="19" r="6.5"/></svg>

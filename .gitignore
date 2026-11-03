@@ -20,3 +20,8 @@ desktop.ini
 # Ảnh tài khoản sinh ra khi sử dụng, không commit ảnh cá nhân.
 public/assets/images/users/*
 !public/assets/images/users/.htaccess
+
+# Ảnh tour được tải lên khi vận hành; giữ nguyên bộ ảnh tour demo đã có.
+public/assets/images/tours/tour_*.jpg
+public/assets/images/tours/tour_*.png
+public/assets/images/tours/tour_*.webp

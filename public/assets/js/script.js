@@ -1,5 +1,66 @@
 /* OnTrip — JavaScript chung, trang chủ, danh sách tour và chi tiết tour. */
 
+/* Biểu mẫu tour vẫn gửi về máy chủ; JavaScript hỗ trợ lịch trình và xem trước ảnh. */
+document.addEventListener('DOMContentLoaded', () => {
+    const editor = document.querySelector('[data-tour-editor]');
+    if (!editor) return;
+    const days = editor.querySelector('[data-tour-days]');
+    const countInput = editor.querySelector('[name="so_ngay"]');
+    const status = editor.querySelector('[name="trang_thai"]');
+    const template = editor.querySelector('[data-tour-day-template]');
+    const syncRequired = () => {
+        const required = status.value === 'published';
+        days.querySelectorAll('input,textarea').forEach(field => { field.required = required; });
+    };
+    status.addEventListener('change', syncRequired);
+    editor.querySelector('[data-tour-resize]').addEventListener('click', event => {
+        event.preventDefault();
+        if (!countInput.reportValidity()) { countInput.focus(); return; }
+        const count = Number(countInput.value);
+        if (!Number.isInteger(count) || count < 1 || count > 255) return;
+        const rows = Array.from(days.querySelectorAll('[data-tour-day]'));
+        if (count < rows.length) {
+            const hasContent = rows.slice(count).some(row => Array.from(row.querySelectorAll('input,textarea')).some(field => field.value.trim()));
+            if (hasContent && !window.confirm('Giảm số ngày sẽ bỏ nội dung các ngày cuối khỏi biểu mẫu. Tiếp tục?')) return;
+            rows.slice(count).forEach(row => row.remove());
+        }
+        for (let index = rows.length; index < count; index++) {
+            days.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__INDEX__', String(index)).replaceAll('__DAY__', String(index + 1)));
+        }
+        syncRequired();
+        const last = days.querySelector('[data-tour-day]:last-child input');
+        if (last) last.focus();
+    });
+    syncRequired();
+    const select = editor.querySelector('[data-tour-image-select]');
+    const file = editor.querySelector('[data-tour-image-file]');
+    const preview = editor.querySelector('[data-tour-image-preview]');
+    let objectUrl = '';
+    const updatePreview = () => {
+        if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = ''; }
+        const image = file.files[0];
+        if (image && ['image/jpeg', 'image/png', 'image/webp'].includes(image.type)) {
+            objectUrl = URL.createObjectURL(image);
+            preview.src = objectUrl;
+        } else preview.src = '../public/' + (select.value || 'assets/images/placeholder.svg');
+    };
+    select.addEventListener('change', updatePreview);
+    file.addEventListener('change', updatePreview);
+    window.addEventListener('pagehide', () => { if (objectUrl) URL.revokeObjectURL(objectUrl); });
+});
+
+/* Ảnh danh mục lấy từ các lựa chọn do máy chủ cung cấp. */
+document.addEventListener('DOMContentLoaded', () => {
+    const select = document.querySelector('[data-category-image]');
+    const preview = document.querySelector('[data-category-preview]');
+    if (!select || !preview) return;
+    select.addEventListener('change', () => {
+        preview.hidden = select.value === '';
+        if (select.value) preview.src = '../public/' + select.value;
+        else preview.removeAttribute('src');
+    });
+});
+
 /* ===== NAVBAR DÙNG CHUNG ===== */
 
 /* NAVBAR DÙNG CHUNG cho trang chủ và trang danh sách tour. */

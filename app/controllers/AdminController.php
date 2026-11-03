@@ -4,6 +4,8 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../models/tai_khoan.php';
 require_once __DIR__ . '/../models/admin.php';
 require_once __DIR__ . '/../models/don_dat.php';
+require_once __DIR__ . '/DanhMucController.php';
+require_once __DIR__ . '/AdminTourController.php';
 
 
 /** Đăng nhập, kiểm tra quyền và xử lý tài khoản của phiên quản trị. */
@@ -82,7 +84,7 @@ class AdminController
     public function index(string $section = 'dashboard'): void
     {
         header('Cache-Control: no-store');
-        $methods = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders'], true) ? ['GET', 'POST'] : ['GET'];
+        $methods = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours'], true) ? ['GET', 'POST'] : ['GET'];
         if (!in_array($_SERVER['REQUEST_METHOD'], $methods, true)) {
             http_response_code(405);
             header('Allow: ' . implode(', ', $methods));
@@ -106,7 +108,15 @@ class AdminController
         $roleName = $account['vai_tro'] === 'admin' ? 'Quản trị viên' : 'Nhân viên';
         $csrfToken = $_SESSION['csrf_token'];
         $avatarUrl = self::avatarUrl($account['hinh_anh'] ?? null);
-        $adminSection = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders'], true) ? $section : 'dashboard';
+        $adminSection = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours'], true) ? $section : 'dashboard';
+        if ($adminSection === 'tours') {
+            (new AdminTourController())->index($account, $roleName, $csrfToken);
+            return;
+        }
+        if ($adminSection === 'danh_muc') {
+            (new DanhMucController())->index($account, $roleName, $csrfToken);
+            return;
+        }
         if ($adminSection === 'orders') {
             $this->donDat($account, $roleName, $csrfToken);
             return;

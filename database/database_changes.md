@@ -12,6 +12,16 @@ Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đ�
 - Lệnh `CREATE TABLE IF NOT EXISTS` không tự bổ sung/đổi cột của bảng cũ; phải có khối nâng cấp đi kèm khi thay schema.
 - Seed đang giữ dữ liệu đã tồn tại khi nhập lại; không dùng nhập lại seed để ép ghi đè dữ liệu người dùng đã chỉnh. Đối chiếu nhật ký trước khi chạy cập nhật.
 
+## 04/11/2026 — Bổ sung ngày về cho lịch khởi hành
+
+- Bảng `lich_khoi_hanh` chỉ có `ngay_khoi_hanh`, chưa có ngày về nên module lịch khởi hành không lưu được ngày kết thúc chuyến. Bổ sung cột `ngay_ve` DATE, đặt sau `ngay_khoi_hanh`.
+- Khối `BEGIN CAP_NHAT_2026_11_04_NGAY_VE_LICH` … `END CAP_NHAT_2026_11_04_NGAY_VE_LICH` nằm trong `ontrip.sql`, ngay sau `CREATE TABLE lich_khoi_hanh` và trước bảng `tai_khoan`. Khối dùng procedure tạm, chỉ thêm cột khi còn thiếu, rồi điền ngày về cho lịch cũ bằng `ngay_khoi_hanh + (tour.so_ngay − 1)`; chạy lại không ghi đè ngày về đã có.
+- Cột cho phép NULL để không chặn bản ghi không suy ra được ngày về; form quản trị lịch khởi hành bắt buộc nhập ngày về và kiểm tra ngày về không trước ngày đi.
+- Seed 144 lịch mẫu cũng điền ngày về theo công thức trên trước khi chèn, nên cài mới và nhập lại seed cho kết quả giống nhau; `INSERT … SELECT` vẫn chỉ thêm lịch chưa có.
+- Không đổi giá, số chỗ, hạn đặt, trạng thái, đơn đặt hay thanh toán. Đơn cũ giữ nguyên thông tin đã chụp; ngày về chỉ đọc từ `lich_khoi_hanh` khi hiển thị.
+- **Máy mới:** import toàn bộ `ontrip.sql`. **Máy đã import:** chọn database `ontrip`, chạy riêng khối trên trong tab SQL của phpMyAdmin.
+- Đã áp dụng khối vào database `ontrip` trên máy phát triển ngày 04/11/2026 và kiểm tra trang chi tiết tour, form đặt tour cùng trang quản trị lịch khởi hành. Các máy khác cần áp dụng khối tương ứng.
+
 ## 01/11/2026 — Nâng cấp thông tin tour/lịch được chụp lại trong đơn đặt cũ
 
 - Bảng `don_dat_tour` bản cũ thiếu `ma_tour`, `ten_tour`, `ngay_khoi_hanh`, `diem_khoi_hanh`, `dia_chi`. Model đọc `dd.*` nên các View danh sách/chi tiết báo `Undefined array key`; thao tác tạo đơn và tìm kiếm tên tour cũng cần các cột này.

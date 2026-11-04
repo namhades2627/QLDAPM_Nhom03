@@ -1874,3 +1874,28 @@ a, button, input, select { outline-offset: 5px; }
     .admin-category-tabs b { font-size:16px; }
     .admin-category-tabs .icon { width:17px; height:17px; }
 }
+
+/* Lịch khởi hành: số chỗ còn lại, hạn đặt và danh sách khách theo chuyến. */
+.admin-schedule-fields { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.admin-schedules-table { min-width:1140px; }
+.admin-seat-usage { display:grid; gap:6px; justify-items:start; min-width:120px; }
+.admin-seat-usage>strong { color:var(--ink); font-size:12px; font-variant-numeric:tabular-nums; }
+.admin-seat-usage>small { color:var(--muted); font-size:11px; }
+.admin-seat-meter { display:block; width:100%; max-width:124px; height:6px; border-radius:999px; background:#eef1f5; overflow:hidden; }
+.admin-seat-fill { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#4f8f68,#6bb287); }
+.admin-seat-fill.is-full { background:linear-gradient(90deg,#c0824f,#cc7956); }
+.admin-schedule-warning { display:block; margin-top:5px; font-size:11px; color:#a8563f; }
+.admin-schedule-customers-table { min-width:980px; }
+.admin-passenger-list { display:grid; gap:6px; max-width:260px; margin:0; padding:0; list-style:none; }
+.admin-passenger-list li { display:flex; flex-wrap:wrap; align-items:center; gap:6px; color:var(--muted); font-size:11px; line-height:1.6; }
+.admin-passenger-list strong { color:var(--ink); font-weight:500; overflow-wrap:anywhere; }
+.admin-schedule-customers-table tr.is-cancelled-order td { background:#fdfbfa; color:var(--muted); }
+.admin-schedule-customers-table tr.is-cancelled-order strong { color:var(--muted); }
+.admin-schedule-empty { display:grid; justify-items:center; gap:6px; }
+.admin-schedule-empty>p { margin:0; }
+@media (max-width:900px) {
+    .admin-schedule-fields { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:700px) {
+    .admin-schedule-fields { grid-template-columns:minmax(0,1fr); }
+}

@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS `lich_khoi_hanh` (
     `id_lich_khoi_hanh` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     `id_tour` BIGINT UNSIGNED NOT NULL,
     `ngay_khoi_hanh` DATE NOT NULL,
+    `ngay_ve` DATE DEFAULT NULL COMMENT 'Ngày về dự kiến; dữ liệu cũ suy ra từ số ngày của tour',
     `diem_khoi_hanh` VARCHAR(120) NOT NULL,
     `gia_nguoi_lon` DECIMAL(12,0) NOT NULL,
     `gia_tre_em` DECIMAL(12,0) NOT NULL,
@@ -141,6 +142,28 @@ CREATE TABLE IF NOT EXISTS `lich_khoi_hanh` (
     CONSTRAINT `fk_schedules_tour` FOREIGN KEY (`id_tour`)
         REFERENCES `tour` (`id_tour`) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- BEGIN CAP_NHAT_2026_11_04_NGAY_VE_LICH
+-- Lịch khởi hành bổ sung ngày về. Bảng cũ chưa có cột này nên suy ra từ số ngày của tour.
+-- Cột cho phép NULL để không chặn bản ghi không xác định được tour; form quản trị vẫn bắt buộc nhập.
+DROP PROCEDURE IF EXISTS `_ontrip_cap_nhat_ngay_ve_lich`;
+DELIMITER $$
+CREATE PROCEDURE `_ontrip_cap_nhat_ngay_ve_lich`()
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS
+                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lich_khoi_hanh' AND COLUMN_NAME = 'ngay_ve') THEN
+        ALTER TABLE `lich_khoi_hanh` ADD COLUMN `ngay_ve` DATE DEFAULT NULL
+            COMMENT 'Ngày về dự kiến; dữ liệu cũ suy ra từ số ngày của tour' AFTER `ngay_khoi_hanh`;
+    END IF;
+    UPDATE `lich_khoi_hanh` l
+    JOIN `tour` t ON t.id_tour = l.id_tour
+    SET l.ngay_ve = DATE_ADD(l.ngay_khoi_hanh, INTERVAL GREATEST(t.so_ngay - 1, 0) DAY)
+    WHERE l.ngay_ve IS NULL OR l.ngay_ve < l.ngay_khoi_hanh;
+END$$
+DELIMITER ;
+CALL `_ontrip_cap_nhat_ngay_ve_lich`();
+DROP PROCEDURE `_ontrip_cap_nhat_ngay_ve_lich`;
+-- END CAP_NHAT_2026_11_04_NGAY_VE_LICH
 
 -- Tài khoản: email dùng đăng nhập; xác nhận mật khẩu chỉ dùng kiểm tra trên form.
 -- Đăng ký công khai mặc định là khách hàng; không nhận vai trò admin/nhân viên từ form.
@@ -1027,9 +1050,15 @@ INSERT INTO du_lieu_lich_khoi_hanh (id_tour, ngay_khoi_hanh, diem_khoi_hanh, gia
     ((SELECT id_tour FROM tour WHERE ma_tour = 'us08'), '2027-01-30', 'TP. Hồ Chí Minh', 69990000, 48993000, 25, '2027-01-09 17:00:00', 'open'),
     ((SELECT id_tour FROM tour WHERE ma_tour = 'us08'), '2027-03-06', 'TP. Hồ Chí Minh', 69990000, 48993000, 25, '2027-02-13 17:00:00', 'open');
 
+-- Ngày về mặc định = ngày đi + (số ngày của tour − 1); quản trị viên có thể sửa lại sau.
+UPDATE du_lieu_lich_khoi_hanh l
+JOIN tour t ON t.id_tour = l.id_tour
+SET l.ngay_ve = DATE_ADD(l.ngay_khoi_hanh, INTERVAL GREATEST(t.so_ngay - 1, 0) DAY)
+WHERE l.ngay_ve IS NULL;
+
 -- Chỉ thêm lịch chưa có; giữ nguyên giá và sức chứa đã chỉnh sửa.
-INSERT INTO lich_khoi_hanh (id_tour, ngay_khoi_hanh, diem_khoi_hanh, gia_nguoi_lon, gia_tre_em, so_cho, han_dat, trang_thai)
-SELECT moi.id_tour, moi.ngay_khoi_hanh, moi.diem_khoi_hanh, moi.gia_nguoi_lon, moi.gia_tre_em, moi.so_cho, moi.han_dat, moi.trang_thai
+INSERT INTO lich_khoi_hanh (id_tour, ngay_khoi_hanh, ngay_ve, diem_khoi_hanh, gia_nguoi_lon, gia_tre_em, so_cho, han_dat, trang_thai)
+SELECT moi.id_tour, moi.ngay_khoi_hanh, moi.ngay_ve, moi.diem_khoi_hanh, moi.gia_nguoi_lon, moi.gia_tre_em, moi.so_cho, moi.han_dat, moi.trang_thai
 FROM du_lieu_lich_khoi_hanh AS moi
 WHERE NOT EXISTS (
     SELECT 1 FROM lich_khoi_hanh AS cu

@@ -609,6 +609,80 @@ class ThoiTietModel
         }
         return "Thời tiết tại $location rất thuận lợi ({$tempMin}°C - {$tempMax}°C), khô ráo, tuyệt vời cho các hoạt động tham quan ngoài trời.";
     }
+
+    /**
+     * Sinh lời khuyên chuẩn bị chung cho toàn bộ chuyến đi (nói chung 1 lần cho cả tour)
+     *
+     * @param array<int, array<string, mixed>> $itineraryWeather
+     * @param array<string, mixed> $tour
+     * @return array{weather_summary: string, clothing: string, personal_items: string}
+     */
+    public static function getGeneralPreparationAdvice(array $itineraryWeather, array $tour = []): array
+    {
+        $minTemp = 20;
+        $maxTemp = 30;
+        $maxRain = 0;
+        $hasRain = false;
+        $hasCold = false;
+        $hasHot = false;
+
+        if (!empty($itineraryWeather)) {
+            $tempsMin = array_column($itineraryWeather, 'temp_min');
+            $tempsMax = array_column($itineraryWeather, 'temp_max');
+            $rains = array_column($itineraryWeather, 'rain');
+
+            $minTemp = !empty($tempsMin) ? min($tempsMin) : 20;
+            $maxTemp = !empty($tempsMax) ? max($tempsMax) : 30;
+            $maxRain = !empty($rains) ? max($rains) : 0;
+            $hasRain = $maxRain >= 40;
+            $hasCold = $minTemp <= 16;
+            $hasHot = $maxTemp >= 33;
+        }
+
+        // Tạo tóm tắt thời tiết chung
+        $weatherSummary = "Nhiệt độ dự kiến toàn hành trình dao động từ {$minTemp}°C đến {$maxTemp}°C.";
+        if ($hasCold) {
+            $weatherSummary .= " Có thời điểm trời se lạnh/rét ({$minTemp}°C), quý khách lưu ý giữ ấm cơ thể.";
+        } elseif ($hasHot) {
+            $weatherSummary .= " Buổi trưa trời có thể nắng gắt ({$maxTemp}°C), nên chủ động che chắn và uống đủ nước.";
+        } else {
+            $weatherSummary .= " Thời tiết nhìn chung mát mẻ, thuận lợi cho các hoạt động tham quan ngoài trời.";
+        }
+        if ($hasRain) {
+            $weatherSummary .= " Có ngày dự báo khả năng mưa rải rác (xác suất khoảng {$maxRain}%), nên chuẩn bị sẵn ô dù hoặc áo mưa nhẹ.";
+        }
+
+        // Lời khuyên trang phục
+        $clothingTips = [];
+        $clothingTips[] = "Ưu tiên trang phục thoáng mát, co giãn tốt và thấm hút mồ hôi.";
+        if ($hasCold) {
+            $clothingTips[] = "Cần mang theo áo ấm dày, khăn quàng và áo khoác cản gió.";
+        } elseif ($minTemp <= 22) {
+            $clothingTips[] = "Nên mang thêm áo khoác mỏng hoặc cardigan cho sáng sớm và ban đêm.";
+        }
+
+        $dest = mb_strtolower(($tour['destination'] ?? '') . ' ' . ($tour['name'] ?? ''));
+        if (str_contains($dest, 'biển') || str_contains($dest, 'phú quốc') || str_contains($dest, 'hạ long') || str_contains($dest, 'nha trang') || str_contains($dest, 'đà nẵng') || str_contains($dest, 'vịnh') || str_contains($dest, 'quy nhơn')) {
+            $clothingTips[] = "Đừng quên chuẩn bị đồ bơi, kính râm và dép đi biển.";
+        }
+        $clothingTips[] = "Mang giày thể thao hoặc sandal đế mềm chống trơn trượt để tiện di chuyển suốt chuyến đi.";
+
+        // Lời khuyên vật dụng
+        $personalItems = [];
+        $personalItems[] = "Kem chống nắng, kính râm, mũ rộng vành và bình nước cá nhân.";
+        if ($hasRain) {
+            $personalItems[] = "Ô (dù) gấp gọn, áo mưa tiện lợi hoặc bọc chống nước cho điện thoại.";
+        } else {
+            $personalItems[] = "Ô che nắng gấp gọn hoặc mũ nón.";
+        }
+        $personalItems[] = "Sạc dự phòng, khăn giấy ướt và túi zip bảo quản đồ điện tử.";
+
+        return [
+            'weather_summary' => $weatherSummary,
+            'clothing'        => implode(' ', $clothingTips),
+            'personal_items'  => implode(' ', $personalItems),
+        ];
+    }
 }
 
 class_alias(ThoiTietModel::class, "ThoiTiet");

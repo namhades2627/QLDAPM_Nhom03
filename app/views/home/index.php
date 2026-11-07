@@ -43,11 +43,7 @@ $banners = [
     <meta name="theme-color" content="#df6024">
     <title>OnTrip — Đi một chuyến, thêm một câu chuyện</title>
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="assets/css/style.css?v=20261102">
+    <link rel="stylesheet" href="assets/css/style.css">
     <script src="assets/js/script.js" defer></script>
 </head>
 <body>
@@ -147,7 +143,7 @@ $banners = [
                 <p class="group-offer-tier"><span>Nhóm từ 10 khách</span><strong>Giảm 8%</strong></p>
                 <p class="group-offer-note">Tính cả người lớn và trẻ em. Giảm trên tổng tiền tour của một đơn cùng lịch khởi hành, không cộng dồn ưu đãi.</p>
             </aside>
-            <div class="section-heading"><div><p class="eyebrow">ONTRIP GỢI Ý</p><h2 id="featured-title">Tour nổi bật</h2><p>Những hành trình đáng cân nhắc cho chuyến đi tiếp theo.</p></div><a class="text-link" href="index.php?page=tours&amp;type=domestic">Khám phá các tour <svg class="icon"><use href="#i-arrow"/></svg></a></div>
+            <div class="section-heading"><div><p class="eyebrow">ONTRIP GỢI Ý</p><h2 id="featured-title">Tour nổi bật</h2><p>Những hành trình đáng cân nhắc cho chuyến đi tiếp theo.</p></div><a class="text-link" href="index.php?page=tours&amp;type=all&amp;sort=featured">Xem thêm tour nổi bật <svg class="icon"><use href="#i-arrow"/></svg></a></div>
             <div class="tour-grid">
                 <?php foreach ($featuredTours as $tour): ?>
                     <article class="tour-card">
@@ -158,6 +154,26 @@ $banners = [
                         <div class="tour-body">
                             <p class="tour-place"><?= $escape($tour['destination']) ?></p><h3><?= $escape($tour['name']) ?></h3>
                             <p class="tour-meta"><svg class="icon"><use href="#i-pin"/></svg><?= $tour['origin'] !== '' ? 'Từ ' . $escape($tour['origin']) : 'Chưa có lịch khởi hành' ?></p>
+                            <p class="tour-schedule-meta">
+                                <svg class="icon"><use href="#i-calendar"/></svg>
+                                <span class="tour-schedule-text">
+                                    <?php if (!empty($tour['dates'])): ?>
+                                        <span class="schedule-intro">Khởi hành gần nhất:</span> <strong><?= date('d/m/Y', strtotime($tour['dates'][0])) ?></strong>
+                                        <?php if (count($tour['dates']) > 1): ?>
+                                            <span class="schedule-badges">
+                                                <?php foreach (array_slice($tour['dates'], 1, 2) as $d): ?>
+                                                    <span class="date-pill"><?= date('d/m', strtotime($d)) ?></span>
+                                                <?php endforeach; ?>
+                                                <?php if (count($tour['dates']) > 3): ?>
+                                                    <span class="date-pill-more">+<?= count($tour['dates']) - 3 ?></span>
+                                                <?php endif; ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="schedule-empty">Đang cập nhật lịch</span>
+                                    <?php endif; ?>
+                                </span>
+                            </p>
                             <div class="tour-bottom"><div><span>Giá từ / người lớn</span><p><?= $tour['price'] !== null ? '<strong>' . number_format($tour['price'], 0, ',', '.') . '</strong><span> ₫</span>' : 'Đang cập nhật' ?></p></div><a class="tour-detail" href="index.php?page=tour-detail&amp;type=<?= $escape($tour['type']) ?>&amp;id=<?= $escape($tour['id']) ?>" aria-label="Chi tiết <?= $escape($tour['name']) ?>"><svg class="icon"><use href="#i-arrow"/></svg></a></div>
                         </div>
                     </article>
@@ -177,7 +193,7 @@ $banners = [
                     <h2 id="seasonal-title"><?= $escape($seasonInfo['title'] ?? 'Tour theo mùa') ?></h2>
                     <p><?= $escape($seasonInfo['subtitle'] ?? 'Những điểm đến vào thời khắc rực rỡ nhất trong năm.') ?></p>
                 </div>
-                <a class="text-link" href="index.php?page=tours&amp;type=all">Xem tất cả <svg class="icon"><use href="#i-arrow"/></svg></a>
+                <a class="text-link" href="index.php?page=tours&amp;type=all&amp;sort=seasonal">Xem thêm tour theo mùa <svg class="icon"><use href="#i-arrow"/></svg></a>
             </div>
             <div class="tour-grid">
                 <?php foreach ($seasonalTours as $tour): ?>
@@ -191,6 +207,26 @@ $banners = [
                             <p class="tour-place"><?= $escape($tour['destination']) ?></p>
                             <h3><?= $escape($tour['name']) ?></h3>
                             <p class="tour-meta"><svg class="icon"><use href="#i-pin"/></svg><?= $tour['origin'] !== '' ? 'Từ ' . $escape($tour['origin']) : 'Chưa có lịch khởi hành' ?></p>
+                            <p class="tour-schedule-meta">
+                                <svg class="icon"><use href="#i-calendar"/></svg>
+                                <span class="tour-schedule-text">
+                                    <?php if (!empty($tour['dates'])): ?>
+                                        <span class="schedule-intro">Khởi hành gần nhất:</span> <strong><?= date('d/m/Y', strtotime($tour['dates'][0])) ?></strong>
+                                        <?php if (count($tour['dates']) > 1): ?>
+                                            <span class="schedule-badges">
+                                                <?php foreach (array_slice($tour['dates'], 1, 2) as $d): ?>
+                                                    <span class="date-pill"><?= date('d/m', strtotime($d)) ?></span>
+                                                <?php endforeach; ?>
+                                                <?php if (count($tour['dates']) > 3): ?>
+                                                    <span class="date-pill-more">+<?= count($tour['dates']) - 3 ?></span>
+                                                <?php endif; ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="schedule-empty">Đang cập nhật lịch</span>
+                                    <?php endif; ?>
+                                </span>
+                            </p>
                             <div class="tour-bottom">
                                 <div>
                                     <span>Giá từ / người lớn</span>
@@ -212,11 +248,11 @@ $banners = [
         <div class="container">
             <div class="section-heading">
                 <div>
-                    <p class="eyebrow"> CƠ HỘI ĐẶT TOUR GIÁ TỐT</p>
+                    <p class="eyebrow" style="color:#d9381e;"> CƠ HỘI ĐẶT TOUR GIÁ TỐT</p>
                     <h2 id="promo-title">Tour khuyến mãi hôm nay</h2>
                     <p>Hành trình chất lượng với mức giá ưu đãi đặc biệt dành cho khách đặt sớm trong ngày.</p>
                 </div>
-                <a class="text-link" href="index.php?page=tours&amp;type=all">Xem thêm ưu đãi <svg class="icon"><use href="#i-arrow"/></svg></a>
+                <a class="text-link" href="index.php?page=tours&amp;type=all" style="color:#d9381e;">Xem thêm ưu đãi <svg class="icon"><use href="#i-arrow"/></svg></a>
             </div>
             <div class="tour-grid">
                 <?php foreach ($promoTours as $tour): ?>
@@ -232,6 +268,26 @@ $banners = [
                             <p class="tour-place"><?= $escape($tour['destination']) ?></p>
                             <h3><?= $escape($tour['name']) ?></h3>
                             <p class="tour-meta"><svg class="icon"><use href="#i-pin"/></svg><?= $tour['origin'] !== '' ? 'Từ ' . $escape($tour['origin']) : 'Chưa có lịch khởi hành' ?></p>
+                            <p class="tour-schedule-meta">
+                                <svg class="icon"><use href="#i-calendar"/></svg>
+                                <span class="tour-schedule-text">
+                                    <?php if (!empty($tour['dates'])): ?>
+                                        <span class="schedule-intro">Khởi hành gần nhất:</span> <strong><?= date('d/m/Y', strtotime($tour['dates'][0])) ?></strong>
+                                        <?php if (count($tour['dates']) > 1): ?>
+                                            <span class="schedule-badges">
+                                                <?php foreach (array_slice($tour['dates'], 1, 2) as $d): ?>
+                                                    <span class="date-pill"><?= date('d/m', strtotime($d)) ?></span>
+                                                <?php endforeach; ?>
+                                                <?php if (count($tour['dates']) > 3): ?>
+                                                    <span class="date-pill-more">+<?= count($tour['dates']) - 3 ?></span>
+                                                <?php endif; ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="schedule-empty">Đang cập nhật lịch</span>
+                                    <?php endif; ?>
+                                </span>
+                            </p>
                             <div class="tour-bottom">
                                 <div>
                                     <?php if (!empty($tour['promo']['old_price'])): ?>

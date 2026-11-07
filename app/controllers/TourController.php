@@ -89,6 +89,7 @@ class TourController
         $filters = [
             'q' => $keyword, 'region' => $tourRegion,
             'destination' => $this->queryInteger('destination', 0, 0, PHP_INT_MAX),
+            'days' => $this->queryInteger('days', 0, 0, 30),
             'date' => $date, 'origin' => isset($origins[$origin]) ? $origin : '',
             'price' => in_array($price, ['0-5000000', '5000000-10000000', '10000000-20000000', '20000000-50000000', '50000000-'], true) ? $price : '',
             'needs' => array_values($needs), 'adults' => $adults, 'children' => $children,
@@ -107,6 +108,10 @@ class TourController
         }
         if ($hasGroupSearch) $searchSummary[] = $adults . ' người lớn, ' . $children . ' trẻ em';
         if ($filters['budget'] > 0) $searchSummary[] = 'Ngân sách nhóm: ' . number_format($filters['budget'], 0, ',', '.') . ' ₫ (sau ưu đãi)';
+        if ($filters['days'] > 0) $searchSummary[] = 'Thời lượng: ' . $filters['days'] . ' ngày';
+        foreach ($filters['needs'] as $need) {
+            if (isset($catalogNeeds[$need])) $searchSummary[] = 'Nhu cầu: ' . $catalogNeeds[$need];
+        }
         require __DIR__ . '/../views/tour/index.php';
     }
 

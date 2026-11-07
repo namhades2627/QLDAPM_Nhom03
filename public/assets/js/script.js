@@ -1,5 +1,61 @@
 /* OnTrip — JavaScript chung, trang chủ, danh sách tour và chi tiết tour. */
 
+function parseNaturalTourSearch(query) {
+    let remaining = query.toLocaleLowerCase('vi')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+    const params = new URLSearchParams();
+
+    const guests = remaining.match(/(?:^|\s)(\d{1,2})\s*(?:nguoi|khach|khach hang)\b/);
+    if (guests) {
+        remaining = remaining.replace(guests[0], ' ');
+        params.set('adults', String(Math.max(1, Number(guests[1]))));
+        params.set('children', '0');
+    }
+
+    const days = remaining.match(/(?:^|\s)(\d{1,2})\s*(?:ngay|ng)(?:\s*(\d{1,2})\s*(?:dem|d))?\b/);
+    if (days) {
+        remaining = remaining.replace(days[0], ' ');
+        params.set('days', String(days[1]));
+    }
+
+    const budget = remaining.match(/(?:duoi|toi da|ngan sach(?:\s+duoi)?)\s*(\d+(?:[.,]\d+)?)\s*(trieu|tr|m|cu|dong|d)?\b/);
+    if (budget) {
+        let amount = Number(budget[1].replace(',', '.'));
+        if (['trieu', 'tr', 'm'].includes(budget[2])) amount *= 1000000;
+        else if (budget[2] === 'cu') amount *= 1000000000;
+        else if (!budget[2] && amount < 100000) amount *= 1000000;
+        remaining = remaining.replace(budget[0], ' ');
+        params.set('budget', String(Math.round(amount)));
+    }
+
+    const beach = /\b(bien|bo bien|tam bien)\b/;
+    if (beach.test(remaining)) {
+        remaining = remaining.replace(beach, ' ');
+        params.append('needs[]', 'relaxation');
+    }
+
+    const keyword = remaining.replace(/\s+/g, ' ').trim();
+    if (keyword) params.set('q', keyword);
+    return params;
+}
+
+function createTourSearchUrl(query, form = null) {
+    const params = form ? new URLSearchParams(new FormData(form)) : new URLSearchParams();
+    params.set('page', 'tours');
+    params.set('type', 'all');
+
+    const parsed = parseNaturalTourSearch(query);
+    const parsedNeeds = parsed.getAll('needs[]');
+    parsed.delete('needs[]');
+    const existingNeeds = params.getAll('needs[]');
+    params.delete('needs[]');
+    for (const [name, value] of parsed) params.set(name, value);
+
+    for (const need of new Set([...existingNeeds, ...parsedNeeds])) params.append('needs[]', need);
+    if (!parsed.has('q')) params.delete('q');
+    return new URL(`index.php?${params.toString()}`, window.location.href);
+}
+
 /* ===== NAVBAR DÙNG CHUNG ===== */
 
 /* NAVBAR DÙNG CHUNG cho trang chủ và trang danh sách tour. */
@@ -11,7 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchToggle = document.querySelector('.nav-search-toggle');
     const searchPanel = document.querySelector('.nav-search-panel');
     const searchInput = document.querySelector('#navbar-search-input');
-
     // Ô tìm kiếm navbar: mở và đưa con trỏ vào ô nhập.
     function closeSearch(restoreFocus = false) {
         searchPanel.hidden = true;
@@ -33,9 +88,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     searchPanel.addEventListener('submit', (event) => {
-        // Chỉ là giao diện; chưa gửi từ khóa hoặc chuyển sang trang kết quả.
         event.preventDefault();
-        searchInput.focus();
+        window.location.assign(createTourSearchUrl(searchInput.value).href);
     });
     document.querySelector('.nav-search').addEventListener('focusout', (event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) closeSearch();
@@ -105,7 +159,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ===== TRANG CHỦ ===== */
 
-/* Chỉ xử lý giao diện. Chưa có tìm tour, đăng nhập hoặc kết nối dữ liệu. */
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('.tour-search');
+    if (!form) return;
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        window.location.assign(createTourSearchUrl(form.elements.q.value, form).href);
+    });
+});
+
+/* Hiệu ứng trang chủ; gửi tìm kiếm được xử lý riêng ở trên. */
 document.addEventListener('DOMContentLoaded', () => {
     if (!document.querySelector('.hero')) return;
     // 1. BANNER: đổi sau 7 giây; thao tác tay sẽ đặt lại thời gian chờ.
@@ -279,6 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return {
             region: form.elements.region.value,
             destination: Number(form.elements.destination.value),
+            days: Number(form.elements.days?.value || 0),
             budget: budget,
             adults: adults,
             children: children,
@@ -298,6 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = card.dataset;
         if (criteria.region && data.region !== criteria.region) return false;
         if (criteria.destination && Number(data.destinationId) !== criteria.destination) return false;
+        if (criteria.days && Number(data.days) !== criteria.days) return false;
         if (criteria.keyword && !normalize(`${data.name} ${data.destination}`).includes(criteria.keyword)) return false;
         // Ngày, nơi khởi hành và mức giá phải cùng thuộc một lịch phù hợp.
         const schedules = schedulesByCard.get(card).filter(schedule => {
@@ -443,7 +508,10 @@ document.addEventListener('DOMContentLoaded', () => {
         form.elements.destination.value = '0';
         applyFilters(event);
     });
-    document.querySelector('.catalog-quick-search').addEventListener('submit', applyFilters);
+    document.querySelector('.catalog-quick-search').addEventListener('submit', (event) => {
+        event.preventDefault();
+        window.location.assign(createTourSearchUrl(keywordInput.value, form).href);
+    });
     keywordInput.addEventListener('search', (event) => {
         if (keywordInput.value === '') applyFilters(event);
     });
@@ -482,6 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.elements.destination.value = '0';
         form.elements.origin.value = '';
         form.elements.date.value = '';
+        if (form.elements.days) form.elements.days.value = '0';
         form.elements.price.value = '';
         needsInputs.forEach(input => { input.checked = false; });
         if (form.elements.adults) form.elements.adults.value = '1';

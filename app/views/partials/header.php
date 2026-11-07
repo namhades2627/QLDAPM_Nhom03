@@ -48,13 +48,14 @@ $isHomePage = ($page ?? 'home') === 'home';
             <a class="nav-link" href="#lien-he">Liên hệ</a>
         </nav>
         <div class="nav-actions">
-            <!-- Ô tìm kiếm nhanh trên navbar; hiện chưa xử lý tìm dữ liệu tour. -->
             <div class="nav-search">
                 <button class="icon-button nav-search-toggle" type="button" aria-label="Mở ô tìm tour" aria-expanded="false" aria-controls="navbar-search">
                     <svg class="icon"><use href="#i-search"/></svg>
                 </button>
-                <form id="navbar-search" class="nav-search-panel" role="search" aria-label="Tìm tour trên navbar" hidden>
-                    <input id="navbar-search-input" type="search" name="q" placeholder="Tìm tour..." aria-label="Tìm tour" autocomplete="off">
+                <form id="navbar-search" class="nav-search-panel" action="index.php" method="get" role="search" aria-label="Tìm tour trên navbar" hidden>
+                    <input type="hidden" name="page" value="tours">
+                    <input type="hidden" name="type" value="all">
+                    <input id="navbar-search-input" type="search" name="q" placeholder="Nhập yêu cầu tìm tour..." aria-label="Mô tả chuyến đi bạn muốn tìm" autocomplete="off">
                     <button class="icon-button nav-search-submit" type="submit" aria-label="Tìm tour">
                         <svg class="icon"><use href="#i-search"/></svg>
                     </button>

@@ -162,6 +162,7 @@ class TourModel
         return array_values(array_filter($tours, function (array $tour) use ($filters, $keyword): bool {
             if ($filters['region'] !== '' && $tour['region'] !== $filters['region']) return false;
             if ($filters['destination'] > 0 && (int) $tour['destination_id'] !== $filters['destination']) return false;
+            if ($filters['days'] > 0 && (int) $tour['days'] !== $filters['days']) return false;
             if ($keyword !== '' && strpos($this->normalizeSearch($tour['name'] . ' ' . $tour['destination']), $keyword) === false) return false;
             if ($filters['needs'] && !array_intersect($filters['needs'], $tour['needs'])) return false;
             $requiresSchedule = $filters['destination'] > 0 || $filters['group_search'] || $filters['date'] !== '' || $filters['origin'] !== '' || $filters['price'] !== '' || $filters['budget'] > 0;

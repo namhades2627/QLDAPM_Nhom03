@@ -53,7 +53,7 @@ $visibleCodes = array_column(array_slice($matchedTours, 0, $pageSize), 'id');
                 </div>
                 <form class="catalog-quick-search" role="search" aria-label="Tìm nhanh trong danh sách tour">
                     <label class="catalog-sr-only" for="catalog-keyword">Tên tour hoặc điểm đến</label>
-                    <input id="catalog-keyword" type="search" placeholder="Tìm theo tên tour hoặc điểm đến..." value="<?= $escape($keyword) ?>" autocomplete="off">
+                    <input id="catalog-keyword" type="search" placeholder="vd: 3 ngày, 4 người, đi biển, dưới 25tr" value="<?= $escape($keyword) ?>" autocomplete="off">
                     <button type="submit" aria-label="Tìm nhanh tour"><svg class="icon"><use href="#i-search"/></svg></button>
                 </form>
             </div>
@@ -67,6 +67,7 @@ $visibleCodes = array_column(array_slice($matchedTours, 0, $pageSize), 'id');
             <div class="catalog-filter-heading"><h2 id="catalog-filter-title">Bộ lọc</h2><button type="button" class="catalog-reset" data-catalog-reset>Xóa bộ lọc <span aria-hidden="true">↺</span></button></div>
             <form id="catalog-filters" class="catalog-filter-form">
                 <input type="hidden" name="destination" value="<?= (int) $filters['destination'] ?>">
+                <input type="hidden" name="days" value="<?= (int) $filters['days'] ?>">
                 <?php if ($hasGroupSearch): ?>
                 <input type="hidden" name="adults" value="<?= (int) $filters['adults'] ?>">
                 <input type="hidden" name="children" value="<?= (int) $filters['children'] ?>">

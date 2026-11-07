@@ -12,6 +12,36 @@ Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đ�
 - Lệnh `CREATE TABLE IF NOT EXISTS` không tự bổ sung/đổi cột của bảng cũ; phải có khối nâng cấp đi kèm khi thay schema.
 - Seed đang giữ dữ liệu đã tồn tại khi nhập lại; không dùng nhập lại seed để ép ghi đè dữ liệu người dùng đã chỉnh. Đối chiếu nhật ký trước khi chạy cập nhật.
 
+## 04/11/2026 — Bổ sung ngày về cho lịch khởi hành
+
+- Bảng `lich_khoi_hanh` chỉ có `ngay_khoi_hanh`, chưa có ngày về nên module lịch khởi hành không lưu được ngày kết thúc chuyến. Bổ sung cột `ngay_ve` DATE, đặt sau `ngay_khoi_hanh`.
+- Khối `BEGIN CAP_NHAT_2026_11_04_NGAY_VE_LICH` … `END CAP_NHAT_2026_11_04_NGAY_VE_LICH` nằm trong `ontrip.sql`, ngay sau `CREATE TABLE lich_khoi_hanh` và trước bảng `tai_khoan`. Khối dùng procedure tạm, chỉ thêm cột khi còn thiếu, rồi điền ngày về cho lịch cũ bằng `ngay_khoi_hanh + (tour.so_ngay − 1)`; chạy lại không ghi đè ngày về đã có.
+- Cột cho phép NULL để không chặn bản ghi không suy ra được ngày về; form quản trị lịch khởi hành bắt buộc nhập ngày về và kiểm tra ngày về không trước ngày đi.
+- Seed 144 lịch mẫu cũng điền ngày về theo công thức trên trước khi chèn, nên cài mới và nhập lại seed cho kết quả giống nhau; `INSERT … SELECT` vẫn chỉ thêm lịch chưa có.
+- Không đổi giá, số chỗ, hạn đặt, trạng thái, đơn đặt hay thanh toán. Đơn cũ giữ nguyên thông tin đã chụp; ngày về chỉ đọc từ `lich_khoi_hanh` khi hiển thị.
+- **Máy mới:** import toàn bộ `ontrip.sql`. **Máy đã import:** chọn database `ontrip`, chạy riêng khối trên trong tab SQL của phpMyAdmin.
+- Đã áp dụng khối vào database `ontrip` trên máy phát triển ngày 04/11/2026 và kiểm tra trang chi tiết tour, form đặt tour cùng trang quản trị lịch khởi hành. Các máy khác cần áp dụng khối tương ứng.
+
+## 01/11/2026 — Nâng cấp thông tin tour/lịch được chụp lại trong đơn đặt cũ
+
+- Bảng `don_dat_tour` bản cũ thiếu `ma_tour`, `ten_tour`, `ngay_khoi_hanh`, `diem_khoi_hanh`, `dia_chi`. Model đọc `dd.*` nên các View danh sách/chi tiết báo `Undefined array key`; thao tác tạo đơn và tìm kiếm tên tour cũng cần các cột này.
+- Khối `BEGIN CAP_NHAT_2026_11_01_THONG_TIN_DON_DAT` … `END CAP_NHAT_2026_11_01_THONG_TIN_DON_DAT` nằm ngay sau `CAP_NHAT_2026_10_31_DON_DAT_TOUR` trong `ontrip.sql`. Khối chỉ bổ sung cột thiếu, điền riêng giá trị NULL từ `lich_khoi_hanh` và `tour`, rồi đặt bốn cột thông tin tour/lịch thành NOT NULL như phần CREATE. `dia_chi` để NULL vì đơn cũ không lưu địa chỉ.
+- Giữ nguyên mã đơn, khách hàng, số khách, giá, tổng tiền, trạng thái, thanh toán và các mốc thời gian. Giá trị chụp lại đã có không bị ghi đè khi chạy lại, kể cả khi tour/lịch hiện tại đã thay đổi. Nếu đơn thiếu thông tin và mất liên kết tour/lịch, khối dừng để đối chiếu, không tự gán dữ liệu giả.
+- **Giới hạn khôi phục:** đơn cũ chưa lưu thông tin tour/lịch chỉ có thể lấy từ dữ liệu hiện tại, không thể xác nhận đó là tên/ngày/điểm đi tại thời điểm đặt. Khối không tính lại tiền đơn cũ.
+- **Máy mới:** import toàn bộ `ontrip.sql`. **Máy đã import:** chọn database `ontrip`, chạy riêng khối trên trong tab SQL của phpMyAdmin; không cần xóa database. Khi vừa pull code mới, kiểm tra toàn bộ các khối nâng cấp chưa áp dụng trong nhật ký thay vì chỉ import lại các lệnh CREATE.
+- Đã kiểm tra trên bản sao database cũ: giữ nguyên tiền/trạng thái/mốc thời gian, thanh toán và người tham gia; điền đủ thông tin thiếu; chạy lại; nâng cấp dở dang; giữ thông tin đơn khi tour/lịch thay đổi; truy vấn danh sách/chi tiết khách hàng, tìm kiếm quản trị và tạo đơn mới. Cài mới cũng chạy thành công. Database thử đã được xóa.
+- Đã sao lưu rồi áp dụng khối này vào database `ontrip` trên máy phát triển ngày 01/11/2026, khôi phục thông tin cho hai đơn cũ. Kiểm tra render danh sách/chi tiết ở quản trị và khách hàng, cùng form đặt tour: không còn warning thiếu khóa hoặc ngày `01/01/1970`. Các máy khác vẫn cần áp dụng khối nâng cấp tương ứng.
+
+## 01/11/2026 — Bổ sung nâng cấp mùa vụ và ưu đãi cho bảng tour cũ
+
+- Nguyên nhân lỗi `#1054 Unknown column 'mua_vu'`: phần CREATE và seed đã dùng ba cột mới, nhưng `CREATE TABLE IF NOT EXISTS` không nâng cấp bảng `tour` đã tồn tại. Database cũ còn thiếu `phan_tram_giam`, `nhan_uu_dai` và hai chỉ mục tương ứng.
+- Khối `BEGIN CAP_NHAT_2026_11_01_MUA_VU_UU_DAI` … `END CAP_NHAT_2026_11_01_MUA_VU_UU_DAI` trong `ontrip.sql`, ngay sau CREATE bảng `tour` và trước seed, bổ sung riêng từng cột/chỉ mục còn thiếu. Khối dùng procedure tạm và xóa procedure sau khi chạy; chạy lại không thêm trùng hoặc ghi đè giá trị hiện có.
+- Cột bổ sung: `mua_vu` ENUM(`tat_ca`, `xuan`, `ha`, `thu`, `dong`) mặc định `tat_ca`; `phan_tram_giam` TINYINT UNSIGNED mặc định `0`; `nhan_uu_dai` VARCHAR(80) nullable mặc định NULL. Chỉ mục: `idx_tours_season_status`, `idx_tours_promo_status`.
+- **Máy mới:** import toàn bộ `ontrip.sql`. **Máy đã import hoặc vừa import bị lỗi:** chọn database `ontrip`, mở tab SQL trong phpMyAdmin và chạy khối trên. Có thể import lại toàn bộ file đã sửa nếu cần tiếp tục các phần seed chưa chạy.
+- Không xóa bảng, tài khoản, tour hoặc đơn đặt. Tour cũ nhận giá trị mặc định cho cột vừa thêm; seed dùng `ON DUPLICATE KEY UPDATE id_tour = id_tour` nên không tự gán mùa vụ/ưu đãi mẫu vào tour đã có. Đơn đặt cũ giữ nguyên giá đã chụp.
+- Chỉ sửa file không cập nhật database đang chạy; các máy thành viên cần áp dụng khối SQL.
+- Đã kiểm tra trên database thử riêng: cài mới (48 tour, 144 lịch, 3 tài khoản mẫu), import lại, tái hiện lỗi 1054 khi thiếu cột, nâng cấp bảng cũ, chạy khối nhiều lần, nâng cấp khi mới có một phần cột/chỉ mục và giữ giá trị đã chỉnh. Database thử đã được xóa; chưa áp dụng khối này vào database `ontrip` đang dùng.
+
 ## 31/10/2026 — Bổ sung ba bảng đặt tour, người tham gia và thanh toán mô phỏng
 
 | Nội dung | Chi tiết |

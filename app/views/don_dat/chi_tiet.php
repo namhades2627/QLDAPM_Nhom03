@@ -31,7 +31,11 @@ $statusNotes = [
     <meta name="description" content="Chi tiết đơn đặt tour trên OnTrip.">
     <title>Chi tiết đơn đặt | OnTrip</title>
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="assets/css/style.css?v=20261102">
     <script src="assets/js/script.js" defer></script>
 </head>
 <body class="booking-page">
@@ -67,15 +71,11 @@ $statusNotes = [
             <div class="order-detail-main">
                 <section class="booking-card">
                     <div class="booking-card-heading"><span class="booking-step" aria-hidden="true">1</span><div><h2>Thông tin chuyến đi</h2><p>Đơn giá được lưu tại thời điểm đặt nên không đổi khi OnTrip cập nhật giá tour.</p></div></div>
-                    <dl class="order-facts">
+                    <dl class="order-facts order-facts-inline">
                         <div><dt>Mã tour</dt><dd><?= $escape($order['ma_tour']) ?></dd></div>
                         <div><dt>Khởi hành</dt><dd><?= date('d/m/Y', strtotime($order['ngay_khoi_hanh'])) ?></dd></div>
                         <div><dt>Điểm khởi hành</dt><dd><?= $escape($order['diem_khoi_hanh']) ?></dd></div>
                         <div><dt>Ngày đặt</dt><dd><?= date('d/m/Y H:i', strtotime($order['tao_luc'])) ?></dd></div>
-                        <div><dt>Số khách</dt><dd><?= (int) $order['so_nguoi_lon'] ?> người lớn, <?= (int) $order['so_tre_em'] ?> trẻ em</dd></div>
-                        <div><dt>Đơn giá người lớn</dt><dd><?= $money($order['gia_nguoi_lon']) ?></dd></div>
-                        <div><dt>Đơn giá trẻ em</dt><dd><?= $money($order['gia_tre_em']) ?></dd></div>
-                        <div><dt>Thanh toán</dt><dd><?= $paid ? 'Đã thanh toán (mô phỏng)' : 'Chưa thanh toán' ?></dd></div>
                     </dl>
                 </section>
 

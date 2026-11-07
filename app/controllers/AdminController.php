@@ -4,6 +4,9 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../models/tai_khoan.php';
 require_once __DIR__ . '/../models/admin.php';
 require_once __DIR__ . '/../models/don_dat.php';
+require_once __DIR__ . '/DanhMucController.php';
+require_once __DIR__ . '/AdminTourController.php';
+require_once __DIR__ . '/LichKhoiHanhController.php';
 
 
 /** Đăng nhập, kiểm tra quyền và xử lý tài khoản của phiên quản trị. */
@@ -82,7 +85,7 @@ class AdminController
     public function index(string $section = 'dashboard'): void
     {
         header('Cache-Control: no-store');
-        $methods = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders'], true) ? ['GET', 'POST'] : ['GET'];
+        $methods = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours', 'lich_khoi_hanh'], true) ? ['GET', 'POST'] : ['GET'];
         if (!in_array($_SERVER['REQUEST_METHOD'], $methods, true)) {
             http_response_code(405);
             header('Allow: ' . implode(', ', $methods));
@@ -106,7 +109,19 @@ class AdminController
         $roleName = $account['vai_tro'] === 'admin' ? 'Quản trị viên' : 'Nhân viên';
         $csrfToken = $_SESSION['csrf_token'];
         $avatarUrl = self::avatarUrl($account['hinh_anh'] ?? null);
-        $adminSection = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders'], true) ? $section : 'dashboard';
+        $adminSection = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours', 'lich_khoi_hanh'], true) ? $section : 'dashboard';
+        if ($adminSection === 'tours') {
+            (new AdminTourController())->index($account, $roleName, $csrfToken);
+            return;
+        }
+        if ($adminSection === 'danh_muc') {
+            (new DanhMucController())->index($account, $roleName, $csrfToken);
+            return;
+        }
+        if ($adminSection === 'lich_khoi_hanh') {
+            (new LichKhoiHanhController())->index($account, $roleName, $csrfToken);
+            return;
+        }
         if ($adminSection === 'orders') {
             $this->donDat($account, $roleName, $csrfToken);
             return;
@@ -509,7 +524,7 @@ class AdminController
 
     private static function isManagedAvatar(?string $path): bool
     {
-        return $path !== null && preg_match('~^uploads/avatars/[a-f0-9]{32}\.(jpg|png|gif|webp)$~D', $path) === 1;
+        return $path !== null && preg_match('~^assets/images/users/[a-f0-9]{32}\.(jpg|png|gif|webp)$~D', $path) === 1;
     }
 
     private static function deleteAvatar(?string $path): void
@@ -541,11 +556,11 @@ class AdminController
         }
         $image = extension_loaded('gd') ? @imagecreatefromstring(file_get_contents($temp)) : null;
         if ($image === false) throw new InvalidArgumentException('Không đọc được ảnh này. Vui lòng chọn ảnh khác.');
-        $directory = __DIR__ . '/../../public/uploads/avatars';
+        $directory = __DIR__ . '/../../public/assets/images/users';
         if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
             throw new RuntimeException('Không tạo được thư mục ảnh đại diện.');
         }
-        $path = 'uploads/avatars/' . bin2hex(random_bytes(16)) . '.' . $types[$mime];
+        $path = 'assets/images/users/' . bin2hex(random_bytes(16)) . '.' . $types[$mime];
         $target = __DIR__ . '/../../public/' . $path;
         try {
             // Có GD thì mã hóa lại; nếu không, ảnh được phục vụ bằng handler tĩnh trong .htaccess.

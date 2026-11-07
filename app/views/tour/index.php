@@ -32,7 +32,11 @@ $visibleCodes = array_column(array_slice($matchedTours, 0, $pageSize), 'id');
     <meta name="description" content="<?= $typeTitle ?> OnTrip — Khám phá hành trình theo điểm đến, ngày khởi hành, mức giá và nhu cầu của bạn.">
     <title><?= $typeTitle ?> | OnTrip — Đi & khám phá</title>
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="assets/css/style.css?v=20261102">
     <script src="assets/js/script.js" defer></script>
 </head>
 <body class="catalog-page">

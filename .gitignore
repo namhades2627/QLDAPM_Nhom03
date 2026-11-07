@@ -18,5 +18,10 @@ desktop.ini
 *.bak
 
 # Ảnh tài khoản sinh ra khi sử dụng, không commit ảnh cá nhân.
-public/uploads/avatars/*
-!public/uploads/avatars/.htaccess
+public/assets/images/users/*
+!public/assets/images/users/.htaccess
+
+# Ảnh tour được tải lên khi vận hành; giữ nguyên bộ ảnh tour demo đã có.
+public/assets/images/tours/tour_*.jpg
+public/assets/images/tours/tour_*.png
+public/assets/images/tours/tour_*.webp

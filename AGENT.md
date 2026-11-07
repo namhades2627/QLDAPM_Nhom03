@@ -1,6 +1,6 @@
 # Hướng dẫn làm việc với dự án OnTrip
 
-Tài liệu bàn giao cho thành viên và AI hỗ trợ phát triển. Cập nhật theo code ngày **31/10/2026**. Đọc tài liệu này trước khi sửa dự án, sau đó kiểm tra lại các tệp thuộc phần việc được giao. Tên tệp hướng dẫn của nhóm là **`AGENT.md`**; khi giao việc cho AI khác, yêu cầu đọc đúng tệp này.
+Tài liệu bàn giao cho thành viên và AI hỗ trợ phát triển. Cập nhật theo code ngày **02/11/2026**. Đọc tài liệu này trước khi sửa dự án, sau đó kiểm tra lại các tệp thuộc phần việc được giao. Tên tệp hướng dẫn của nhóm là **`AGENT.md`**; khi giao việc cho AI khác, yêu cầu đọc đúng tệp này.
 
 ## 1. Nguyên tắc phối hợp nhóm
 
@@ -31,12 +31,22 @@ Phần ảnh đại diện hiện được xử lý trong `AdminController` bằ
 - Mỗi lần đổi tên phải cập nhật đầy đủ `require`/`require_once`, tên lớp/nơi khởi tạo, tham chiếu trong tài liệu và kiểm tra luồng chạy. Không tạo bản sao tên cũ hoặc đổi tên ngoài phạm vi được giao.
 - Hai trang quản lý nhân sự/khách hàng hiện dùng chung `app/views/admin/tai_khoan.php`; không tạo thêm `khach_hang.php` chỉ để có đủ tên khi chưa cần tách giao diện/xử lý. Model đề xuất thông minh `de_xuat_thong_minh.php` đang trống; đổi tên không có nghĩa chức năng đề xuất đã hoạt động.
 
+### Giao diện OnTrip — cập nhật 02/11/2026
+
+- Theo yêu cầu người dùng, đã làm lại lớp trình bày trên bố cục hiện có: giữ thứ tự khu vực, nội dung, ảnh, route, biểu mẫu và nghiệp vụ. Tham khảo nguyên tắc thiết kế có chủ đích; không áp đặt template của dự án khác.
+- Font dùng chung là **Be Vietnam Pro**, tải qua Google Fonts và có `Segoe UI`/sans-serif dự phòng. Màu nhận diện vẫn là cam đất; biến `--orange` là `#c45226`, `--orange-dark` là `#a9441d`. Nền trắng/xám nhạt, sidebar quản trị slate tối. Chỉnh màu, font, viền và kích thước chung tại `:root` của `public/assets/css/style.css`.
+- Các View nạp **Bootstrap CSS 5.3.8 qua CDN trước `style.css`**; chưa dùng Bootstrap JS để giữ nguyên handler hiện có. Giữ CSS tương thích cho `.container`, `.navbar`, `.dropdown-menu`, caret và `[hidden]`; không bỏ các đoạn này khi sửa menu. Không cần npm/build hay thêm cấu trúc thư mục.
+- Thẻ tour, bộ lọc, đăng nhập/đăng ký, chi tiết/thời tiết, đặt tour, đơn khách và quản trị dùng cùng hệ chữ, khoảng cách, focus và trạng thái. CSS `.smart-*` chỉ trình bày View đề xuất sẵn có; không kích hoạt route hoặc bổ sung thuật toán.
+- Khung quản trị dùng backdrop và cơ chế sidebar đang có cho cả dashboard/hồ sơ trên màn hình nhỏ. Giữ `data-*`, ID, `name`, `action`, token CSRF và tất cả handler; thay đổi UI không được kéo theo sửa Controller/Model/database.
+- CSS phiên bản `v=20261102` trong View giúp tải bản giao diện mới sau khi pull. Khi đổi giao diện tiếp, cập nhật đồng bộ phiên bản cho các View; không dùng việc tắt cache làm giải pháp lâu dài.
+
 ## 2. Công nghệ và cách chạy
 
 - Website quản lý tour du lịch **OnTrip**, PHP thuần theo MVC, PDO và MariaDB/MySQL; JavaScript thuần, không dùng framework hay trình build.
 - Môi trường dự án: XAMPP, **PHP 8.2 trở lên**, MariaDB 10.4 trở lên. Chạy website không cần Composer hoặc Node.js; Node chỉ có thể dùng cho kiểm tra JavaScript khi có sẵn.
 - Đặt dự án trong `htdocs/QLDAPM_Nhom03`, bật Apache/MySQL và import **`database/ontrip.sql`** trên máy mới. Database tên **`ontrip`**. Không đổi thành `tripon` hoặc tạo bản SQL khác tên để thay thế tùy ý.
 - URL khách hàng: `http://localhost/QLDAPM_Nhom03/public/`.
+- Từ 02/11/2026, có thể mở `http://localhost/QLDAPM_Nhom03/`: `index.php` ở thư mục gốc chuyển hướng HTTP 302 đến `public/`, thay cho màn hình liệt kê thư mục. Dùng đường dẫn tương đối để vẫn chạy khi đổi tên thư mục dự án; phần điều hướng khách hàng tiếp tục nằm trong `public/index.php`.
 - URL quản trị: `http://localhost/QLDAPM_Nhom03/admin/`. Đây là lối vào đăng nhập riêng cho admin/nhân viên.
 - `config/database.php` cung cấp `getDatabaseConnection()`, tái sử dụng PDO trong một request. Mặc định `127.0.0.1:3306`, `root`, mật khẩu trống; hỗ trợ `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`. Không tự đọc `.env`.
 - Đường dẫn XAMPP trên máy người khác có thể khác; không sao chép đường dẫn tuyệt đối của máy hiện tại vào code. `.vscode/`, `.env`, log và tệp tạm đã được `.gitignore` loại trừ.
@@ -54,14 +64,16 @@ Phần ảnh đại diện hiện được xử lý trong `AdminController` bằ
 | Đăng xuất khách hàng | POST có CSRF, hủy phiên khách hàng và về trang chủ. |
 | Đăng nhập quản trị | Đã có form riêng tại `/admin/`; chỉ admin/nhân viên hoạt động được vào, session riêng. |
 | Bảng điều khiển quản trị | Đã đọc số tour, tour công bố, điểm đến hoạt động, lịch mở sắp đi và năm lịch gần nhất từ database; có thu gọn thanh bên và menu tài khoản. |
-| Menu quản trị | Lịch khởi hành và Danh mục tour hiện là liên kết đến vùng tổng quan trên cùng bảng điều khiển; chưa phải trang CRUD riêng. |
+| Menu quản trị | Quản lý tour và Quản lý danh mục là trang riêng trong DỮ LIỆU ĐIỀU HÀNH. Lịch khởi hành còn là liên kết đến vùng tổng quan trên bảng điều khiển, chưa phải trang CRUD riêng. Không thêm lại mục Danh mục tour thừa bên dưới Lịch khởi hành. |
 | Hồ sơ cá nhân quản trị | `action=profile` hỗ trợ GET/POST multipart: kiểm tra họ tên, điện thoại, email hợp lệ/không trùng, CSRF; cập nhật tài khoản từ ID session. Đã upload/lưu ảnh đại diện thật; không chọn ảnh mới thì giữ ảnh cũ, thay thành công mới xóa ảnh cũ. Đồng bộ thông tin vào session rồi redirect 303. Không đổi vai trò/trạng thái/mật khẩu qua form này. |
 | Đổi mật khẩu quản trị | `action=password` hỗ trợ GET/POST có CSRF, xác thực mật khẩu hiện tại bằng `password_verify()`, mật khẩu mới ít nhất 8 ký tự/tối đa 72 byte, khác mật khẩu hiện tại và xác nhận khớp. Lưu bằng `password_hash()`, đổi session ID/CSRF và redirect 303. Không đưa mật khẩu về HTML hoặc log. |
 | Icon tin nhắn, chuông | Chỉ giao diện, chưa có dữ liệu/xử lý nghiệp vụ. Đăng xuất trong menu tài khoản đã hoạt động. Không tự gắn thêm chức năng ngoài yêu cầu. |
 | Đặt tour, thanh toán, quản lý đơn, doanh thu | **Đã triển khai (31/10/2026).** Khách đăng nhập chọn lịch, nhập liên hệ và người tham gia; máy chủ kiểm tra chỗ còn, tính lại tiền và **chụp giá vào đơn**. Đơn có bốn trạng thái `cho_xac_nhan → da_xac_nhan → hoan_thanh` và `da_huy`. Thanh toán mô phỏng ghi một dòng `thanh_toan` cho mỗi đơn. Quản trị xử lý trạng thái tại `action=orders`. Chưa có cổng thanh toán thật, hoàn tiền, email xác nhận hoặc báo cáo doanh thu theo kỳ. |
 | Quản lý tài khoản | `action=accounts` trong HỆ THỐNG chỉ liệt kê admin/nhân viên. Chỉ admin truy cập: tìm/lọc/phân trang, tạo nhân viên, sửa liên hệ, đổi vai trò admin↔nhân viên, khóa/mở và xóa có xác nhận. Không đặt lại mật khẩu người khác. |
 | Quản lý khách hàng | `action=customers` trong DỮ LIỆU ĐIỀU HÀNH chỉ liệt kê `khach_hang`. Chỉ admin truy cập: tìm theo họ tên/email/điện thoại, lọc trạng thái, phân trang, sửa liên hệ, khóa/mở và xóa có xác nhận; vai trò khách hàng cố định. Khách hàng vẫn tự đăng ký ở website; chưa có lịch sử đơn hoặc chi tiêu. |
-| Quản lý tour/lịch bằng thêm–sửa–xóa | Chưa triển khai. |
+| Quản lý tour | `action=tours` dành cho admin/nhân viên: thống kê, tìm/lọc/phân trang, xem chi tiết, thêm/sửa thông tin/ảnh/nhu cầu/lịch trình từng ngày, nháp/công bố/lưu trữ và xóa có xác nhận. Chặn xóa tour có lịch khởi hành; giữ mã tour, điểm đến/số ngày của tour đã có đơn đặt. Không đổi schema. |
+| Quản lý lịch khởi hành bằng thêm–sửa–xóa | Chưa triển khai; giá bán, sức chứa và lịch mở vẫn đọc dữ liệu hiện có. |
+| Quản lý danh mục | `action=danh_muc` trong DỮ LIỆU ĐIỀU HÀNH, dành cho admin/nhân viên: ba tab Khu vực, Điểm đến, Nhu cầu du lịch. Có tìm/lọc/phân trang, thêm/sửa/xóa có xác nhận và ngừng hoạt động điểm đến/nhu cầu. Không xóa danh mục có dữ liệu liên quan. Dùng schema hiện có, không cần import SQL lại. |
 | Đánh giá tour | Mới có giao diện trạng thái trống, chưa có bảng và chức năng gửi đánh giá. |
 | Google, quên mật khẩu/OTP | Chưa triển khai. |
 | Điều chỉnh lịch trình theo thời tiết/mùa vụ | Là hướng nghiệp vụ dự kiến, chưa có API hoặc xử lý. Chỉ bổ sung khi được giao và đã chốt quy tắc. |
@@ -77,6 +89,7 @@ Giá, lịch trình và lịch đi trong SQL là **dữ liệu demo phục vụ 
 | Trang chủ | `app/controllers/HomeController.php` → `app/views/home/index.php` |
 | Danh sách/chi tiết tour | `app/controllers/TourController.php` → `app/views/tour/index.php`, `detail.php` |
 | Truy vấn tour | `app/models/tour.php`, lớp `TourModel`: tour, vùng, nhu cầu, lịch, điểm đến và tạm tính nhóm cho tìm kiếm |
+| Quản lý nội dung tour | `AdminTourController.php` → `app/views/admin/tour.php`, qua kiểm tra phiên/quyền của `AdminController`. Các phương thức quản trị nằm trong `TourModel`; dùng ba bảng `tour`, `tour_nhu_cau`, `lich_trinh_ngay` trong cùng transaction, không ghi lại đơn hoặc giá lịch khởi hành. |
 | Đặt tour và đơn của tôi | `app/controllers/DonDatController.php` → `app/views/don_dat/dat_tour.php`, `danh_sach.php`, `chi_tiet.php` |
 | Truy vấn đơn đặt | `app/models/don_dat.php`, lớp `DonDatModel`: bảng giá/ưu đãi, chỗ còn, tạo đơn có transaction, thanh toán mô phỏng, trạng thái và truy vấn quản trị. Đây là **nguồn duy nhất** tính tiền; `TourModel::addGroupEstimates()` và View chỉ hiển thị lại kết quả |
 | Tài khoản khách hàng | `app/controllers/TaiKhoanController.php` → `app/views/tai_khoan/layout.php` |
@@ -84,16 +97,19 @@ Giá, lịch trình và lịch đi trong SQL là **dữ liệu demo phục vụ 
 | Quản trị | `app/controllers/AdminController.php` → `app/views/admin/index.php` hoặc `forbidden.php` |
 | Giao diện tài khoản quản trị | `app/views/admin/profile.php`, `password.php`; dùng khung `app/views/admin/partials/header.php`, `footer.php` chung với dashboard. Không sao chép hoặc thay lại toàn bộ khung khi thêm nội dung trang. |
 | Upload ảnh tài khoản | Các hàm ảnh đại diện trong `app/controllers/AdminController.php`: kiểm tra upload thật, MIME/nội dung ảnh, tối đa 5 MB, tối đa 4096 mỗi chiều và 12 triệu pixel; tên ngẫu nhiên do máy chủ cấp. Có GD thì mã hóa lại ảnh; không có GD thì lưu ảnh đã kiểm tra trong thư mục chỉ phục vụ file tĩnh. |
-| Ảnh đại diện đã lưu | `public/uploads/avatars/`, file sinh ra được `.gitignore` loại trừ; giữ `.htaccess` để chặn thực thi script/liệt kê thư mục. `admin/.htaccess` giới hạn upload cho XAMPP/mod_php. Không lưu ảnh cá nhân vào thư mục tour hoặc dùng tên file do người dùng gửi. |
+| Ảnh đại diện đã lưu | Từ 02/11/2026 lưu tại `public/assets/images/users/`, đường dẫn trong `tai_khoan.hinh_anh` có dạng `assets/images/users/<32 ký tự hex>.<đuôi ảnh>`. File sinh ra được `.gitignore` loại trừ; giữ `.htaccess` để chặn thực thi script/liệt kê thư mục. `admin/.htaccess` giới hạn upload cho XAMPP/mod_php. Thư mục `public/uploads/` đã bỏ; trên máy hiện tại chưa có ảnh/đường dẫn ảnh cũ cần chuyển. Không lưu ảnh cá nhân vào thư mục tour hoặc dùng tên file do người dùng gửi. |
 | Cập nhật schema ảnh | `tai_khoan.hinh_anh` là đường dẫn tương đối nullable. Máy mới dùng `ontrip.sql`; máy đã import chạy khối `CAP_NHAT_2026_10_30_HINH_ANH` trong cùng file để thêm/đổi từ tên cũ và giữ dữ liệu. Xem `database/database_changes.md`; không có file SQL nâng cấp riêng. |
 | Số liệu quản trị | `app/models/admin.php`, lớp `AdminModel`: dữ liệu tổng quan chỉ đọc |
 | Quản lý tài khoản/khách hàng | Hai route `accounts` và `customers` đi qua `AdminController::accounts()` và dùng chung `app/views/admin/tai_khoan.php`, với tiêu đề, biểu mẫu, thống kê và URL theo nhóm. `TaiKhoanModel::getManagedAccounts()`, `findManagedAccount()`, `createEmployee()`, `updateManagedAccount()`, `deleteManagedAccount()` xử lý dữ liệu; hai menu chỉ hiện cho admin. |
+| Quản lý danh mục | `AdminController` kiểm tra phiên/quyền rồi chuyển đến `DanhMucController::index()` → `app/views/admin/danh_muc.php`; `app/models/danh_muc.php`, lớp `DanhMucModel`, truy vấn và cập nhật ba bảng danh mục bằng prepared statements/transaction. |
 | Quản lý đơn đặt | Route `orders` đi qua `AdminController::donDat()` → `app/views/admin/don_dat.php`. `DonDatModel::getAdminOrders()`, `getAdminSummary()`, `updateStatus()` xử lý danh sách, thống kê và chuyển trạng thái; admin và nhân viên đều dùng được. |
 | Form dùng chung | `app/views/tai_khoan/layout.php`: hỗ trợ đăng ký/đăng nhập khách hàng và đăng nhập quản trị qua biến cấu hình |
 | Tệp View cũ | `app/views/tai_khoan/login.php`, `register.php` còn trong thư mục nhưng router hiện gọi TaiKhoanController rồi nạp `layout.php`; không thêm xử lý xác thực vào các wrapper này |
 | Navbar/footer khách hàng | `app/views/partials/header.php`, `footer.php`; không dùng làm khung quản trị |
 | Lỗi database khách hàng | `app/views/errors/database.php`; ghi chi tiết lỗi vào log, không đưa exception/SQL ra giao diện |
 | Database/kết nối | `database/ontrip.sql`, `config/database.php` |
+| Nâng cấp đơn đặt cũ (01/11/2026) | Khối `CAP_NHAT_2026_11_01_THONG_TIN_DON_DAT` bổ sung thông tin tour/lịch và địa chỉ còn thiếu trong `don_dat_tour`. Điền thông tin NULL từ tour/lịch hiện tại, giữ nguyên tiền, trạng thái, mốc thời gian và dữ liệu đã chụp; xem giới hạn khôi phục trong `database/database_changes.md`. |
+| Nâng cấp mùa vụ/ưu đãi tour (01/11/2026) | Bảng `tour` cũ cần chạy khối `CAP_NHAT_2026_11_01_MUA_VU_UU_DAI` trong `ontrip.sql` để thêm các cột `mua_vu`, `phan_tram_giam`, `nhan_uu_dai` và hai chỉ mục trước seed. `CREATE TABLE IF NOT EXISTS` không nâng cấp bảng cũ. Khối giữ dữ liệu hiện có và chạy lại được; xem `database/database_changes.md`. |
 | Toàn bộ CSS | **`public/assets/css/style.css`**, chia theo chú thích từng phần |
 | Toàn bộ JavaScript | **`public/assets/js/script.js`**, chia theo chú thích từng phần |
 | Ảnh | `public/assets/images/`, tour tại `images/tours/`, placeholder cục bộ |
@@ -122,7 +138,7 @@ Không tách thêm CSS/JS riêng từng trang. CSS quản trị dùng lớp `.ad
 
 ### Quyền đã có và quyền sẽ triển khai
 
-Hiện admin/nhân viên đều xem được bảng điều khiển; khách hàng bị từ chối đăng nhập quản trị. Quản lý tài khoản và Quản lý khách hàng hiện chỉ admin; các quyền tour/đơn dưới đây sẽ bổ sung khi triển khai module tương ứng:
+Hiện admin/nhân viên đều xem được bảng điều khiển và quản lý danh mục, tour, đơn đặt; khách hàng bị từ chối đăng nhập quản trị. Quản lý tài khoản và Quản lý khách hàng chỉ dành cho admin. Quản lý lịch khởi hành riêng chưa triển khai:
 
 - Admin quản lý toàn hệ thống, gồm tài khoản nhân viên, vai trò và khóa/mở tài khoản.
 - Nhân viên vận hành tour, lịch và xử lý đơn theo chức năng được giao; không được cấp quyền hoặc quản lý tài khoản nhân sự.
@@ -144,6 +160,27 @@ Mật khẩu dùng `password_hash()`/`password_verify()`, SQL dùng prepared sta
 - Danh sách chỉ truy vấn các trường cần hiển thị, không lấy hash mật khẩu. Tìm/lọc/phân trang xử lý phía máy chủ; URL giữ bộ lọc khi chuyển trang/sửa/khóa. Chỉ thêm các khối `.admin-accounts*`, `.admin-managed-*` và handler liên quan trong CSS/JS dùng chung, giữ nguyên các khối module khác.
 - Hai trang Quản lý tài khoản/khách hàng cùng dùng lớp body `admin-accounts-page`; màn hình ≤700px dùng sidebar dạng trượt, mặc định thu gọn, đóng bằng nền phủ hoặc Escape. Các trang quản trị khác giữ hành vi sidebar hiện có.
 - Xóa: nút thùng rác mở vùng xác nhận tên/email; cần tích checkbox `confirm_delete=1` và gửi POST. GET không xóa dữ liệu, xác nhận vẫn dùng được khi tắt JavaScript. `TaiKhoanModel::deleteManagedAccount()` dùng cùng khóa admin/transaction để chặn xóa chính mình, giữ admin hoạt động và đọc lại quyền của người thao tác. Kiểm tra bản ghi liên quan qua các khóa ngoại đã khai báo đến `tai_khoan.id_tai_khoan`, kể cả CASCADE/SET NULL; nếu có dữ liệu thì yêu cầu khóa thay vì xóa. Khi thêm module đơn đặt phải khai báo khóa ngoại tương ứng, không dựa vào quan hệ ngầm. Controller cũng xử lý lỗi FK 1451. Chỉ sau commit mới dọn ảnh đại diện do ứng dụng quản lý và không còn được tài khoản khác dùng. Không đổi schema/seed.
+
+### Quản lý danh mục — bổ sung 02/11/2026
+
+- Vào `admin/index.php?action=danh_muc`; `tab=khu_vuc|diem_den|nhu_cau` chọn nhóm. Admin và nhân viên hoạt động được xem/thêm/sửa/xóa, khách hàng không được truy cập quản trị. Phiên, trạng thái, vai trò và dấu mật khẩu được kiểm tra lại trước mỗi lần ghi trong transaction.
+- Dùng ba bảng sẵn có `khu_vuc_tour`, `diem_den`, `nhu_cau`. Không đổi schema/seed, không cần import SQL lại. Mã khu vực/nhu cầu do người dùng nhập khi tạo (chữ thường không dấu, số, `_` hoặc `-`, bắt đầu bằng chữ, tối đa 32 ký tự); sau khi tạo mã cố định. ID điểm đến do database cấp. Thứ tự khu vực/nhu cầu từ 0 đến 255; khu vực không có cột trạng thái.
+- Khu vực sửa tên/loại tour/thứ tự; khi đã có điểm đến thì giữ cố định loại tour. Điểm đến sửa tên/khu vực/ảnh/trạng thái; khi đã được tour sử dụng thì không chuyển khu vực. Nhu cầu sửa tên/thứ tự/trạng thái. Ngừng hoạt động điểm đến sẽ ẩn các tour thuộc điểm đến khỏi danh sách công khai theo `TourModel`; ngừng hoạt động nhu cầu ẩn nhu cầu khỏi bộ lọc nhưng giữ liên kết với tour.
+- Ảnh điểm đến chọn từ thư viện hiện có ở `public/assets/images/` và `tours/`; kiểm tra đường dẫn bằng danh sách cho phép, không nhận URL tùy ý và không truy cập ảnh tài khoản trong `users/`. Lưu đường dẫn vào `diem_den.duong_dan_anh`, có xem trước trong biểu mẫu. Phần Khám phá trang chủ hiện vẫn chọn mười điểm đến/bộ ảnh riêng trong `HomeController`; không tự mở rộng hoặc đổi bộ ảnh đó khi thêm danh mục.
+- Tìm theo tên/mã, lọc loại tour/khu vực/trạng thái theo từng tab, phân trang 10 dòng phía máy chủ; URL sửa/xóa giữ bộ lọc. Form lỗi giữ thông tin đã nhập và báo lỗi từng trường. Lưu thành công redirect 303, thông báo một lần. CSRF sai trả 403; danh mục không tồn tại khi mở sửa/xóa trả 404.
+- Nút xóa mở vùng xác nhận; GET không ghi dữ liệu. POST xóa cần CSRF và `confirm_delete=1`. Không xóa khu vực có điểm đến, điểm đến có tour hoặc nhu cầu đã liên kết tour; giao diện chỉ giải thích và dẫn sang chỉnh sửa, Model vẫn chặn nếu gửi POST trực tiếp. Không xóa ảnh thư viện vì nhiều bản ghi có thể dùng chung.
+- Dùng khung quản trị chung, CSS giới hạn trong các selector danh mục; JavaScript chỉ hỗ trợ xem trước ảnh. Thêm/sửa/xóa/lọc/phân trang vẫn hoạt động khi tắt JavaScript. Không triển khai quản lý tour, lịch hoặc khuyến mãi trong module này.
+
+### Quản lý tour — bổ sung 02/11/2026
+
+- URL `admin/index.php?action=tours` cho admin/nhân viên hoạt động; `mode=create`, `edit=<id_tour>`, `view=<id_tour>`, `delete=<id_tour>` mở các màn hình tương ứng. Khách hàng không được vào quản trị. Mọi thao tác ghi có CSRF, transaction, kiểm tra lại quyền/trạng thái/dấu mật khẩu của người thao tác và khóa tour/danh mục liên quan. GET chỉ đọc, lưu thành công redirect 303 và thông báo một lần.
+- Danh sách phân trang 10 tour, tìm theo tên/mã/điểm đến, lọc loại tour/điểm đến/trạng thái/nhu cầu. Thống kê tổng/nháp/công bố/lưu trữ độc lập bộ lọc. Hiển thị số lịch, số đơn và ngày mở gần nhất; loại tour lấy theo khu vực của điểm đến, không nhập riêng dễ mâu thuẫn.
+- Mã tour mới 1–20 ký tự (chữ thường không dấu, số, `_`, `-`, bắt đầu bằng chữ) và duy nhất; cố định sau khi tạo. Giới hạn 20 để tương thích cột chụp mã trong đơn đặt hiện có. Tên 5–255 ký tự, giới thiệu tối đa 10.000 ký tự, số ngày 1–255, mùa vụ/trạng thái/nổi bật dùng danh sách giá trị cố định. Nhu cầu mới gắn phải hoạt động; có thể giữ hoặc bỏ nhu cầu cũ đã ngừng hoạt động.
+- Lịch trình có tiêu đề/nội dung theo ngày, văn bản thuần, xuống dòng được giữ và luôn escape khi hiển thị. Nút Áp dụng số ngày thêm/bớt các ngày trong biểu mẫu, chưa ghi database; có POST dự phòng khi tắt JavaScript. Bản nháp/lưu trữ có thể chưa đủ lịch trình; công bố cần điểm đến hoạt động và đủ tiêu đề/nội dung tất cả ngày. Khi một ngày có nội dung thì phải điền cả hai trường. Toàn bộ tour, nhu cầu và lịch trình được lưu nguyên khối; lỗi rollback không lưu dở.
+- Tour đã có đơn đặt (kể cả đã hủy) giữ nguyên điểm đến và số ngày; Model kiểm tra lại khi khóa dòng, không chỉ khóa trường trên giao diện. Sửa tên/giới thiệu/ảnh/nhu cầu/lịch trình hoặc lưu trữ không sửa snapshot tên tour, mã, giá, ngày và điểm đi của đơn cũ. Không tự đổi trạng thái đơn khi lưu trữ tour.
+- Ưu đãi hiển thị giới hạn 0–99%, nhãn tối đa 80 ký tự. Đây là metadata trang chủ hiện có; giá bán vẫn là giá lịch khởi hành, module không áp dụng thêm lần giảm giá hay đổi cách tính tiền. Không nhận 100% vì `HomeController::buildPromoTours()` tính giá so sánh bằng phép chia cho `1 - phần_trăm/100`. Mùa vụ và nổi bật phục vụ các truy vấn công khai đang có; không đổi thuật toán tuyển chọn của trang chủ.
+- Ảnh chọn từ thư viện hoặc tải JPG/PNG/WEBP thật, tối đa 5 MB, 4096 mỗi chiều và 12 triệu pixel. Kiểm tra upload/MIME/kích thước; có GD thì mã hóa lại. Lưu tại `public/assets/images/tours/tour_<32 hex>.<jpg|png|webp>`; không tạo thư mục uploads/services. `.htaccess` tại thư mục ảnh chặn thực thi/liệt kê; `.gitignore` chỉ loại ảnh runtime có tiền tố `tour_`, giữ bộ ảnh demo. Ảnh runtime/database của mỗi máy cần được sao lưu/đồng bộ riêng khi chuyển môi trường. Lỗi lưu sẽ dọn ảnh mới của request; ảnh thư viện đã lưu thành công được giữ vì điểm đến/tour khác có thể dùng chung.
+- Chỉ xóa tour chưa có lịch khởi hành/đơn đặt, cần POST + `confirm_delete=1`; các dòng lịch trình và liên kết nhu cầu thuộc tour được dọn bằng FK CASCADE. Tour có liên quan được hướng dẫn chuyển Lưu trữ; ảnh thư viện không bị xóa. Đây là quản lý nội dung tour, không gồm CRUD lịch khởi hành hoặc thay đổi schema/seed, không cần import SQL lại.
 
 ### Đặt tour, thanh toán mô phỏng và xử lý đơn — bổ sung 31/10/2026
 

@@ -31,7 +31,11 @@ $authTitle = $isAdminLogin ? 'Đăng nhập quản trị' : ($isRegister ? 'Đă
     <meta name="description" content="<?= $isRegister ? 'Đăng ký tài khoản' : 'Đăng nhập' ?> OnTrip để bắt đầu hành trình của bạn.">
     <title><?= $authTitle ?> | OnTrip</title>
     <link rel="icon" type="image/svg+xml" href="<?= $escape($authAssetPrefix) ?>assets/images/favicon.svg">
-    <link rel="stylesheet" href="<?= $escape($authAssetPrefix) ?>assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="<?= $escape($authAssetPrefix) ?>assets/css/style.css?v=20261102">
     <script src="<?= $escape($authAssetPrefix) ?>assets/js/script.js" defer></script>
 </head>
 <body class="auth-page<?= $isAdminLogin ? ' admin-login-page' : '' ?>">

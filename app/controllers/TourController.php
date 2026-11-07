@@ -51,6 +51,8 @@ class TourController
         $requestedRegion = $this->queryString('region');
         $tourRegion = isset($regionNames[$requestedRegion]) ? $requestedRegion : '';
         $keyword = mb_substr($this->queryString('q'), 0, 255, 'UTF-8');
+        $rawQuery = mb_substr($this->queryString('raw_q'), 0, 255, 'UTF-8');
+        $displayQuery = $rawQuery !== '' ? $rawQuery : $keyword;
         $catalogNeeds = $this->model->getNeeds();
         $tours = $tourType === 'all'
             ? array_merge($this->model->getPublishedTours('domestic'), $this->model->getPublishedTours('international'))
@@ -85,7 +87,56 @@ class TourController
         }
         $origin = $this->queryString('origin');
         $price = $this->queryString('price');
+        $month = $this->queryInteger('month', 0, 1, 12);
+        $season = $this->queryString('season');
+        if (!in_array($season, ['xuan', 'ha', 'thu', 'dong'], true)) {
+            $season = '';
+        }
         $hasGroupSearch = isset($_GET['adults']) || isset($_GET['children']) || $this->queryInteger('budget', 0, 0, 1000000000000) > 0;
+        $requestedSort = $this->queryString('sort');
+        $validSorts = ['default', 'featured', 'seasonal', 'promo', 'price-asc', 'price-desc', 'duration'];
+        $sort = in_array($requestedSort, $validSorts, true) ? $requestedSort : 'default';
+
+        $currentMonth = (int) date('n');
+        $currentSeason = in_array($currentMonth, [9, 10, 11], true) ? 'thu'
+            : (in_array($currentMonth, [12, 1, 2], true) ? 'dong'
+            : (in_array($currentMonth, [3, 4], true) ? 'xuan' : 'ha'));
+
+        if ($sort === 'featured') {
+            usort($tours, static function ($a, $b) {
+                $diff = (int) ($b['featured'] ?? 0) <=> (int) ($a['featured'] ?? 0);
+                return $diff !== 0 ? $diff : strcmp($a['id'], $b['id']);
+            });
+        } elseif ($sort === 'seasonal') {
+            usort($tours, static function ($a, $b) use ($currentSeason) {
+                $aMatch = ($a['season'] ?? '') === $currentSeason ? 2 : (!empty($a['season']) ? 1 : 0);
+                $bMatch = ($b['season'] ?? '') === $currentSeason ? 2 : (!empty($b['season']) ? 1 : 0);
+                $diff = $bMatch <=> $aMatch;
+                return $diff !== 0 ? $diff : strcmp($a['id'], $b['id']);
+            });
+        } elseif ($sort === 'promo') {
+            usort($tours, static function ($a, $b) {
+                $diff = (int) ($b['discount_percent'] ?? 0) <=> (int) ($a['discount_percent'] ?? 0);
+                return $diff !== 0 ? $diff : strcmp($a['id'], $b['id']);
+            });
+        } elseif ($sort === 'price-asc') {
+            usort($tours, static function ($a, $b) {
+                $priceA = $a['price'] ?? PHP_INT_MAX;
+                $priceB = $b['price'] ?? PHP_INT_MAX;
+                return $priceA <=> $priceB;
+            });
+        } elseif ($sort === 'price-desc') {
+            usort($tours, static function ($a, $b) {
+                $priceA = $a['price'] ?? -1;
+                $priceB = $b['price'] ?? -1;
+                return $priceB <=> $priceA;
+            });
+        } elseif ($sort === 'duration') {
+            usort($tours, static function ($a, $b) {
+                return ((int) ($a['days'] ?? 0)) <=> ((int) ($b['days'] ?? 0));
+            });
+        }
+
         $filters = [
             'q' => $keyword, 'region' => $tourRegion,
             'destination' => $this->queryInteger('destination', 0, 0, PHP_INT_MAX),
@@ -95,6 +146,8 @@ class TourController
             'needs' => array_values($needs), 'adults' => $adults, 'children' => $children,
             'group_search' => $hasGroupSearch,
             'budget' => $this->queryInteger('budget', 0, 0, 1000000000000),
+            'month' => $month,
+            'season' => $season,
         ];
         $matchedTours = $this->model->filterTours($tours, $filters);
         $searchSummary = [];
@@ -105,12 +158,37 @@ class TourController
                     break;
                 }
             }
+        } elseif ($tourRegion !== '' && isset($regionNames[$tourRegion])) {
+            $searchSummary[] = $regionNames[$tourRegion];
         }
-        if ($hasGroupSearch) $searchSummary[] = $adults . ' người lớn, ' . $children . ' trẻ em';
-        if ($filters['budget'] > 0) $searchSummary[] = 'Ngân sách nhóm: ' . number_format($filters['budget'], 0, ',', '.') . ' ₫ (sau ưu đãi)';
-        if ($filters['days'] > 0) $searchSummary[] = 'Thời lượng: ' . $filters['days'] . ' ngày';
+        if ($filters['origin'] !== '') {
+            $searchSummary[] = 'Từ ' . $filters['origin'];
+        }
+        if ($filters['days'] > 0) {
+            $searchSummary[] = $filters['days'] . ' ngày';
+        }
+        if ($filters['month'] > 0) {
+            $searchSummary[] = 'Khởi hành: Tháng ' . $filters['month'];
+        }
+        if ($filters['season'] !== '') {
+            $seasonLabels = ['xuan' => 'Mùa Xuân', 'ha' => 'Mùa Hè', 'thu' => 'Mùa Thu', 'dong' => 'Mùa Đông'];
+            if (isset($seasonLabels[$filters['season']])) {
+                $searchSummary[] = $seasonLabels[$filters['season']];
+            }
+        }
         foreach ($filters['needs'] as $need) {
-            if (isset($catalogNeeds[$need])) $searchSummary[] = 'Nhu cầu: ' . $catalogNeeds[$need];
+            if (isset($catalogNeeds[$need])) $searchSummary[] = $catalogNeeds[$need];
+        }
+        $unrecognizedWord = $keyword;
+        $highlightedQuery = '';
+        if ($unrecognizedWord !== '' && $displayQuery !== '') {
+            $escapedWord = preg_quote($unrecognizedWord, '/');
+            $safeDisplay = htmlspecialchars($displayQuery, ENT_QUOTES, 'UTF-8');
+            $highlightedQuery = preg_replace(
+                '/(' . $escapedWord . ')/ui',
+                '<span class="unrecognized-word" title="Từ chưa nhận diện được">$1</span>',
+                $safeDisplay
+            );
         }
         require __DIR__ . '/../views/tour/index.php';
     }
@@ -169,6 +247,8 @@ class TourController
                 );
             }
 
+            $generalAdvice = ThoiTietModel::getGeneralPreparationAdvice($itineraryWeather, $tour);
+
             // Hỗ trợ API AJAX khi khách bấm chọn lịch khởi hành khác trên giao diện
             if ($this->queryString('action') === 'weather') {
                 header('Content-Type: application/json; charset=utf-8');
@@ -178,7 +258,8 @@ class TourController
                     'departure_date' => $startDate,
                     'departure_formatted' => ThoiTietModel::formatVietnameseDate($startDate),
                     'origin' => $selectedSchedule['origin'] ?? '',
-                    'weather' => $itineraryWeather
+                    'weather' => $itineraryWeather,
+                    'general_advice' => $generalAdvice
                 ], JSON_UNESCAPED_UNICODE);
                 return;
             }

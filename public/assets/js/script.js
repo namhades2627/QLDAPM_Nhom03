@@ -1,57 +1,275 @@
 /* OnTrip — JavaScript chung, trang chủ, danh sách tour và chi tiết tour. */
 
-function parseNaturalTourSearch(query) {
-    let remaining = query.toLocaleLowerCase('vi')
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
-    const params = new URLSearchParams();
+const ONTRIP_DESTINATIONS = [
+    { id: 1, name: 'Hà Nội', region: 'north', aliases: ['ha noi', 'hanoi'] },
+    { id: 2, name: 'Hà Giang', region: 'north', aliases: ['ha giang', 'hagiang'] },
+    { id: 3, name: 'Sa Pa', region: 'north', aliases: ['sa pa', 'sapa'] },
+    { id: 4, name: 'Hạ Long', region: 'north', aliases: ['ha long', 'halong'] },
+    { id: 5, name: 'Ninh Bình', region: 'north', aliases: ['ninh binh', 'ninhbinh'] },
+    { id: 6, name: 'Cao Bằng', region: 'north', aliases: ['cao bang', 'caobang'] },
+    { id: 7, name: 'Mộc Châu', region: 'north', aliases: ['moc chau', 'mocchau'] },
+    { id: 8, name: 'Yên Bái', region: 'north', aliases: ['yen bai', 'yenbai'] },
+    { id: 9, name: 'Đà Nẵng', region: 'central', aliases: ['da nang', 'danang'] },
+    { id: 10, name: 'Huế', region: 'central', aliases: ['hue'] },
+    { id: 11, name: 'Hội An', region: 'central', aliases: ['hoi an', 'hoian'] },
+    { id: 12, name: 'Phan Thiết', region: 'central', aliases: ['phan thiet', 'phanthiet', 'mui ne', 'muine'] },
+    { id: 13, name: 'Quy Nhơn', region: 'central', aliases: ['quy nhon', 'quynhon'] },
+    { id: 14, name: 'Phú Yên', region: 'central', aliases: ['phu yen', 'phuyen'] },
+    { id: 15, name: 'Nha Trang', region: 'central', aliases: ['nha trang', 'nhatrang'] },
+    { id: 16, name: 'Đà Lạt', region: 'central', aliases: ['da lat', 'dalat'] },
+    { id: 17, name: 'Phú Quốc', region: 'south', aliases: ['phu quoc', 'phuquoc'] },
+    { id: 18, name: 'Côn Đảo', region: 'south', aliases: ['con dao', 'condao'] },
+    { id: 19, name: 'Cần Thơ', region: 'south', aliases: ['can tho', 'cantho'] },
+    { id: 20, name: 'An Giang', region: 'south', aliases: ['an giang', 'angiang'] },
+    { id: 21, name: 'Đồng Nai', region: 'south', aliases: ['dong nai', 'dongnai'] },
+    { id: 22, name: 'Kiên Giang', region: 'south', aliases: ['kien giang', 'kiengiang'] },
+    { id: 23, name: 'Cà Mau', region: 'south', aliases: ['ca mau', 'camau'] },
+    { id: 24, name: 'Tây Ninh', region: 'south', aliases: ['tay ninh', 'tayninh'] },
+    { id: 25, name: 'Nhật Bản', region: 'asia', aliases: ['nhat ban', 'japan', 'nhat'] },
+    { id: 26, name: 'Hàn Quốc', region: 'asia', aliases: ['han quoc', 'korea', 'han'] },
+    { id: 27, name: 'Thái Lan', region: 'asia', aliases: ['thai lan', 'thailand', 'thai'] },
+    { id: 28, name: 'Singapore', region: 'asia', aliases: ['singapore', 'sing'] },
+    { id: 29, name: 'Malaysia', region: 'asia', aliases: ['malaysia', 'malay'] },
+    { id: 30, name: 'Đài Loan', region: 'asia', aliases: ['dai loan', 'taiwan'] },
+    { id: 31, name: 'Trung Quốc', region: 'asia', aliases: ['trung quoc', 'china'] },
+    { id: 32, name: 'Indonesia', region: 'asia', aliases: ['indonesia', 'bali'] },
+    { id: 33, name: 'Anh', region: 'europe', aliases: ['anh', 'nuoc anh', 'uk'] },
+    { id: 34, name: 'Thụy Sĩ', region: 'europe', aliases: ['thuy si', 'thuy sy', 'switzerland'] },
+    { id: 35, name: 'Ý', region: 'europe', aliases: ['y', 'nuoc y', 'italia', 'italy'] },
+    { id: 36, name: 'Đức', region: 'europe', aliases: ['duc', 'nuoc duc', 'germany'] },
+    { id: 37, name: 'Thổ Nhĩ Kỳ', region: 'europe', aliases: ['tho nhi ky', 'turkey'] },
+    { id: 38, name: 'Hà Lan', region: 'europe', aliases: ['ha lan', 'netherlands'] },
+    { id: 39, name: 'Pháp', region: 'europe', aliases: ['phap', 'nuoc phap', 'france'] },
+    { id: 40, name: 'Nga', region: 'europe', aliases: ['nga', 'nuoc nga', 'russia'] },
+    { id: 41, name: 'Mỹ', region: 'americas-oceania', aliases: ['my', 'hoa ky', 'usa'] },
+    { id: 42, name: 'Úc', region: 'americas-oceania', aliases: ['uc', 'australia'] },
+    { id: 43, name: 'Canada', region: 'americas-oceania', aliases: ['canada'] },
+    { id: 44, name: 'Brazil', region: 'americas-oceania', aliases: ['brazil'] }
+];
 
-    const guests = remaining.match(/(?:^|\s)(\d{1,2})\s*(?:nguoi|khach|khach hang)\b/);
-    if (guests) {
-        remaining = remaining.replace(guests[0], ' ');
-        params.set('adults', String(Math.max(1, Number(guests[1]))));
+const ONTRIP_REGIONS = [
+    { key: 'north', name: 'Miền Bắc', aliases: ['mien bac', 'bac'] },
+    { key: 'central', name: 'Miền Trung', aliases: ['mien trung', 'trung'] },
+    { key: 'south', name: 'Miền Nam', aliases: ['mien nam', 'nam'] },
+    { key: 'asia', name: 'Châu Á', aliases: ['chau a'] },
+    { key: 'europe', name: 'Châu Âu', aliases: ['chau au'] },
+    { key: 'americas-oceania', name: 'Châu Mỹ – Châu Úc', aliases: ['chau my', 'chau uc', 'chau my chau uc'] }
+];
+
+function normalizeVietnameseSearch(text) {
+    return String(text || '').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[đĐ]/g, 'd')
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+/**
+ * Phân tích câu lệnh tìm kiếm ngôn ngữ tự nhiên thành JSON chuẩn và URLSearchParams.
+ */
+function parseNaturalTourSearch(query) {
+    let norm = ' ' + normalizeVietnameseSearch(query) + ' ';
+    const params = new URLSearchParams();
+    const json = {
+        diem_den: null,
+        diem_khoi_hanh: null,
+        ngan_sach_max: null,
+        so_ngay: null,
+        thang: null,
+        mua_vu: null,
+        ma_nhu_cau: []
+    };
+
+    // 1. Số ngày (so_ngay)
+    const daysMatch = norm.match(/\s(\d{1,2})\s*(?:ngay|ng)(?:\s*(\d{1,2})\s*(?:dem|d))?\s/) 
+                   || norm.match(/\s(\d{1,2})[nN](?:(\d{1,2})[dD])?\s/);
+    if (daysMatch) {
+        const d = parseInt(daysMatch[1], 10);
+        json.so_ngay = d;
+        params.set('days', String(d));
+        norm = norm.replace(daysMatch[0], ' ');
+    }
+
+    // 2. Số người (adults & children)
+    const adultsMatch = norm.match(/\s(?:nhom\s+)?(\d{1,2})\s*(?:nguoi|khach|ve|thanh vien)(?:\s+lon)?\s/);
+    if (adultsMatch) {
+        const adults = Math.max(1, parseInt(adultsMatch[1], 10));
+        params.set('adults', String(adults));
+        norm = norm.replace(adultsMatch[0], ' ');
+    }
+    const childrenMatch = norm.match(/\s(\d{1,2})\s*(?:tre em|em be|tre nho)\s/);
+    if (childrenMatch) {
+        const children = parseInt(childrenMatch[1], 10);
+        params.set('children', String(children));
+        norm = norm.replace(childrenMatch[0], ' ');
+    } else if (adultsMatch) {
         params.set('children', '0');
     }
 
-    const days = remaining.match(/(?:^|\s)(\d{1,2})\s*(?:ngay|ng)(?:\s*(\d{1,2})\s*(?:dem|d))?\b/);
-    if (days) {
-        remaining = remaining.replace(days[0], ' ');
-        params.set('days', String(days[1]));
+    // 3. Ngân sách tối đa (ngan_sach_max)
+    const budgetMatch = norm.match(/\s(?:duoi|toi da|ngan sach|tam|khoang|gia duoi|<|<=)\s*(\d+(?:[.,]\d+)?)\s*(trieu|tr|m|cu|k|nghin|ngan|dong|vnd|d)?\s/)
+                     || norm.match(/\s(\d+(?:[.,]\d+)?)\s*(trieu|tr|m|cu)\s/);
+    if (budgetMatch) {
+        let amount = parseFloat(budgetMatch[1].replace(',', '.'));
+        const unit = budgetMatch[2];
+        if (['trieu', 'tr', 'm'].includes(unit)) amount *= 1000000;
+        else if (unit === 'cu') amount *= 1000000000;
+        else if (['k', 'nghin', 'ngan'].includes(unit)) amount *= 1000;
+        else if (!unit && amount < 1000) amount *= 1000000;
+        const finalBudget = Math.round(amount);
+        json.ngan_sach_max = finalBudget;
+        params.set('budget', String(finalBudget));
+        norm = norm.replace(budgetMatch[0], ' ');
     }
 
-    const budget = remaining.match(/(?:duoi|toi da|ngan sach(?:\s+duoi)?)\s*(\d+(?:[.,]\d+)?)\s*(trieu|tr|m|cu|dong|d)?\b/);
-    if (budget) {
-        let amount = Number(budget[1].replace(',', '.'));
-        if (['trieu', 'tr', 'm'].includes(budget[2])) amount *= 1000000;
-        else if (budget[2] === 'cu') amount *= 1000000000;
-        else if (!budget[2] && amount < 100000) amount *= 1000000;
-        remaining = remaining.replace(budget[0], ' ');
-        params.set('budget', String(Math.round(amount)));
+    // 4. Điểm khởi hành (diem_khoi_hanh)
+    const originMatch = norm.match(/\s(?:khoi hanh|xuat phat|di tu|tu)\s+(ha noi|tp\s*ho\s*chi\s*minh|tphcm|tp\s*hcm|sai\s*gon|da\s*nang|can\s*tho)\s/)
+                     || norm.match(/\s(ha noi|tp\s*ho\s*chi\s*minh|tphcm|sai gon)\s/);
+    if (originMatch) {
+        const o = originMatch[1].trim();
+        let detectedOrigin = null;
+        if (['ha noi'].includes(o)) detectedOrigin = 'Hà Nội';
+        else if (['tp ho chi minh', 'tphcm', 'tp hcm', 'sai gon'].includes(o)) detectedOrigin = 'TP. Hồ Chí Minh';
+        else if (['da nang'].includes(o)) detectedOrigin = 'Đà Nẵng';
+        else if (['can tho'].includes(o)) detectedOrigin = 'Cần Thơ';
+        if (detectedOrigin) {
+            json.diem_khoi_hanh = detectedOrigin;
+            params.set('origin', detectedOrigin);
+            norm = norm.replace(originMatch[0], ' ');
+        }
     }
 
-    const beach = /\b(bien|bo bien|tam bien)\b/;
-    if (beach.test(remaining)) {
-        remaining = remaining.replace(beach, ' ');
-        params.append('needs[]', 'relaxation');
+    // 5. Tháng khởi hành (thang: 1-12)
+    const monthMatch = norm.match(/\s(?:thang|t)\s*(\d{1,2})\s/);
+    if (monthMatch) {
+        const m = parseInt(monthMatch[1], 10);
+        if (m >= 1 && m <= 12) {
+            json.thang = m;
+            params.set('month', String(m));
+            norm = norm.replace(monthMatch[0], ' ');
+        }
     }
 
-    const keyword = remaining.replace(/\s+/g, ' ').trim();
-    if (keyword) params.set('q', keyword);
+    // 6. Mùa vụ (mua_vu: xuan | ha | thu | dong)
+    if (/\s(?:mua\s+xuan|xuan|tet)\s/.test(norm)) {
+        json.mua_vu = 'xuan';
+        params.set('season', 'xuan');
+        norm = norm.replace(/\s(?:mua\s+xuan|xuan|tet)\s/, ' ');
+    } else if (/\s(?:mua\s+he|mua\s+ha|he|ha)\s/.test(norm)) {
+        json.mua_vu = 'ha';
+        params.set('season', 'ha');
+        norm = norm.replace(/\s(?:mua\s+he|mua\s+ha|he|ha)\s/, ' ');
+    } else if (/\s(?:mua\s+thu|thu)\s/.test(norm)) {
+        json.mua_vu = 'thu';
+        params.set('season', 'thu');
+        norm = norm.replace(/\s(?:mua\s+thu|thu)\s/, ' ');
+    } else if (/\s(?:mua\s+dong|dong)\s/.test(norm)) {
+        json.mua_vu = 'dong';
+        params.set('season', 'dong');
+        norm = norm.replace(/\s(?:mua\s+dong|dong)\s/, ' ');
+    }
+
+    // 7. Nhu cầu (ma_nhu_cau)
+    const needRules = [
+        { code: 'relaxation', regex: /\s(bien|bai bien|bo bien|tam bien|ngam bien|resort|nghi duong|spa|thu gian|xa stress|nghi ngoi)\s/g },
+        { code: 'nature', regex: /\s(thien nhien|ngam canh|phong canh|nui rung|nui|thac|vinh|hang dong|song nuoc|sinh thai|san may|rung)\s/g },
+        { code: 'culture', regex: /\s(van hoa|lich su|den|chua|mieu|lang tam|pho co|di tich|di san|tam linh|le hoi|bao tang)\s/g },
+        { code: 'food', regex: /\s(am thuc|mon ngon|an uong|dac san|food tour|an vat|buffet|thuong thuc)\s/g },
+        { code: 'entertainment', regex: /\s(vui choi|giai tri|cong vien|theme park|bar|pub|vinwonders|sunworld|pho di bo|cho dem|mua sam|shopping)\s/g },
+        { code: 'adventure', regex: /\s(van dong|leo nui|trekking|mao hiem|tham hiem|phuot|lan bien|lan ngam san ho|cheo sup|kayak|cam trai|camping)\s/g }
+    ];
+    for (const rule of needRules) {
+        if (rule.regex.test(norm)) {
+            if (!json.ma_nhu_cau.includes(rule.code)) {
+                json.ma_nhu_cau.push(rule.code);
+                params.append('needs[]', rule.code);
+            }
+            norm = norm.replace(rule.regex, ' ');
+        }
+    }
+
+    // 8. Điểm đến & Khu vực (diem_den)
+    const foundDestinations = [];
+    for (const dest of ONTRIP_DESTINATIONS) {
+        for (const alias of dest.aliases) {
+            const aliasRegex = new RegExp(`\\s${alias}\\s`, 'g');
+            if (aliasRegex.test(norm)) {
+                foundDestinations.push(dest.name);
+                params.set('destination', String(dest.id));
+                if (!params.has('region')) params.set('region', dest.region);
+                norm = norm.replace(aliasRegex, ' ');
+                break;
+            }
+        }
+    }
+    for (const reg of ONTRIP_REGIONS) {
+        for (const alias of reg.aliases) {
+            const aliasRegex = new RegExp(`\\s${alias}\\s`, 'g');
+            if (aliasRegex.test(norm)) {
+                foundDestinations.push(reg.name);
+                if (!params.has('region')) params.set('region', reg.key);
+                norm = norm.replace(aliasRegex, ' ');
+                break;
+            }
+        }
+    }
+    if (foundDestinations.length > 0) {
+        json.diem_den = [...new Set(foundDestinations)];
+    }
+
+    // 9. Lọc bỏ các từ dừng (stop-words) tiếng Việt
+    const stopWords = [
+        'di', 'cho', 'tour', 'tim', 'du lich', 'chuyen di', 'khoang', 'tam', 
+        'muon', 'can', 'duoi', 'tren', 'gia', 'nguoi', 'khach', 'ngay', 'dem', 
+        've', 'voi', 'o', 'tai', 'nao', 'gi', 'het', 'toi', 'den', 'trong', 'ngoai',
+        'kham pha', 'trai nghiem', 'cho toi', 'muon di'
+    ];
+    for (const sw of stopWords) {
+        norm = norm.replace(new RegExp(`\\s${sw}\\s`, 'g'), ' ');
+    }
+    const cleanKeyword = norm.replace(/\s+/g, ' ').trim();
+    if (cleanKeyword) {
+        params.set('q', cleanKeyword);
+    }
+
+    params._json = json;
     return params;
 }
 
 function createTourSearchUrl(query, form = null) {
-    const params = form ? new URLSearchParams(new FormData(form)) : new URLSearchParams();
+    const rawQuery = String(query || '').trim();
+    const parsed = parseNaturalTourSearch(rawQuery);
+    const params = new URLSearchParams();
     params.set('page', 'tours');
     params.set('type', 'all');
 
-    const parsed = parseNaturalTourSearch(query);
-    const parsedNeeds = parsed.getAll('needs[]');
-    parsed.delete('needs[]');
-    const existingNeeds = params.getAll('needs[]');
-    params.delete('needs[]');
-    for (const [name, value] of parsed) params.set(name, value);
+    if (rawQuery) {
+        params.set('raw_q', rawQuery);
+    }
 
-    for (const need of new Set([...existingNeeds, ...parsedNeeds])) params.append('needs[]', need);
+    for (const [name, value] of parsed) {
+        if (name !== '_json') params.set(name, value);
+    }
+
+    const parsedNeeds = parsed.getAll('needs[]');
+    if (parsedNeeds.length > 0) {
+        params.delete('needs[]');
+        for (const need of parsedNeeds) params.append('needs[]', need);
+    }
+
+    const hasNaturalIntent = parsed.has('days') || parsed.has('budget') || parsed.has('adults') || 
+                             parsedNeeds.length > 0 || parsed.has('destination') || parsed.has('region') || 
+                             parsed.has('origin') || parsed.has('month') || parsed.has('season');
+
+    if (form && !hasNaturalIntent) {
+        for (const [name, value] of new FormData(form)) {
+            if (value && !params.has(name) && name !== 'q') {
+                params.append(name, value);
+            }
+        }
+    }
+
     if (!parsed.has('q')) params.delete('q');
     return new URL(`index.php?${params.toString()}`, window.location.href);
 }
@@ -338,17 +556,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const adults = Math.max(1, parseInt(form.elements.adults?.value, 10) || 1);
         const children = Math.max(0, parseInt(form.elements.children?.value, 10) || 0);
         const budget = Number(form.elements.budget?.value || 0);
+        const month = Number(form.elements.month?.value || 0);
+        const season = String(form.elements.season?.value || '').trim();
         const hasCustomGroup = budget > 0 || adults > 1 || children > 0;
+        let activeKeyword = keywordInput.value.trim();
+        // Nếu ô tìm kiếm chứa câu tự nhiên, bóc tách để chỉ lấy phần từ khóa chưa nhận diện (nếu có)
+        const parsedNatural = parseNaturalTourSearch(activeKeyword);
+        const naturalRemaining = parsedNatural.get('q') || '';
+        if (keywordInput.dataset.displayQuery && activeKeyword === keywordInput.dataset.displayQuery.trim()) {
+            activeKeyword = keywordInput.dataset.realKeyword !== undefined ? keywordInput.dataset.realKeyword : naturalRemaining;
+        } else {
+            activeKeyword = naturalRemaining;
+        }
         return {
             region: form.elements.region.value,
             destination: Number(form.elements.destination.value),
             days: Number(form.elements.days?.value || 0),
             budget: budget,
+            month: month,
+            season: season,
             adults: adults,
             children: children,
             groupSearch: hasCustomGroup || Boolean(form.elements.adults && !form.elements.adults.disabled),
             guests: adults + children,
-            keyword: normalize(keywordInput.value),
+            keyword: normalize(activeKeyword),
             origin: form.elements.origin.value,
             date: form.elements.date.value,
             price: form.elements.price.value,
@@ -363,54 +594,76 @@ document.addEventListener('DOMContentLoaded', () => {
         if (criteria.region && data.region !== criteria.region) return false;
         if (criteria.destination && Number(data.destinationId) !== criteria.destination) return false;
         if (criteria.days && Number(data.days) !== criteria.days) return false;
+        if (criteria.season && data.season && data.season !== criteria.season) return false;
         if (criteria.keyword && !normalize(`${data.name} ${data.destination}`).includes(criteria.keyword)) return false;
+
+        const rate = criteria.guests >= 10 ? 8 : (criteria.guests >= 5 ? 5 : 0);
+        const cardSchedules = schedulesByCard.get(card) || [];
+        cardSchedules.forEach(schedule => {
+            const subtotal = criteria.adults * Number(schedule.adult_price || 0) + criteria.children * Number(schedule.child_price || 0);
+            schedule.group_total = subtotal - Math.round(subtotal * rate / 100);
+        });
+
         // Ngày, nơi khởi hành và mức giá phải cùng thuộc một lịch phù hợp.
-        const schedules = schedulesByCard.get(card).filter(schedule => {
+        const schedules = cardSchedules.filter(schedule => {
             if (criteria.groupSearch && criteria.guests > Number(schedule.capacity)) return false;
             if (criteria.origin && schedule.origin !== criteria.origin) return false;
             if (criteria.date && schedule.date !== criteria.date) return false;
-            if (criteria.budget > 0 && schedule.group_total > criteria.budget) return false;
+            if (criteria.month && (new Date(schedule.date).getMonth() + 1) !== criteria.month) return false;
+            const comparePrice = criteria.groupSearch && typeof schedule.group_total === 'number' ? schedule.group_total : schedule.adult_price;
+            if (criteria.budget > 0 && comparePrice > criteria.budget) return false;
             if (criteria.price) {
                 const [minimum, maximum] = criteria.price.split('-');
                 if (schedule.adult_price < Number(minimum) || (maximum && schedule.adult_price >= Number(maximum))) return false;
             }
             return true;
         });
-        if ((criteria.destination || criteria.groupSearch || criteria.origin || criteria.date || criteria.price || criteria.budget > 0) && schedules.length === 0) return false;
+        if ((criteria.destination || criteria.groupSearch || criteria.origin || criteria.date || criteria.price || criteria.budget > 0 || criteria.month > 0) && schedules.length === 0) return false;
         // Chọn nhiều nhu cầu: tour phù hợp ít nhất một mục được chọn.
         if (criteria.needs.length && !criteria.needs.some((need) => data.needs.split(',').includes(need))) return false;
-        const rate = criteria.guests >= 10 ? 8 : (criteria.guests >= 5 ? 5 : 0);
-        schedules.forEach(schedule => {
-            const subtotal = criteria.adults * schedule.adult_price + criteria.children * schedule.child_price;
-            schedule.group_total = subtotal - Math.round(subtotal * rate / 100);
-        });
 
         const bestSchedule = schedules.length ? schedules[0] : null;
-        data.sortPrice = bestSchedule ? String(criteria.groupSearch ? bestSchedule.group_total : bestSchedule.adult_price) : '';
+        data.sortPrice = bestSchedule ? String(bestSchedule.adult_price) : '';
         const priceElement = card.querySelector('[data-card-price]');
-        const priceLabel = card.querySelector('.card-price-label');
+        const priceLabel = card.querySelector('.catalog-card-bottom span, .card-price-label');
 
         if (priceElement && data.sortPrice !== '') {
             const amount = document.createElement('strong');
-            amount.textContent = new Intl.NumberFormat('vi-VN').format(Number(data.sortPrice));
+            amount.textContent = new Intl.NumberFormat('vi-VN').format(Number(bestSchedule.adult_price));
             const currency = document.createElement('span');
             currency.textContent = ' ₫';
-            if (criteria.groupSearch && rate > 0) {
-                const discountPill = document.createElement('small');
-                discountPill.className = 'card-discount-pill';
-                discountPill.textContent = ` -${rate}%`;
-                priceElement.replaceChildren(amount, currency, discountPill);
-            } else {
-                priceElement.replaceChildren(amount, currency);
-            }
+            priceElement.replaceChildren(amount, currency);
             if (priceLabel) {
-                priceLabel.textContent = criteria.groupSearch ? `Tổng nhóm (${criteria.guests} khách):` : 'Giá từ / người lớn';
+                priceLabel.textContent = 'Giá từ / người lớn';
             }
         } else if (priceElement) {
             priceElement.textContent = 'Đang cập nhật';
         }
         const origins = [...new Set(schedules.map(schedule => schedule.origin))];
         card.querySelector('[data-card-origin]').textContent = origins.length ? `Khởi hành từ ${origins.join(', ')}` : 'Chưa có lịch khởi hành';
+
+        const scheduleDates = [...new Set(schedules.map(s => s.date))];
+        const scheduleContainer = card.querySelector('[data-card-schedules]');
+        if (scheduleContainer) {
+            if (scheduleDates.length > 0) {
+                const firstDate = scheduleDates[0];
+                const [y, m, d] = firstDate.split('-');
+                const formattedFirst = `${d}/${m}/${y}`;
+                let badgesHtml = '';
+                if (scheduleDates.length > 1) {
+                    const others = scheduleDates.slice(1, 3);
+                    const pills = others.map(od => {
+                        const [, om, odD] = od.split('-');
+                        return `<span class="date-pill">${odD}/${om}</span>`;
+                    }).join(' ');
+                    const more = scheduleDates.length > 3 ? `<span class="date-pill-more">+${scheduleDates.length - 3}</span>` : '';
+                    badgesHtml = `<span class="schedule-badges">${pills} ${more}</span>`;
+                }
+                scheduleContainer.innerHTML = `<span class="schedule-intro">Khởi hành gần nhất:</span> <strong>${formattedFirst}</strong> ${badgesHtml}`;
+            } else {
+                scheduleContainer.innerHTML = '<span class="schedule-empty">Đang cập nhật lịch</span>';
+            }
+        }
         return true;
     }
 
@@ -431,15 +684,23 @@ document.addEventListener('DOMContentLoaded', () => {
             let difference = 0;
             if (sortInput.value === 'smart') {
                 difference = Number(b.dataset.smartScore || 0) - Number(a.dataset.smartScore || 0);
-            }
-            if (sortInput.value.startsWith('price-')) {
+            } else if (sortInput.value === 'featured') {
+                difference = Number(b.dataset.featured || 0) - Number(a.dataset.featured || 0);
+            } else if (sortInput.value === 'seasonal') {
+                const aMatch = Number(a.dataset.seasonMatch || 0) * 2 + (a.dataset.season ? 1 : 0);
+                const bMatch = Number(b.dataset.seasonMatch || 0) * 2 + (b.dataset.season ? 1 : 0);
+                difference = bMatch - aMatch;
+            } else if (sortInput.value === 'promo') {
+                difference = Number(b.dataset.discount || 0) - Number(a.dataset.discount || 0);
+            } else if (sortInput.value.startsWith('price-')) {
                 if (a.dataset.sortPrice === '' && b.dataset.sortPrice !== '') return 1;
                 if (b.dataset.sortPrice === '' && a.dataset.sortPrice !== '') return -1;
                 difference = sortInput.value === 'price-asc'
                     ? Number(a.dataset.sortPrice) - Number(b.dataset.sortPrice)
                     : Number(b.dataset.sortPrice) - Number(a.dataset.sortPrice);
+            } else if (sortInput.value === 'duration') {
+                difference = Number(a.dataset.days) - Number(b.dataset.days);
             }
-            if (sortInput.value === 'duration') difference = Number(a.dataset.days) - Number(b.dataset.days);
             return difference || Number(a.dataset.order) - Number(b.dataset.order);
         });
         const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -465,17 +726,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const summary = [];
         const destination = cards.find(card => Number(card.dataset.destinationId) === criteria.destination);
         if (destination) summary.push(destination.dataset.destination);
-        if (form.elements.adults && !form.elements.adults.disabled) {
-            summary.push(`${form.elements.adults.value} người lớn, ${form.elements.children.value} trẻ em`);
-        }
-        if (criteria.budget > 0) summary.push(`Ngân sách nhóm: ${new Intl.NumberFormat('vi-VN').format(criteria.budget)} ₫ (sau ưu đãi)`);
         const summaryElement = document.querySelector('.catalog-search-summary');
-        summaryElement.textContent = summary.join(' · ');
-        summaryElement.hidden = summary.length === 0;
+        if (summaryElement) {
+            summaryElement.textContent = summary.join(' · ');
+            summaryElement.hidden = summary.length === 0 || filtered.length === 0;
+        }
+
+        const smartBadge = document.querySelector('#smart-search-badge');
+        const smartBadgeText = document.querySelector('#smart-badge-text');
+        if (smartBadge && smartBadgeText) {
+            if (filtered.length === 0) {
+                smartBadge.hidden = false;
+                smartBadge.classList.add('is-warning');
+                smartBadgeText.textContent = '⚠️ Không tìm thấy tour phù hợp. Vui lòng kiểm tra lại.';
+            } else {
+                smartBadge.classList.remove('is-warning');
+                if (summary.length > 0) {
+                    smartBadge.hidden = false;
+                    smartBadgeText.textContent = summary.join(' · ');
+                }
+            }
+        }
     }
 
     function searchUrl(type = root.dataset.catalogType) {
         const url = new URL(window.location.href);
+        const existingRawQ = url.searchParams.get('raw_q') || '';
         url.search = '';
         url.searchParams.set('page', 'tours');
         url.searchParams.set('type', type);
@@ -483,7 +759,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (value === '' || ((name === 'destination' || name === 'budget') && Number(value) === 0)) continue;
             url.searchParams.append(name, value);
         }
-        if (keywordInput.value.trim()) url.searchParams.set('q', keywordInput.value.trim());
+        if (sortInput && sortInput.value && sortInput.value !== 'default') {
+            url.searchParams.set('sort', sortInput.value);
+        }
+        if (keywordInput.value.trim()) {
+            url.searchParams.set('raw_q', keywordInput.value.trim());
+        } else if (existingRawQ) {
+            url.searchParams.set('raw_q', existingRawQ);
+        }
         return url;
     }
 
@@ -508,6 +791,25 @@ document.addEventListener('DOMContentLoaded', () => {
         form.elements.destination.value = '0';
         applyFilters(event);
     });
+    const highlightBackdrop = keywordInput.parentElement?.querySelector('.search-highlight-backdrop');
+    function syncHighlight() {
+        if (!highlightBackdrop) return;
+        const unrec = keywordInput.dataset.unrecognized;
+        const val = keywordInput.value;
+        if (!unrec || !val.toLowerCase().includes(unrec.toLowerCase())) {
+            highlightBackdrop.innerHTML = '';
+            return;
+        }
+        const escapedVal = val.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const escapedWord = unrec.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        highlightBackdrop.innerHTML = escapedVal.replace(new RegExp(`(${escapedWord})`, 'gi'), '<span class="unrecognized-word">$1</span>');
+        highlightBackdrop.scrollLeft = keywordInput.scrollLeft;
+    }
+    keywordInput.addEventListener('input', syncHighlight);
+    keywordInput.addEventListener('scroll', () => {
+        if (highlightBackdrop) highlightBackdrop.scrollLeft = keywordInput.scrollLeft;
+    });
+
     document.querySelector('.catalog-quick-search').addEventListener('submit', (event) => {
         event.preventDefault();
         window.location.assign(createTourSearchUrl(keywordInput.value, form).href);
@@ -515,7 +817,17 @@ document.addEventListener('DOMContentLoaded', () => {
     keywordInput.addEventListener('search', (event) => {
         if (keywordInput.value === '') applyFilters(event);
     });
-    sortInput.addEventListener('change', () => { currentPage = 1; renderResults(); });
+    sortInput.addEventListener('change', () => {
+        currentPage = 1;
+        const currentUrl = new URL(window.location.href);
+        if (sortInput.value && sortInput.value !== 'default') {
+            currentUrl.searchParams.set('sort', sortInput.value);
+        } else {
+            currentUrl.searchParams.delete('sort');
+        }
+        window.history.replaceState(null, '', currentUrl.toString());
+        renderResults();
+    });
     pagination.addEventListener('click', (event) => {
         const button = event.target.closest('button[data-page]');
         if (!button || button.disabled) return;
@@ -545,17 +857,25 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-catalog-reset]').forEach((button) => button.addEventListener('click', () => {
         form.reset();
         keywordInput.value = '';
+        keywordInput.dataset.displayQuery = '';
+        keywordInput.dataset.realKeyword = '';
+        keywordInput.dataset.unrecognized = '';
+        if (highlightBackdrop) highlightBackdrop.innerHTML = '';
         sortInput.value = 'default';
         form.elements.region.value = '';
         form.elements.destination.value = '0';
         form.elements.origin.value = '';
         form.elements.date.value = '';
         if (form.elements.days) form.elements.days.value = '0';
+        if (form.elements.month) form.elements.month.value = '0';
+        if (form.elements.season) form.elements.season.value = '';
         form.elements.price.value = '';
         needsInputs.forEach(input => { input.checked = false; });
         if (form.elements.adults) form.elements.adults.value = '1';
         if (form.elements.children) form.elements.children.value = '0';
         if (form.elements.budget) form.elements.budget.value = '';
+        const smartBadge = document.querySelector('#smart-search-badge');
+        if (smartBadge) smartBadge.hidden = true;
         updateCatalogGuestTier();
         currentPage = 1;
         criteria = readCriteria();
@@ -656,22 +976,30 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const locEl = card.querySelector('[data-weather-loc]');
                                 const rainEl = card.querySelector('[data-weather-rain]');
                                 const statusEl = card.querySelector('[data-weather-status]');
-                                const adviceEl = card.querySelector('[data-weather-advice]');
-                                const adviceBox = card.querySelector('[data-weather-advice-box]');
-
                                 if (dateEl) dateEl.textContent = w.date_formatted;
                                 if (locEl) locEl.textContent = w.location;
                                 if (rainEl) rainEl.textContent = `${w.rain}%`;
                                 if (statusEl) statusEl.textContent = w.status;
-                                if (adviceEl) adviceEl.textContent = w.advice;
-                                if (adviceBox) {
-                                    adviceBox.classList.toggle('is-hidden', !w.advice);
-                                }
 
                                 card.classList.add('weather-card-updated');
                                 setTimeout(() => card.classList.remove('weather-card-updated'), 500);
                             }
                         });
+
+                        if (data.general_advice) {
+                            const summaryEl = document.querySelector('[data-general-weather-summary]');
+                            const clothingEl = document.querySelector('[data-prep-clothing]');
+                            const itemsEl = document.querySelector('[data-prep-items]');
+                            if (summaryEl && data.general_advice.weather_summary) {
+                                summaryEl.textContent = data.general_advice.weather_summary;
+                            }
+                            if (clothingEl && data.general_advice.clothing) {
+                                clothingEl.textContent = data.general_advice.clothing;
+                            }
+                            if (itemsEl && data.general_advice.personal_items) {
+                                itemsEl.textContent = data.general_advice.personal_items;
+                            }
+                        }
                     }
                 })
                 .catch(err => {

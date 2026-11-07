@@ -32,12 +32,12 @@ $visibleCodes = array_column(array_slice($matchedTours, 0, $pageSize), 'id');
     <meta name="description" content="<?= $typeTitle ?> OnTrip — Khám phá hành trình theo điểm đến, ngày khởi hành, mức giá và nhu cầu của bạn.">
     <title><?= $typeTitle ?> | OnTrip — Đi & khám phá</title>
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
-    <link rel="stylesheet" href="assets/css/style.css">
-    <script src="assets/js/script.js" defer></script>
+    <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/style.css') ?>">
+    <script src="assets/js/script.js?v=<?= filemtime(__DIR__ . '/../../../public/assets/js/script.js') ?>" defer></script>
 </head>
 <body class="catalog-page">
 <?php require __DIR__ . '/../partials/header.php'; ?>
-<main id="noi-dung" data-catalog-type="<?= $tourType ?>" data-region="<?= $escape($tourRegion) ?>">
+<main id="noi-dung" data-catalog-type="<?= $tourType ?>" data-region="<?= $escape($tourRegion) ?>" data-current-season="<?= $escape($currentSeason ?? '') ?>" data-current-sort="<?= $escape($sort ?? 'default') ?>">
     <!-- 1. TIÊU ĐỀ — breadcrumb và tìm nhanh; chọn loại/vùng trên navbar. -->
     <section class="catalog-intro">
         <div class="container">
@@ -49,11 +49,14 @@ $visibleCodes = array_column(array_slice($matchedTours, 0, $pageSize), 'id');
                 <div>
                     <h1><?= $typeTitle ?><span aria-hidden="true">.</span></h1>
                     <p class="catalog-intro-text"><?= $tourType === 'domestic' ? 'Những miền đất thân quen, những trải nghiệm mới.' : 'Khám phá văn hóa và cảnh sắc qua những hành trình mới.' ?></p>
-                    <p class="catalog-search-summary" <?= $searchSummary ? '' : 'hidden' ?>><?= $escape(implode(' · ', $searchSummary)) ?></p>
+                    <p class="catalog-search-summary" <?= $searchSummary && $initialCount > 0 ? '' : 'hidden' ?>><?= $escape(implode(' · ', $searchSummary)) ?></p>
                 </div>
                 <form class="catalog-quick-search" role="search" aria-label="Tìm nhanh trong danh sách tour">
                     <label class="catalog-sr-only" for="catalog-keyword">Tên tour hoặc điểm đến</label>
-                    <input id="catalog-keyword" type="search" placeholder="vd: 3 ngày, 4 người, đi biển, dưới 25tr" value="<?= $escape($keyword) ?>" autocomplete="off">
+                    <div class="catalog-search-field-wrap">
+                        <div class="search-highlight-backdrop" aria-hidden="true"><?php if ($initialCount === 0 && !empty($unrecognizedWord) && !empty($highlightedQuery)): ?><?= $highlightedQuery ?><?php endif; ?></div>
+                        <input id="catalog-keyword" type="search" placeholder="vd: 3 ngày, 4 người, đi biển, dưới 25tr" value="<?= $escape($displayQuery ?? $keyword) ?>" data-display-query="<?= $escape($displayQuery ?? '') ?>" data-real-keyword="<?= $escape($keyword) ?>" data-unrecognized="<?= $escape($unrecognizedWord ?? '') ?>" autocomplete="off" spellcheck="false">
+                    </div>
                     <button type="submit" aria-label="Tìm nhanh tour"><svg class="icon"><use href="#i-search"/></svg></button>
                 </form>
             </div>
@@ -66,13 +69,15 @@ $visibleCodes = array_column(array_slice($matchedTours, 0, $pageSize), 'id');
         <aside class="catalog-filter-section" aria-labelledby="catalog-filter-title">
             <div class="catalog-filter-heading"><h2 id="catalog-filter-title">Bộ lọc</h2><button type="button" class="catalog-reset" data-catalog-reset>Xóa bộ lọc <span aria-hidden="true">↺</span></button></div>
             <form id="catalog-filters" class="catalog-filter-form">
+                <input type="hidden" name="q" value="<?= $escape($keyword) ?>">
+                <input type="hidden" name="raw_q" value="<?= $escape($rawQuery) ?>">
                 <input type="hidden" name="destination" value="<?= (int) $filters['destination'] ?>">
                 <input type="hidden" name="days" value="<?= (int) $filters['days'] ?>">
-                <?php if ($hasGroupSearch): ?>
                 <input type="hidden" name="adults" value="<?= (int) $filters['adults'] ?>">
                 <input type="hidden" name="children" value="<?= (int) $filters['children'] ?>">
                 <input type="hidden" name="budget" value="<?= (int) $filters['budget'] ?>">
-                <?php endif; ?>
+                <input type="hidden" name="month" value="<?= (int) ($filters['month'] ?? 0) ?>">
+                <input type="hidden" name="season" value="<?= $escape($filters['season'] ?? '') ?>">
                 <label class="catalog-field"><span>ĐIỂM ĐẾN</span>
                     <select name="region"><option value="">Tất cả điểm đến</option>
                         <?php foreach ($destinationRegions as $region => $label): ?>
@@ -110,23 +115,58 @@ $visibleCodes = array_column(array_slice($matchedTours, 0, $pageSize), 'id');
 
         <!-- 3. KẾT QUẢ — mỗi loại 24 tour, 12 tour/trang, 3 cột × 4 hàng. -->
         <section id="catalog-results" aria-labelledby="catalog-results-title">
+            <div id="smart-search-badge" class="smart-search-badge<?= $initialCount === 0 ? ' is-warning' : '' ?>" <?= (empty($searchSummary) && $initialCount > 0) ? 'hidden' : '' ?>>
+                <div class="smart-badge-content">
+                    <span id="smart-badge-text"><?= $initialCount === 0 ? '⚠️ Không tìm thấy tour phù hợp. Vui lòng kiểm tra lại.' : $escape(implode(' · ', $searchSummary)) ?></span>
+                </div>
+                <button type="button" class="smart-badge-clear" data-catalog-reset title="Xóa bộ lọc">&times;</button>
+            </div>
             <div class="catalog-toolbar">
                 <div><h2 id="catalog-results-title">Danh sách tour</h2><p id="catalog-result-description" aria-live="polite"><strong><?= $initialCount ?></strong> tour · Hiển thị <?= min($pageSize, $initialCount) ?> tour</p></div>
-                <label class="catalog-sort"><span>Sắp xếp theo</span><select id="catalog-sort"><option value="default">Mặc định</option><option value="price-asc">Giá tăng dần</option><option value="price-desc">Giá giảm dần</option><option value="duration">Thời lượng ngắn nhất</option></select></label>
+                <label class="catalog-sort"><span>Sắp xếp theo</span><select id="catalog-sort" name="sort"><option value="default" <?= ($sort === '' || $sort === 'default') ? 'selected' : '' ?>>Mặc định</option><option value="featured" <?= $sort === 'featured' ? 'selected' : '' ?>>Tour nổi bật</option><option value="seasonal" <?= $sort === 'seasonal' ? 'selected' : '' ?>>Tour theo mùa</option><option value="promo" <?= $sort === 'promo' ? 'selected' : '' ?>>Tour khuyến mãi</option><option value="price-asc" <?= $sort === 'price-asc' ? 'selected' : '' ?>>Giá tăng dần</option><option value="price-desc" <?= $sort === 'price-desc' ? 'selected' : '' ?>>Giá giảm dần</option><option value="duration" <?= $sort === 'duration' ? 'selected' : '' ?>>Thời lượng ngắn nhất</option></select></label>
             </div>
             <div id="catalog-grid" class="tour-grid catalog-grid">
                 <?php foreach ($tours as $index => $tour):
                     $visible = in_array($tour['id'], $visibleCodes, true);
                 ?>
-                    <article class="tour-card catalog-card" data-name="<?= $escape($tour['name']) ?>" data-destination="<?= $escape($tour['destination']) ?>" data-destination-id="<?= (int) $tour['destination_id'] ?>" data-region="<?= $escape($tour['region']) ?>" data-price="<?= $tour['price'] ?? '' ?>" data-days="<?= $tour['days'] ?>" data-needs="<?= $escape(implode(',', $tour['needs'])) ?>" data-schedules="<?= $escape(json_encode($tour['schedules'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) ?>" data-order="<?= $index ?>" <?= $visible ? '' : 'hidden' ?>>
+                    <article class="tour-card catalog-card" data-name="<?= $escape($tour['name']) ?>" data-destination="<?= $escape($tour['destination']) ?>" data-destination-id="<?= (int) $tour['destination_id'] ?>" data-region="<?= $escape($tour['region']) ?>" data-season="<?= $escape($tour['season'] ?? '') ?>" data-season-match="<?= ($tour['season'] ?? '') === $currentSeason ? '1' : '0' ?>" data-featured="<?= (int) ($tour['featured'] ?? 0) ?>" data-discount="<?= (int) ($tour['discount_percent'] ?? 0) ?>" data-price="<?= $tour['price'] ?? '' ?>" data-days="<?= $tour['days'] ?>" data-needs="<?= $escape(implode(',', $tour['needs'])) ?>" data-schedules="<?= $escape(json_encode($tour['schedules'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) ?>" data-order="<?= $index ?>" <?= $visible ? '' : 'hidden' ?>>
                         <div class="tour-image-wrap">
                             <img src="<?= $escape($tour['image']) ?>" alt="<?= $escape($tour['destination']) ?>" width="600" height="450" loading="lazy">
                             <span class="tour-duration"><svg class="icon"><use href="#i-clock"/></svg><?= $tour['duration'] ?></span>
+                            <?php if (!empty($tour['featured'])): ?>
+                                <span class="home-card-badge badge-featured">⭐ Nổi bật</span>
+                            <?php elseif (!empty($tour['discount_percent'])): ?>
+                                <span class="home-card-badge badge-promo">🔥 Giảm <?= (int) $tour['discount_percent'] ?>%</span>
+                            <?php elseif (!empty($tour['season'])): 
+                                $sBadges = ['xuan' => '🌸 Mùa xuân', 'ha' => '🏖️ Mùa hè', 'thu' => '🍁 Mùa thu', 'dong' => '❄️ Mùa đông'];
+                            ?>
+                                <span class="home-card-badge badge-season"><?= $sBadges[$tour['season']] ?? 'Đúng mùa' ?></span>
+                            <?php endif; ?>
                         </div>
                         <div class="tour-body">
                             <div class="catalog-card-top"><p class="tour-place"><?= $escape($tour['destination']) ?></p></div>
                             <h3><?= $escape($tour['name']) ?></h3>
                             <p class="tour-meta"><svg class="icon"><use href="#i-pin"/></svg><span data-card-origin><?= $tour['origin'] !== '' ? 'Khởi hành từ ' . $escape($tour['origin']) : 'Chưa có lịch khởi hành' ?></span></p>
+                            <p class="tour-schedule-meta">
+                                <svg class="icon"><use href="#i-calendar"/></svg>
+                                <span class="tour-schedule-text" data-card-schedules>
+                                    <?php if (!empty($tour['dates'])): ?>
+                                        <span class="schedule-intro">Khởi hành gần nhất:</span> <strong><?= date('d/m/Y', strtotime($tour['dates'][0])) ?></strong>
+                                        <?php if (count($tour['dates']) > 1): ?>
+                                            <span class="schedule-badges">
+                                                <?php foreach (array_slice($tour['dates'], 1, 2) as $d): ?>
+                                                    <span class="date-pill"><?= date('d/m', strtotime($d)) ?></span>
+                                                <?php endforeach; ?>
+                                                <?php if (count($tour['dates']) > 3): ?>
+                                                    <span class="date-pill-more">+<?= count($tour['dates']) - 3 ?></span>
+                                                <?php endif; ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="schedule-empty">Đang cập nhật lịch</span>
+                                    <?php endif; ?>
+                                </span>
+                            </p>
                             <div class="catalog-card-bottom"><div><span>Giá từ / người lớn</span><p data-card-price><?= $tour['price'] !== null ? '<strong>' . number_format($tour['price'], 0, ',', '.') . '</strong> <span>₫</span>' : 'Đang cập nhật' ?></p></div><a class="catalog-detail" href="index.php?page=tour-detail&amp;type=<?= $escape($tour['type']) ?>&amp;id=<?= $escape($tour['id']) ?>">Xem chi tiết <svg class="icon"><use href="#i-arrow"/></svg></a></div>
                         </div>
                     </article>

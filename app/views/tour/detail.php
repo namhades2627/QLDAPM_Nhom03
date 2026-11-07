@@ -33,8 +33,8 @@ if (!empty($itineraryWeather)) {
     <meta name="description" content="<?= $escape($notFound ? 'Không tìm thấy tour tại OnTrip.' : $tour['name']) ?>">
     <title><?= $escape($notFound ? 'Không tìm thấy tour' : $tour['name']) ?> | OnTrip</title>
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
-    <link rel="stylesheet" href="assets/css/style.css">
-    <script src="assets/js/script.js" defer></script>
+    <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/style.css') ?>">
+    <script src="assets/js/script.js?v=<?= filemtime(__DIR__ . '/../../../public/assets/js/script.js') ?>" defer></script>
 </head>
 <body class="detail-page" data-tour-id="<?= $escape($tour['id'] ?? '') ?>" data-tour-type="<?= $escape($tourType ?? '') ?>">
 <?php require __DIR__ . '/../partials/header.php'; ?>
@@ -103,12 +103,6 @@ if (!empty($itineraryWeather)) {
                                     <div class="weather-card-desc">
                                         <span class="weather-status-text" data-weather-status><?= $escape($dayWeather['status']) ?></span>
                                     </div>
-                                    <?php if (!empty($dayWeather['advice'])): ?>
-                                    <div class="weather-card-advice" data-weather-advice-box>
-                                        <span class="advice-label">💡 Gợi ý chuẩn bị:</span>
-                                        <span class="advice-content" data-weather-advice><?= $escape($dayWeather['advice']) ?></span>
-                                    </div>
-                                    <?php endif; ?>
                                 </div>
                                 <?php endif; ?>
 
@@ -116,6 +110,45 @@ if (!empty($itineraryWeather)) {
                             </div>
                         </article>
                         <?php endforeach; ?>
+                    </div>
+
+                    <!-- GỢI Ý CHUẨN BỊ CHO CHUYẾN ĐI (Nói chung 1 lần cho cả hành trình) -->
+                    <div class="detail-preparation-box" data-preparation-box>
+                        <div class="preparation-header">
+                            <span class="preparation-badge">💡 HÀNH TRANG CHUYẾN ĐI</span>
+                            <h3>Gợi ý chuẩn bị cho chuyến đi</h3>
+                            <p class="preparation-subtitle" data-general-weather-summary><?= $escape($generalAdvice['weather_summary'] ?? 'Được tổng hợp tự động theo dự báo thời tiết và tính chất điểm đến của chuyến đi.') ?></p>
+                        </div>
+                        <div class="preparation-general-grid">
+                            <div class="prep-general-card">
+                                <div class="prep-card-icon">👕</div>
+                                <div class="prep-card-body">
+                                    <strong>Trang phục &amp; Giày dép</strong>
+                                    <p data-prep-clothing><?= $escape($generalAdvice['clothing'] ?? 'Trang phục thoải mái, co giãn tốt. Mang giày thể thao hoặc sandal đế mềm để tiện di chuyển.') ?></p>
+                                </div>
+                            </div>
+                            <div class="prep-general-card">
+                                <div class="prep-card-icon">🧴</div>
+                                <div class="prep-card-body">
+                                    <strong>Vật dụng cá nhân</strong>
+                                    <p data-prep-items><?= $escape($generalAdvice['personal_items'] ?? 'Kem chống nắng, kính râm, mũ nón, bình nước cá nhân và ô dù che mưa/nắng gấp gọn.') ?></p>
+                                </div>
+                            </div>
+                            <div class="prep-general-card">
+                                <div class="prep-card-icon">🪪</div>
+                                <div class="prep-card-body">
+                                    <strong>Giấy tờ tùy thân</strong>
+                                    <p>Mang theo bản gốc CCCD/Hộ chiếu còn hạn; giấy khai sinh (bản sao trích lục/mộc đỏ) cho trẻ em nếu đi cùng để làm thủ tục lưu trú và di chuyển.</p>
+                                </div>
+                            </div>
+                            <div class="prep-general-card">
+                                <div class="prep-card-icon">💊</div>
+                                <div class="prep-card-body">
+                                    <strong>Y tế &amp; Sức khỏe</strong>
+                                    <p>Nên chuẩn bị sẵn thuốc say xe/say tàu, thuốc cảm sốt, tiêu hóa, băng cá nhân và sạc dự phòng để luôn chủ động trong suốt chuyến đi.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
                 <section class="detail-section" id="danh-gia"><span class="detail-section-label">3 / CẢM NHẬN</span><h2>Đánh giá tour</h2><div class="detail-review-empty"><span aria-hidden="true">☆</span><div><strong>Chưa có đánh giá</strong><p>Nhận xét của khách đã hoàn thành chuyến đi sẽ xuất hiện tại đây khi chức năng đánh giá được triển khai.</p></div></div></section>

@@ -163,19 +163,24 @@ class TourModel
             if ($filters['region'] !== '' && $tour['region'] !== $filters['region']) return false;
             if ($filters['destination'] > 0 && (int) $tour['destination_id'] !== $filters['destination']) return false;
             if ($filters['days'] > 0 && (int) $tour['days'] !== $filters['days']) return false;
+            if (!empty($filters['season']) && isset($tour['season']) && $tour['season'] !== $filters['season']) return false;
             if ($keyword !== '' && strpos($this->normalizeSearch($tour['name'] . ' ' . $tour['destination']), $keyword) === false) return false;
             if ($filters['needs'] && !array_intersect($filters['needs'], $tour['needs'])) return false;
-            $requiresSchedule = $filters['destination'] > 0 || $filters['group_search'] || $filters['date'] !== '' || $filters['origin'] !== '' || $filters['price'] !== '' || $filters['budget'] > 0;
+            $requiresSchedule = $filters['destination'] > 0 || $filters['group_search'] || $filters['date'] !== '' || $filters['origin'] !== '' || $filters['price'] !== '' || $filters['budget'] > 0 || !empty($filters['month']);
             if (!$requiresSchedule) return true;
             foreach ($tour['schedules'] as $schedule) {
                 if ($filters['group_search'] && $filters['adults'] + $filters['children'] > (int) $schedule['capacity']) continue;
                 if ($filters['date'] !== '' && $schedule['date'] !== $filters['date']) continue;
+                if (!empty($filters['month']) && (int) date('m', strtotime($schedule['date'])) !== (int) $filters['month']) continue;
                 if ($filters['origin'] !== '' && $schedule['origin'] !== $filters['origin']) continue;
                 if ($filters['price'] !== '') {
                     [$minimum, $maximum] = explode('-', $filters['price']);
                     if ($schedule['adult_price'] < (int) $minimum || ($maximum !== '' && $schedule['adult_price'] >= (int) $maximum)) continue;
                 }
-                if ($filters['budget'] > 0 && $schedule['group_total'] > $filters['budget']) continue;
+                if ($filters['budget'] > 0) {
+                    $comparePrice = $filters['group_search'] && isset($schedule['group_total']) ? $schedule['group_total'] : $schedule['adult_price'];
+                    if ($comparePrice > $filters['budget']) continue;
+                }
                 return true;
             }
             return false;

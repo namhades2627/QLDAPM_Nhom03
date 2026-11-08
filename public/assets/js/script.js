@@ -1472,3 +1472,110 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+// Tính năng Đánh giá tour (Review & Rating System)
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Phản hồi nhãn đánh giá sao tương tác
+    const starPicker = document.querySelector('.rating-stars-input');
+    const feedbackText = document.getElementById('rating-text-feedback');
+    const starLabels = {
+        '5': 'Tuyệt vời',
+        '4': 'Rất tốt',
+        '3': 'Bình thường',
+        '2': 'Tạm được',
+        '1': 'Chưa hài lòng'
+    };
+
+    if (starPicker && feedbackText) {
+        const getCheckedValue = () => {
+            const checked = starPicker.querySelector('input[name="so_sao"]:checked');
+            return checked ? checked.value : '5';
+        };
+
+        starPicker.querySelectorAll('label').forEach(label => {
+            label.addEventListener('mouseenter', () => {
+                const inputId = label.getAttribute('for');
+                const radio = document.getElementById(inputId);
+                if (radio && starLabels[radio.value]) {
+                    feedbackText.textContent = starLabels[radio.value];
+                }
+            });
+        });
+
+        starPicker.addEventListener('mouseleave', () => {
+            const val = getCheckedValue();
+            feedbackText.textContent = starLabels[val] || 'Tuyệt vời';
+        });
+
+        starPicker.querySelectorAll('input[name="so_sao"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                feedbackText.textContent = starLabels[radio.value] || 'Tuyệt vời';
+            });
+        });
+    }
+
+    // 2. Cuộn mượt đến form đánh giá khi click "Viết đánh giá" / "Sửa đánh giá"
+    document.querySelectorAll('.review-btn-scroll').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const targetId = btn.getAttribute('href');
+            if (targetId && targetId.startsWith('#')) {
+                const targetEl = document.querySelector(targetId);
+                if (targetEl) {
+                    e.preventDefault();
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const textarea = targetEl.querySelector('textarea');
+                    if (textarea) setTimeout(() => textarea.focus(), 400);
+                }
+            }
+        });
+    });
+
+    // 3. Xác nhận xóa đánh giá
+    const deleteBtn = document.getElementById('btn-delete-review');
+    const deleteForm = document.getElementById('delete-review-form');
+    if (deleteBtn && deleteForm) {
+        deleteBtn.addEventListener('click', () => {
+            if (confirm('Bạn có chắc chắn muốn xóa đánh giá của mình không?')) {
+                deleteForm.submit();
+            }
+        });
+    }
+
+    // 4. Lọc đánh giá theo số sao (client-side)
+    const filterPills = document.querySelectorAll('#review-filters .review-pill-btn');
+    const reviewItems = document.querySelectorAll('#review-items-wrapper .review-item');
+    const emptyNotice = document.getElementById('review-filter-empty');
+
+    function applyStarFilter(filterVal) {
+        filterPills.forEach(p => p.classList.toggle('is-active', p.dataset.filter === filterVal));
+        let visibleCount = 0;
+        reviewItems.forEach(item => {
+            const stars = item.dataset.stars;
+            const match = (filterVal === 'all' || stars === filterVal);
+            item.style.display = match ? '' : 'none';
+            if (match) visibleCount++;
+        });
+
+        if (emptyNotice) {
+            emptyNotice.style.display = (visibleCount === 0 && reviewItems.length > 0) ? 'block' : 'none';
+        }
+    }
+
+    filterPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            applyStarFilter(pill.dataset.filter || 'all');
+        });
+    });
+
+    // Cho phép click vào từng thanh tỷ lệ sao để lọc
+    document.querySelectorAll('.rating-bar-row[data-star-filter]').forEach(row => {
+        row.addEventListener('click', () => {
+            const star = row.dataset.starFilter;
+            applyStarFilter(star);
+            const reviewListSection = document.querySelector('.reviews-list-container');
+            if (reviewListSection) {
+                reviewListSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+});

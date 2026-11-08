@@ -155,7 +155,209 @@ if (!empty($itineraryWeather)) {
                         </div>
                     </div>
                 </section>
-                <section class="detail-section" id="danh-gia"><span class="detail-section-label">3 / CẢM NHẬN</span><h2>Đánh giá tour</h2><div class="detail-review-empty"><span aria-hidden="true">☆</span><div><strong>Chưa có đánh giá</strong><p>Nhận xét của khách đã hoàn thành chuyến đi sẽ xuất hiện tại đây khi chức năng đánh giá được triển khai.</p></div></div></section>
+                <section class="detail-section" id="danh-gia">
+                    <div class="detail-section-header">
+                        <span class="detail-section-label">3 / CẢM NHẬN</span>
+                        <h2>Đánh giá từ du khách</h2>
+                    </div>
+
+                    <?php if (!empty($reviewFlash)): ?>
+                        <div class="review-flash-alert review-flash-<?= $escape($reviewFlash['type']) ?>" role="alert">
+                            <?= $reviewFlash['type'] === 'success' ? '✓' : '⚠' ?> <?= $escape($reviewFlash['message']) ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Thống kê điểm số tổng quan -->
+                    <div class="review-overview-card">
+                        <div class="review-score-summary">
+                            <div class="review-score-big"><?= number_format($reviewStats['average'], 1) ?></div>
+                            <div class="review-stars-display" aria-label="<?= $reviewStats['average'] ?> trên 5 sao">
+                                <?php for ($s = 1; $s <= 5; $s++): ?>
+                                    <span class="star-icon <?= $s <= round($reviewStats['average']) ? 'star-filled' : 'star-empty' ?>">★</span>
+                                <?php endfor; ?>
+                            </div>
+                            <div class="review-count-text">
+                                <?= $reviewStats['count'] > 0 ? 'Dựa trên ' . $reviewStats['count'] . ' đánh giá' : 'Chưa có đánh giá nào' ?>
+                            </div>
+                        </div>
+
+                        <div class="review-rating-breakdown">
+                            <?php for ($star = 5; $star >= 1; $star--): 
+                                $count = $reviewStats['stars'][$star] ?? 0;
+                                $pct = $reviewStats['percentages'][$star] ?? 0;
+                            ?>
+                                <div class="rating-bar-row" data-star-filter="<?= $star ?>">
+                                    <span class="rating-bar-label"><?= $star ?> ★</span>
+                                    <div class="rating-progress-track">
+                                        <div class="rating-progress-fill" style="width: <?= $pct ?>%;"></div>
+                                    </div>
+                                    <span class="rating-bar-count"><?= $count ?></span>
+                                </div>
+                            <?php endfor; ?>
+                        </div>
+
+                        <div class="review-action-box">
+                            <?php if (isset($_SESSION['tai_khoan'])): ?>
+                                <?php if ($userReview): ?>
+                                    <p class="review-action-desc">Bạn đã đánh giá <strong><?= (int) $userReview['so_sao'] ?> ★</strong> cho tour này.</p>
+                                    <a href="#form-danh-gia" class="btn btn-outline review-btn-scroll">Sửa đánh giá</a>
+                                <?php else: ?>
+                                    <p class="review-action-desc">Bạn đã đi tour này hoặc có cảm nhận muốn chia sẻ?</p>
+                                    <a href="#form-danh-gia" class="btn btn-primary review-btn-scroll">Viết đánh giá ngay</a>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <p class="review-action-desc">Đăng nhập để chia sẻ trải nghiệm chuyến đi của bạn cùng cộng đồng OnTrip.</p>
+                                <a href="index.php?page=login&redirect=<?= urlencode('index.php?page=tour-detail&id=' . ($tour['id'] ?? '') . '#danh-gia') ?>" class="btn btn-primary">Đăng nhập để đánh giá</a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Form viết/sửa đánh giá nếu đã đăng nhập -->
+                    <?php if (isset($_SESSION['tai_khoan'])): ?>
+                        <div class="review-form-wrapper" id="form-danh-gia">
+                            <h3 class="review-form-title">
+                                <?= $userReview ? 'Chỉnh sửa đánh giá của bạn' : 'Chia sẻ cảm nhận về chuyến đi' ?>
+                            </h3>
+
+                            <?php if ($hasBooked): ?>
+                                <div class="verified-booking-notice">
+                                    <span class="notice-icon">✓</span>
+                                    <span>Bạn đã đặt tour này. Đánh giá của bạn sẽ được gắn huy hiệu <strong>Đã trải nghiệm tour</strong>.</span>
+                                </div>
+                            <?php endif; ?>
+
+                            <form action="index.php?page=tour-detail&id=<?= $escape($tour['id']) ?>#danh-gia" method="post" class="review-submit-form" id="tour-review-form">
+                                <input type="hidden" name="action" value="submit_review">
+                                <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
+                                
+                                <div class="form-group-rating">
+                                    <label class="form-label-rating">Đánh giá chung của bạn: <span class="required">*</span></label>
+                                    <div class="rating-stars-input" role="radiogroup" aria-label="Chọn số sao">
+                                        <?php 
+                                        $currentStar = $userReview ? (int) $userReview['so_sao'] : 5;
+                                        $starLabels = [
+                                            5 => 'Tuyệt vời',
+                                            4 => 'Rất tốt',
+                                            3 => 'Bình thường',
+                                            2 => 'Tạm được',
+                                            1 => 'Chưa hài lòng'
+                                        ];
+                                        for ($i = 5; $i >= 1; $i--): ?>
+                                            <input type="radio" id="star-<?= $i ?>" name="so_sao" value="<?= $i ?>" <?= $currentStar === $i ? 'checked' : '' ?> required>
+                                            <label for="star-<?= $i ?>" title="<?= $starLabels[$i] ?>" aria-label="<?= $i ?> sao">★</label>
+                                        <?php endfor; ?>
+                                        <span class="rating-current-text" id="rating-text-feedback"><?= $starLabels[$currentStar] ?? 'Tuyệt vời' ?></span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="review-title">Tiêu đề đánh giá (tùy chọn):</label>
+                                    <input type="text" id="review-title" name="tieu_de" maxlength="150" placeholder="Ví dụ: Chuyến đi đáng nhớ, hướng dẫn viên chu đáo..." value="<?= $escape($userReview['tieu_de'] ?? '') ?>" class="form-input">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="review-content">Nội dung đánh giá: <span class="required">*</span></label>
+                                    <textarea id="review-content" name="noi_dung" rows="4" minlength="5" maxlength="3000" required placeholder="Chia sẻ chi tiết về khách sạn, dịch vụ, điểm tham quan, ẩm thực hoặc điều bạn tâm đắc nhất..." class="form-textarea"><?= $escape($userReview['noi_dung'] ?? '') ?></textarea>
+                                    <small class="form-help">Tối thiểu 5 ký tự. Hãy chia sẻ chân thực để giúp đỡ những người đi sau.</small>
+                                </div>
+
+                                <div class="review-form-actions">
+                                    <button type="submit" class="btn btn-primary" id="btn-submit-review">
+                                        <?= $userReview ? 'Cập nhật đánh giá' : 'Gửi đánh giá' ?>
+                                    </button>
+                                    <?php if ($userReview): ?>
+                                        <button type="button" class="btn btn-outline-danger" id="btn-delete-review">
+                                            Xóa đánh giá
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                            </form>
+
+                            <?php if ($userReview): ?>
+                                <form id="delete-review-form" action="index.php?page=tour-detail&id=<?= $escape($tour['id']) ?>#danh-gia" method="post" style="display: none;">
+                                    <input type="hidden" name="action" value="delete_review">
+                                    <input type="hidden" name="id_danh_gia" value="<?= (int) $userReview['id_danh_gia'] ?>">
+                                    <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
+                                </form>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Bộ lọc theo số sao và danh sách đánh giá -->
+                    <div class="reviews-list-container">
+                        <div class="reviews-filter-header">
+                            <h3 class="reviews-list-title">Nhận xét từ du khách (<?= count($reviews) ?>)</h3>
+                            <div class="review-filter-pills" id="review-filters">
+                                <button type="button" class="review-pill-btn is-active" data-filter="all">Tất cả (<?= $reviewStats['count'] ?>)</button>
+                                <button type="button" class="review-pill-btn" data-filter="5">5 ★ (<?= $reviewStats['stars'][5] ?>)</button>
+                                <button type="button" class="review-pill-btn" data-filter="4">4 ★ (<?= $reviewStats['stars'][4] ?>)</button>
+                                <button type="button" class="review-pill-btn" data-filter="3">3 ★ (<?= $reviewStats['stars'][3] ?>)</button>
+                                <button type="button" class="review-pill-btn" data-filter="2">2 ★ (<?= $reviewStats['stars'][2] ?>)</button>
+                                <button type="button" class="review-pill-btn" data-filter="1">1 ★ (<?= $reviewStats['stars'][1] ?>)</button>
+                            </div>
+                        </div>
+
+                        <?php if (empty($reviews)): ?>
+                            <div class="detail-review-empty">
+                                <span aria-hidden="true">★</span>
+                                <div>
+                                    <strong>Chưa có đánh giá nào cho tour này</strong>
+                                    <p>Hãy là người đầu tiên trải nghiệm và chia sẻ những khoảnh khắc tuyệt vời của chuyến đi!</p>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="review-items-list" id="review-items-wrapper">
+                                <?php foreach ($reviews as $rev): 
+                                    $revStars = (int) $rev['so_sao'];
+                                    $userInitials = mb_substr(trim($rev['ho_ten'] ?? 'K'), 0, 1, 'UTF-8');
+                                    $avatarUrl = !empty($rev['hinh_anh']) ? $rev['hinh_anh'] : null;
+                                    $formattedDate = date('d/m/Y', strtotime($rev['tao_luc']));
+                                ?>
+                                    <article class="review-item" data-stars="<?= $revStars ?>">
+                                        <div class="review-item-header">
+                                            <div class="reviewer-avatar">
+                                                <?php if ($avatarUrl): ?>
+                                                    <img src="<?= $escape($avatarUrl) ?>" alt="<?= $escape($rev['ho_ten']) ?>" loading="lazy">
+                                                <?php else: ?>
+                                                    <span class="avatar-initial"><?= $escape(mb_strtoupper($userInitials, 'UTF-8')) ?></span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="reviewer-info">
+                                                <div class="reviewer-name-row">
+                                                    <strong class="reviewer-name"><?= $escape($rev['ho_ten']) ?></strong>
+                                                    <?php if (!empty($rev['da_dat_tour'])): ?>
+                                                        <span class="badge-verified-buyer" title="Đã hoàn thành chuyến đi cùng OnTrip">
+                                                            <span class="badge-icon">✓</span> Đã trải nghiệm tour
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="review-meta-row">
+                                                    <div class="review-stars-icons" aria-label="<?= $revStars ?> sao">
+                                                        <?php for ($s = 1; $s <= 5; $s++): ?>
+                                                            <span class="star-icon <?= $s <= $revStars ? 'star-filled' : 'star-empty' ?>">★</span>
+                                                        <?php endfor; ?>
+                                                    </div>
+                                                    <time class="review-date" datetime="<?= $rev['tao_luc'] ?>"><?= $formattedDate ?></time>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <?php if (!empty($rev['tieu_de'])): ?>
+                                            <h4 class="review-item-title"><?= $escape($rev['tieu_de']) ?></h4>
+                                        <?php endif; ?>
+
+                                        <div class="review-item-content">
+                                            <?= nl2br($escape($rev['noi_dung'])) ?>
+                                        </div>
+                                    </article>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="review-filter-no-results" id="review-filter-empty" style="display: none;">
+                                <p>Không có đánh giá nào phù hợp với số sao đã chọn.</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </section>
             </div>
             <aside class="detail-sidebar" aria-label="Lịch khởi hành và tạm tính tour">
                 <div class="detail-booking" <?= $selectedSchedule ? 'data-booking-preview' : '' ?> data-adult-price="<?= $adultPrice ?>" data-child-price="<?= $childPrice ?>">

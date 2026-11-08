@@ -180,6 +180,7 @@ class AdminController
         $accountErrors = [];
         $accountFormMode = !$isCustomerManagement && $query('mode') === 'create' ? 'create' : '';
         $editAccountId = 0;
+        $editingTarget = null;
         $deleteAccount = null;
         $accountValues = ['ho_ten' => '', 'email' => '', 'so_dien_thoai' => '', 'vai_tro' => $isCustomerManagement ? 'khach_hang' : 'nhan_vien', 'dang_hoat_dong' => '1'];
         $allowedOperations = $isCustomerManagement ? ['update', 'status', 'delete'] : ['create', 'update', 'status', 'delete'];
@@ -194,6 +195,7 @@ class AdminController
             if ($operation === 'update' || ($operation === 'create' && !$isCustomerManagement)) {
                 $accountFormMode = $operation === 'create' ? 'create' : 'edit';
                 $editAccountId = $targetId;
+                if ($operation === 'update' && $targetId > 0) $editingTarget = $model->findManagedAccount($targetId, $accountGroup);
                 $accountValues = [
                     'ho_ten' => trim($this->input('ho_ten')),
                     'email' => strtolower(trim($this->input('email'))),
@@ -209,6 +211,7 @@ class AdminController
                 http_response_code(400);
                 $accountMessage = 'Yêu cầu quản lý tài khoản không hợp lệ.';
             } else {
+                $newAvatar = null;
                 try {
                     $managerId = (int) $account['id_tai_khoan'];
                     $stamp = $_SESSION['admin_credential_stamp'];
@@ -245,7 +248,18 @@ class AdminController
                         } else {
                             $changes = $accountValues;
                             $changes['dang_hoat_dong'] = (int) $changes['dang_hoat_dong'];
-                            $model->updateManagedAccount($managerId, $stamp, $targetId, $changes, $accountGroup);
+                            $file = $_FILES['hinh_anh'] ?? [];
+                            if (!is_array($file)) throw new InvalidArgumentException('Ảnh tải lên không hợp lệ.');
+                            if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                                if ($isCustomerManagement || !$editingTarget || $editingTarget['vai_tro'] !== 'nhan_vien' || $targetId === $managerId) {
+                                    throw new DomainException('Chỉ hỗ trợ cập nhật ảnh nhân viên trong mục Quản lý tài khoản.');
+                                }
+                                $newAvatar = self::saveAvatar($file);
+                                if ($newAvatar !== null) $changes['hinh_anh'] = $newAvatar;
+                            }
+                            $oldAvatar = $model->updateManagedAccount($managerId, $stamp, $targetId, $changes, $accountGroup);
+                            $newAvatar = null; // Ảnh đã được lưu vào tài khoản sau commit.
+                            self::deleteAvatar($oldAvatar);
                             $_SESSION[$messageKey] = $isCustomerManagement ? 'Đã lưu thông tin khách hàng.' : 'Đã lưu thay đổi tài khoản.';
                         }
                     }
@@ -253,6 +267,10 @@ class AdminController
                         header('Location: ' . $accountsUrl(), true, 303);
                         return;
                     }
+                } catch (InvalidArgumentException $exception) {
+                    http_response_code(422);
+                    $accountErrors['hinh_anh'] = $exception->getMessage();
+                    $accountMessage = 'Ảnh đại diện chưa hợp lệ. Các thay đổi chưa được lưu.';
                 } catch (DomainException $exception) {
                     http_response_code(409);
                     $accountMessage = $exception->getMessage();
@@ -269,6 +287,13 @@ class AdminController
                         http_response_code(503);
                         $accountMessage = 'Chưa thể lưu tài khoản. Vui lòng thử lại sau.';
                     }
+                } catch (RuntimeException $exception) {
+                    error_log('OnTrip managed avatar error: ' . $exception->getMessage());
+                    http_response_code(503);
+                    $accountErrors['hinh_anh'] = 'Chưa thể lưu ảnh đại diện. Vui lòng thử lại sau.';
+                    $accountMessage = 'Các thay đổi chưa được lưu.';
+                } finally {
+                    self::deleteAvatar($newAvatar);
                 }
             }
         } elseif ($query('edit') !== '') {
@@ -284,6 +309,7 @@ class AdminController
                 $accountMessage = 'Không tìm thấy tài khoản cần chỉnh sửa.';
             } else {
                 $accountFormMode = 'edit';
+                $editingTarget = $target;
                 foreach (array_keys($accountValues) as $key) $accountValues[$key] = (string) $target[$key];
             }
         } elseif ($query('delete') !== '') {
@@ -300,6 +326,9 @@ class AdminController
                 }
             }
         }
+        $canEditManagedAvatar = !$isCustomerManagement && $accountFormMode === 'edit' && $editingTarget
+            && $editingTarget['vai_tro'] === 'nhan_vien' && $editAccountId !== (int) $account['id_tai_khoan'];
+        $managedAvatarUrl = $canEditManagedAvatar ? self::avatarUrl($editingTarget['hinh_anh'] ?? null) : '';
         $accountList = $model->getManagedAccounts($accountFilters['q'], $accountFilters['role'], $accountFilters['status'], $pageNumber, $accountGroup);
         require __DIR__ . '/../views/admin/tai_khoan.php';
     }

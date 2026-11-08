@@ -23,8 +23,8 @@ $escape = static function ($value): string { return htmlspecialchars((string) $v
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="../public/assets/css/style.css?v=20261102-tours">
-    <script src="../public/assets/js/script.js?v=20261102-tours" defer></script>
+    <link rel="stylesheet" href="../public/assets/css/style.css?v=20261108-avatar">
+    <script src="../public/assets/js/script.js?v=20261108-avatar" defer></script>
 </head>
 <body class="admin-page admin-accounts-page">
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -46,6 +46,7 @@ $escape = static function ($value): string { return htmlspecialchars((string) $v
     <symbol id="a-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
     <symbol id="a-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2m-8 3h2"/></symbol>
     <symbol id="a-tour" viewBox="0 0 24 24"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5Zm6-2v16m6-14v16"/></symbol>
+    <symbol id="a-orders" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 10h6m-6 4h6m-6 4h4"/></symbol>
     <symbol id="a-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
     <symbol id="a-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></symbol>
 </svg>
@@ -67,7 +68,7 @@ $escape = static function ($value): string { return htmlspecialchars((string) $v
             <p class="admin-sidebar-label">DỮ LIỆU ĐIỀU HÀNH</p>
             <a class="admin-nav-link<?= $adminSection === 'tours' ? ' is-active' : '' ?>" href="index.php?action=tours" <?= $adminSection === 'tours' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-tour"/></svg><span>Quản lý tour</span></a>
             <a class="admin-nav-link<?= $adminSection === 'danh_muc' ? ' is-active' : '' ?>" href="index.php?action=danh_muc" <?= $adminSection === 'danh_muc' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-grid"/></svg><span>Quản lý danh mục</span></a>
-            <a class="admin-nav-link<?= $adminSection === 'orders' ? ' is-active' : '' ?>" href="index.php?action=orders" <?= $adminSection === 'orders' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-tour"/></svg><span>Quản lý đơn đặt</span></a>
+            <a class="admin-nav-link<?= $adminSection === 'orders' ? ' is-active' : '' ?>" href="index.php?action=orders" <?= $adminSection === 'orders' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-orders"/></svg><span>Quản lý đơn đặt</span></a>
             <?php if ($account['vai_tro'] === 'admin'): ?>
             <a class="admin-nav-link<?= $adminSection === 'customers' ? ' is-active' : '' ?>" href="index.php?action=customers" <?= $adminSection === 'customers' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-user"/></svg><span>Quản lý khách hàng</span></a>
             <?php endif; ?>

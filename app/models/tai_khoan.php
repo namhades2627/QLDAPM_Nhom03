@@ -203,8 +203,8 @@ class TaiKhoanModel
         }
     }
 
-    /** Chỉ sửa liên hệ/quyền/trạng thái; thao tác khóa chỉ truyền dang_hoat_dong. */
-    public function updateManagedAccount(int $managerId, string $credentialStamp, int $targetId, array $changes, string $group = 'staff'): void
+    /** Sửa liên hệ/quyền/trạng thái; ảnh chỉ cập nhật cho nhân viên. Trả ảnh cũ có thể dọn sau commit. */
+    public function updateManagedAccount(int $managerId, string $credentialStamp, int $targetId, array $changes, string $group = 'staff'): ?string
     {
         $this->connection->beginTransaction();
         try {
@@ -220,6 +220,12 @@ class TaiKhoanModel
             if ($targetId === $managerId) {
                 throw new DomainException('Không thể thay đổi quyền hoặc khóa chính mình. Hãy dùng Hồ sơ cá nhân để sửa thông tin.');
             }
+            if (array_key_exists('hinh_anh', $changes)) {
+                if ($group !== 'staff' || $target['vai_tro'] !== 'nhan_vien') throw new DomainException('Chỉ hỗ trợ cập nhật ảnh nhân viên trong mục Quản lý tài khoản.');
+                if (!is_string($changes['hinh_anh']) || !preg_match('~^assets/images/users/[a-f0-9]{32}\.(jpg|png|gif|webp)$~D', $changes['hinh_anh'])) {
+                    throw new DomainException('Đường dẫn ảnh đại diện không hợp lệ.');
+                }
+            }
             $role = $changes['vai_tro'] ?? $target['vai_tro'];
             $active = $changes['dang_hoat_dong'] ?? (int) $target['dang_hoat_dong'];
             if (!in_array($role, $roles, true) || !in_array($active, [0, 1], true)) {
@@ -232,7 +238,7 @@ class TaiKhoanModel
             }
             $assignments = [];
             $parameters = [];
-            foreach (['ho_ten', 'email', 'so_dien_thoai', 'vai_tro', 'dang_hoat_dong'] as $column) {
+            foreach (['ho_ten', 'email', 'so_dien_thoai', 'vai_tro', 'dang_hoat_dong', 'hinh_anh'] as $column) {
                 if (!array_key_exists($column, $changes)) continue;
                 $assignments[] = $column . ' = ?';
                 $parameters[] = $changes[$column];
@@ -241,7 +247,14 @@ class TaiKhoanModel
             $parameters[] = $targetId;
             $query = $this->connection->prepare('UPDATE tai_khoan SET ' . implode(', ', $assignments) . ' WHERE id_tai_khoan = ?');
             $query->execute($parameters);
+            $oldAvatar = null;
+            if (isset($changes['hinh_anh']) && $target['hinh_anh'] !== null && $target['hinh_anh'] !== $changes['hinh_anh']) {
+                $query = $this->connection->prepare('SELECT 1 FROM tai_khoan WHERE hinh_anh = ? LIMIT 1');
+                $query->execute([$target['hinh_anh']]);
+                if ($query->fetchColumn() === false) $oldAvatar = $target['hinh_anh'];
+            }
             $this->connection->commit();
+            return $oldAvatar;
         } catch (Throwable $exception) {
             if ($this->connection->inTransaction()) $this->connection->rollBack();
             throw $exception;

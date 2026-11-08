@@ -71,10 +71,16 @@ $accountColumnCount = $isCustomerManagement ? 5 : 6;
     <?php if ($accountFormMode !== ''): ?>
     <section class="admin-panel admin-managed-editor" aria-labelledby="account-editor-title" id="account-editor">
         <div class="admin-panel-heading"><div><h2 id="account-editor-title"><?= $isCreating ? 'Thêm tài khoản nhân viên' : 'Chỉnh sửa ' . $accountNoun . ' #' . $editAccountId ?></h2><p><?= $isCreating ? 'Khách hàng tự đăng ký tài khoản trên website.' : ($isCustomerManagement ? 'Cập nhật thông tin liên hệ và trạng thái khách hàng.' : 'Cập nhật thông tin liên hệ, vai trò và trạng thái tài khoản.') ?></p></div><a class="admin-editor-close" href="<?= $escape($accountsUrl()) ?>" aria-label="Đóng biểu mẫu">×</a></div>
-        <form class="admin-account-form" method="post" action="<?= $escape($accountsUrl()) ?>" data-managed-account-form>
+        <form class="admin-account-form" method="post" <?= $canEditManagedAvatar ? 'enctype="multipart/form-data"' : '' ?> action="<?= $escape($accountsUrl()) ?>" data-managed-account-form>
             <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
             <input type="hidden" name="operation" value="<?= $isCreating ? 'create' : 'update' ?>">
             <?php if (!$isCreating): ?><input type="hidden" name="id_tai_khoan" value="<?= $editAccountId ?>"><?php endif; ?>
+            <?php if ($canEditManagedAvatar): ?>
+            <div class="admin-managed-avatar">
+                <span class="admin-profile-avatar"><img data-managed-avatar-preview alt="Ảnh đại diện nhân viên" <?= $managedAvatarUrl !== '' ? 'src="' . $escape($managedAvatarUrl) . '"' : 'hidden' ?>><svg class="icon" data-managed-avatar-default aria-hidden="true" <?= $managedAvatarUrl !== '' ? 'hidden' : '' ?>><use href="#a-user"/></svg></span>
+                <div class="admin-form-field admin-avatar-field"><label for="managed-avatar">Ảnh đại diện nhân viên</label><input id="managed-avatar" name="hinh_anh" type="file" accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp" data-managed-avatar-input aria-invalid="<?= isset($accountErrors['hinh_anh']) ? 'true' : 'false' ?>" aria-describedby="managed-avatar-hint managed-avatar-error"><small id="managed-avatar-hint">JPG, PNG, GIF hoặc WEBP, tối đa 5 MB. Không chọn ảnh mới sẽ giữ ảnh hiện tại. Chọn Lưu thay đổi để cập nhật.</small><p class="admin-avatar-error" id="managed-avatar-error" role="alert" <?= isset($accountErrors['hinh_anh']) ? '' : 'hidden' ?>><?= $escape($accountErrors['hinh_anh'] ?? '') ?></p></div>
+            </div>
+            <?php endif; ?>
             <div class="admin-managed-fields">
                 <?php foreach ([['ho_ten', 'Họ và tên', 'text', 'name', 120], ['email', 'Địa chỉ email', 'email', 'off', 254], ['so_dien_thoai', 'Số điện thoại', 'tel', 'off', 20]] as [$name, $label, $type, $autocomplete, $max]): ?>
                 <div class="admin-form-field"><label for="managed-<?= $name ?>"><?= $label ?> <span>*</span></label><input id="managed-<?= $name ?>" name="<?= $name ?>" type="<?= $type ?>" value="<?= $escape($accountValues[$name]) ?>" maxlength="<?= $max ?>" autocomplete="<?= $autocomplete ?>" <?= $name === 'ho_ten' ? 'minlength="2"' : '' ?> aria-invalid="<?= isset($accountErrors[$name]) ? 'true' : 'false' ?>" aria-describedby="managed-<?= $name ?>-error" required><p class="admin-field-error" id="managed-<?= $name ?>-error" <?= isset($accountErrors[$name]) ? '' : 'hidden' ?>><?= $escape($accountErrors[$name] ?? '') ?></p></div>

@@ -1104,6 +1104,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ===== QUẢN TRỊ: FORM HỒ SƠ VÀ ĐỔI MẬT KHẨU ===== */
 document.addEventListener('DOMContentLoaded', () => {
+    const input = document.querySelector('[data-managed-avatar-input]');
+    if (!input) return;
+    const form = input.closest('form');
+    const preview = form.querySelector('[data-managed-avatar-preview]');
+    const fallback = form.querySelector('[data-managed-avatar-default]');
+    const error = form.querySelector('#managed-avatar-error');
+    const savedUrl = preview.getAttribute('src') || '';
+    let objectUrl = '';
+    const reset = () => {
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        objectUrl = '';
+        preview.hidden = !savedUrl;
+        fallback.toggleAttribute('hidden', !!savedUrl);
+        if (savedUrl) preview.src = savedUrl;
+        else preview.removeAttribute('src');
+    };
+    const reject = text => { reset(); input.value = ''; error.textContent = text; error.hidden = false; };
+    input.addEventListener('change', () => {
+        error.hidden = true;
+        reset();
+        const file = input.files[0];
+        if (!file) return;
+        if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) { reject('Vui lòng chọn ảnh JPG, PNG, GIF hoặc WEBP.'); return; }
+        if (file.size > 5 * 1024 * 1024) { reject('Ảnh đại diện không vượt quá 5 MB.'); return; }
+        const url = URL.createObjectURL(file);
+        objectUrl = url;
+        preview.onload = () => { if (objectUrl === url) { preview.hidden = false; fallback.setAttribute('hidden', ''); } };
+        preview.onerror = () => { if (objectUrl === url) reject('Không đọc được ảnh này. Vui lòng chọn ảnh khác.'); };
+        preview.src = url;
+    });
+    window.addEventListener('pagehide', reset);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('[data-admin-password-form], [data-admin-profile-form]');
     if (!form) return;
     const message = form.querySelector('[data-admin-preview-message]');
@@ -1422,4 +1456,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renumber();
     renderSummary();
+});
+
+// Native details giu chuong thong bao hoat dong khi khong co JavaScript.
+document.addEventListener('DOMContentLoaded', () => {
+    const notifications = document.querySelector('.customer-notifications');
+    if (!notifications) return;
+    document.addEventListener('click', event => {
+        if (!notifications.contains(event.target)) notifications.open = false;
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && notifications.open) {
+            notifications.open = false;
+            notifications.querySelector('summary').focus();
+        }
+    });
 });

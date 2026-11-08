@@ -284,6 +284,25 @@ CREATE TABLE IF NOT EXISTS `thanh_toan` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- END CAP_NHAT_2026_10_31_DON_DAT_TOUR
 
+-- BEGIN CAP_NHAT_2026_11_08_THONG_BAO
+-- Chay lai an toan; khong tao thong bao cho lich su don cu.
+CREATE TABLE IF NOT EXISTS `thong_bao` (
+    `id_thong_bao` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_tai_khoan` BIGINT UNSIGNED NOT NULL,
+    `id_don_dat` BIGINT UNSIGNED NOT NULL,
+    `loai_thong_bao` ENUM('xac_nhan_don', 'thanh_toan', 'huy_don') NOT NULL,
+    `tieu_de` VARCHAR(160) NOT NULL,
+    `noi_dung` VARCHAR(500) NOT NULL,
+    `da_doc` TINYINT(1) NOT NULL DEFAULT 0,
+    `tao_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id_thong_bao`),
+    UNIQUE KEY `uq_thong_bao_su_kien` (`id_don_dat`, `loai_thong_bao`),
+    KEY `idx_thong_bao_tai_khoan` (`id_tai_khoan`, `da_doc`, `id_thong_bao`),
+    CONSTRAINT `fk_thong_bao_tai_khoan` FOREIGN KEY (`id_tai_khoan`) REFERENCES `tai_khoan` (`id_tai_khoan`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_thong_bao_don_dat` FOREIGN KEY (`id_don_dat`) REFERENCES `don_dat_tour` (`id_don_dat`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- END CAP_NHAT_2026_11_08_THONG_BAO
+
 -- BEGIN CAP_NHAT_2026_11_01_THONG_TIN_DON_DAT
 -- Nâng cấp bảng đơn đặt cũ; giữ nguyên tiền, trạng thái và ngày cập nhật của đơn.
 -- Đơn cũ chưa có thông tin chụp lại chỉ có thể khôi phục từ tour/lịch hiện tại.

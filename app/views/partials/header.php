@@ -4,12 +4,14 @@ $tourType = $tourType ?? '';
 $tourRegion = $tourRegion ?? '';
 $isToursPage = in_array(($page ?? 'home'), ['tours', 'tour-detail'], true);
 $isHomePage = ($page ?? 'home') === 'home';
+$notificationData = $GLOBALS['customerNotifications'] ?? null;
 ?>
 <!-- Biểu tượng vector nội bộ, không cần thư viện ngoài. -->
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.8"/></symbol>
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
     <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4M12 2V1"/></symbol>
     <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m8 4 8 8-8 8"/></symbol>
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
     <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
@@ -63,12 +65,14 @@ $isHomePage = ($page ?? 'home') === 'home';
                 </form>
             </div>
             <span class="action-divider" aria-hidden="true"></span>
+            <?php if (is_array($notificationData)) require __DIR__ . '/thong_bao.php'; ?>
             <div class="dropdown account-dropdown">
                 <button class="icon-button dropdown-toggle" type="button" aria-label="Tài khoản" aria-expanded="false" aria-controls="account-menu"><svg class="icon"><use href="#i-user"/></svg></button>
                 <div id="account-menu" class="dropdown-menu dropdown-menu-right">
                     <?php if (isset($_SESSION['tai_khoan'])): ?>
                     <span class="account-name"><?= htmlspecialchars($_SESSION['tai_khoan']['ho_ten'], ENT_QUOTES, 'UTF-8') ?></span>
                     <a href="index.php?page=orders">Đơn đặt của tôi</a>
+                    <?php if (is_array($notificationData)): ?><a href="index.php?page=thong_bao">Thông báo</a><?php endif; ?>
                     <form method="post" action="index.php?page=logout">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
                         <button class="account-logout" type="submit">Đăng xuất</button>

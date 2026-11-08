@@ -4,6 +4,14 @@
 
 Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đặt trong `ontrip.sql`, người/AI thực hiện phải cập nhật nhật ký này trong cùng lần sửa. Ghi rõ ngày, thay đổi, ảnh hưởng dữ liệu, vị trí khối SQL và cách áp dụng. Không ghi ở đây các thao tác sử dụng website thông thường như đổi mật khẩu hoặc sửa hồ sơ cá nhân.
 
+## 08/11/2026 — Thông báo đơn đặt cho khách hàng
+
+- Thêm bảng `thong_bao`, lưu chủ đơn, đơn đặt, loại sự kiện, tiêu đề/nội dung, trạng thái đã đọc và thời điểm tạo. Khóa ngoại gắn với tài khoản/đơn; xóa đơn sẽ xóa thông báo của đơn. Khóa duy nhất `(id_don_dat, loai_thong_bao)` chống sự kiện trùng.
+- Sự kiện áp dụng: xác nhận đơn, hủy đơn, ghi nhận thanh toán mô phỏng. Thông báo và thay đổi đơn/thanh toán nằm trong cùng transaction; không tạo thông báo từ dữ liệu lịch sử có trước khi triển khai.
+- **Vị trí:** khối `BEGIN CAP_NHAT_2026_11_08_THONG_BAO` / `END CAP_NHAT_2026_11_08_THONG_BAO` ngay sau phần tạo bảng đơn đặt/thanh toán trong `ontrip.sql`. Khối CREATE TABLE IF NOT EXISTS này dùng được cho cả cài mới và nâng cấp, có thể chạy lại.
+- **Máy đã có database:** chọn `ontrip` trong phpMyAdmin → SQL → chạy riêng khối trên. Không cần xóa database hay import lại dữ liệu. Database máy phát triển hiện tại đã được áp dụng; Git không tự áp dụng schema trên máy thành viên khác.
+- **Đã kiểm tra:** chạy khối hai lần, không sinh thông báo hồi tố; kiểm tra chống trùng, đọc theo chủ đơn, phân trang và rollback thông báo cùng transaction. Các đơn có trước triển khai được giữ nguyên.
+
 ## Cách áp dụng
 
 - **Máy mới:** import toàn bộ `ontrip.sql`.

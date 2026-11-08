@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/thong_bao.php';
 
 /**
  * Đọc và ghi đơn đặt tour.
@@ -362,6 +363,7 @@ class DonDatModel
             }
             $this->connection->prepare("UPDATE don_dat_tour SET trang_thai = 'da_huy' WHERE id_don_dat = ?")
                 ->execute([(int) $order['id_don_dat']]);
+            (new ThongBaoModel($this->connection))->createForOrder((int) $order['id_don_dat'], 'huy_don');
             $this->connection->commit();
         } catch (Throwable $exception) {
             if ($this->connection->inTransaction()) {
@@ -403,6 +405,7 @@ class DonDatModel
                 "INSERT INTO thanh_toan (id_don_dat, phuong_thuc, so_tien, ma_giao_dich, trang_thai)
                  VALUES (?, ?, ?, ?, 'thanh_cong')"
             )->execute([(int) $order['id_don_dat'], $method, (int) $order['tong_thanh_toan'], $maGiaoDich]);
+            (new ThongBaoModel($this->connection))->createForOrder((int) $order['id_don_dat'], 'thanh_toan');
             $this->connection->commit();
             return $maGiaoDich;
         } catch (Throwable $exception) {
@@ -449,6 +452,9 @@ class DonDatModel
             }
             $this->connection->prepare('UPDATE don_dat_tour SET trang_thai = ? WHERE id_don_dat = ?')
                 ->execute([$status, $orderId]);
+            if (in_array($status, ['da_xac_nhan', 'da_huy'], true)) {
+                (new ThongBaoModel($this->connection))->createForOrder($orderId, $status === 'da_huy' ? 'huy_don' : 'xac_nhan_don');
+            }
             $this->connection->commit();
             return true;
         } catch (Throwable $exception) {

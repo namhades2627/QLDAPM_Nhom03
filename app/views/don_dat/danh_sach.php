@@ -71,6 +71,9 @@ $statusClasses = [
                 </dl>
                 <div class="order-card-actions">
                     <a class="button booking-secondary-button" href="index.php?page=orders&amp;id=<?= $escape(rawurlencode($order['ma_don'])) ?>">Xem chi tiết</a>
+                    <?php if (in_array($order['trang_thai'], ['da_xac_nhan', 'hoan_thanh'], true)): ?>
+                        <a class="button booking-secondary-button" href="index.php?page=tour-detail&amp;id=<?= $escape(rawurlencode($order['ma_tour'])) ?>#danh-gia">⭐ Đánh giá tour</a>
+                    <?php endif; ?>
                 </div>
             </article>
             <?php endforeach; ?>

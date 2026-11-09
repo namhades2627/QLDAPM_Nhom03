@@ -624,17 +624,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const bestSchedule = schedules.length ? schedules[0] : null;
         data.sortPrice = bestSchedule ? String(bestSchedule.adult_price) : '';
+        const discountPercent = Number(data.discount || 0);
         const priceElement = card.querySelector('[data-card-price]');
-        const priceLabel = card.querySelector('.catalog-card-bottom span, .card-price-label');
+        const priceWrap = card.querySelector('.catalog-card-bottom > div');
+        let oldPriceEl = card.querySelector('.promo-old-price');
+        let priceLabel = card.querySelector('.card-price-label');
 
         if (priceElement && data.sortPrice !== '') {
+            const currentPrice = Number(bestSchedule.adult_price);
             const amount = document.createElement('strong');
-            amount.textContent = new Intl.NumberFormat('vi-VN').format(Number(bestSchedule.adult_price));
+            amount.textContent = new Intl.NumberFormat('vi-VN').format(currentPrice);
             const currency = document.createElement('span');
             currency.textContent = ' ₫';
             priceElement.replaceChildren(amount, currency);
-            if (priceLabel) {
-                priceLabel.textContent = 'Giá từ / người lớn';
+
+            if (discountPercent > 0) {
+                const oldPrice = Math.round(currentPrice / (1 - (discountPercent / 100)));
+                priceElement.classList.add('promo-sale-price');
+                if (priceLabel) {
+                    priceLabel.remove();
+                }
+                if (!oldPriceEl && priceWrap) {
+                    oldPriceEl = document.createElement('span');
+                    oldPriceEl.className = 'promo-old-price';
+                    priceWrap.insertBefore(oldPriceEl, priceElement);
+                }
+                if (oldPriceEl) {
+                    oldPriceEl.innerHTML = `<del>${new Intl.NumberFormat('vi-VN').format(oldPrice)} ₫</del>`;
+                }
+            } else {
+                priceElement.classList.remove('promo-sale-price');
+                if (oldPriceEl) {
+                    oldPriceEl.remove();
+                }
+                if (!priceLabel && priceWrap) {
+                    priceLabel = document.createElement('span');
+                    priceLabel.className = 'card-price-label';
+                    priceLabel.textContent = 'Giá từ / người lớn';
+                    priceWrap.insertBefore(priceLabel, priceElement);
+                } else if (priceLabel) {
+                    priceLabel.textContent = 'Giá từ / người lớn';
+                }
             }
         } else if (priceElement) {
             priceElement.textContent = 'Đang cập nhật';

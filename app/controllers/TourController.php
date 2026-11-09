@@ -113,7 +113,7 @@ class TourController
         }
         $hasGroupSearch = isset($_GET['adults']) || isset($_GET['children']) || $this->queryInteger('budget', 0, 0, 1000000000000) > 0;
         $requestedSort = $this->queryString('sort');
-        $validSorts = ['default', 'featured', 'seasonal', 'promo', 'price-asc', 'price-desc', 'duration'];
+        $validSorts = ['default', 'booked', 'featured', 'seasonal', 'promo', 'price-asc', 'price-desc', 'duration'];
         $sort = in_array($requestedSort, $validSorts, true) ? $requestedSort : 'default';
 
         $currentMonth = (int) date('n');
@@ -121,22 +121,28 @@ class TourController
             : (in_array($currentMonth, [12, 1, 2], true) ? 'dong'
             : (in_array($currentMonth, [3, 4], true) ? 'xuan' : 'ha'));
 
-        if ($sort === 'featured') {
+        if ($sort === 'featured' || $sort === 'booked') {
             usort($tours, static function ($a, $b) {
-                $diff = (int) ($b['featured'] ?? 0) <=> (int) ($a['featured'] ?? 0);
-                return $diff !== 0 ? $diff : strcmp($a['id'], $b['id']);
+                $diff = (int) ($b['booked_count'] ?? 0) <=> (int) ($a['booked_count'] ?? 0);
+                if ($diff !== 0) return $diff;
+                $diffFeatured = (int) ($b['featured'] ?? 0) <=> (int) ($a['featured'] ?? 0);
+                return $diffFeatured !== 0 ? $diffFeatured : strcmp($a['id'], $b['id']);
             });
         } elseif ($sort === 'seasonal') {
             usort($tours, static function ($a, $b) use ($currentSeason) {
-                $aMatch = ($a['season'] ?? '') === $currentSeason ? 2 : (!empty($a['season']) ? 1 : 0);
-                $bMatch = ($b['season'] ?? '') === $currentSeason ? 2 : (!empty($b['season']) ? 1 : 0);
+                $aMatch = ($a['season'] ?? '') === $currentSeason ? 2 : (!empty($a['season']) && $a['season'] !== 'tat_ca' ? 1 : 0);
+                $bMatch = ($b['season'] ?? '') === $currentSeason ? 2 : (!empty($b['season']) && $b['season'] !== 'tat_ca' ? 1 : 0);
                 $diff = $bMatch <=> $aMatch;
-                return $diff !== 0 ? $diff : strcmp($a['id'], $b['id']);
+                if ($diff !== 0) return $diff;
+                $diffBooked = (int) ($b['booked_count'] ?? 0) <=> (int) ($a['booked_count'] ?? 0);
+                return $diffBooked !== 0 ? $diffBooked : strcmp($a['id'], $b['id']);
             });
         } elseif ($sort === 'promo') {
             usort($tours, static function ($a, $b) {
                 $diff = (int) ($b['discount_percent'] ?? 0) <=> (int) ($a['discount_percent'] ?? 0);
-                return $diff !== 0 ? $diff : strcmp($a['id'], $b['id']);
+                if ($diff !== 0) return $diff;
+                $diffBooked = (int) ($b['booked_count'] ?? 0) <=> (int) ($a['booked_count'] ?? 0);
+                return $diffBooked !== 0 ? $diffBooked : strcmp($a['id'], $b['id']);
             });
         } elseif ($sort === 'price-asc') {
             usort($tours, static function ($a, $b) {
@@ -169,6 +175,14 @@ class TourController
             'season' => $season,
         ];
         $matchedTours = $this->model->filterTours($tours, $filters);
+        if ($sort === 'promo') {
+            $matchedTours = array_values(array_filter($matchedTours, static fn($t) => !empty($t['discount_percent']) && (int) $t['discount_percent'] > 0));
+        } elseif ($sort === 'seasonal') {
+            $seasonMatched = array_values(array_filter($matchedTours, static fn($t) => ($t['season'] ?? '') === $currentSeason));
+            $matchedTours = !empty($seasonMatched)
+                ? $seasonMatched
+                : array_values(array_filter($matchedTours, static fn($t) => !empty($t['season']) && $t['season'] !== 'tat_ca'));
+        }
         $searchSummary = [];
         if ($filters['destination'] > 0) {
             foreach ($tours as $tour) {

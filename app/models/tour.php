@@ -205,7 +205,7 @@ class TourModel
         }));
     }
 
-    /** Ưu tiên tour được đánh dấu nổi bật; bổ sung tour đã công bố nếu chưa đủ bốn. */
+    /** Ưu tiên tour có số lượng đặt cao nhất làm tour nổi bật; bổ sung tour nếu chưa đủ bốn. */
     public function getFeaturedTours(): array
     {
         $tours = array_merge(
@@ -213,7 +213,9 @@ class TourModel
             $this->getPublishedTours('international')
         );
         usort($tours, static function (array $a, array $b): int {
-            $priority = (int) $b['featured'] <=> (int) $a['featured'];
+            $booked = (int) ($b['booked_count'] ?? 0) <=> (int) ($a['booked_count'] ?? 0);
+            if ($booked !== 0) return $booked;
+            $priority = (int) ($b['featured'] ?? 0) <=> (int) ($a['featured'] ?? 0);
             return $priority !== 0 ? $priority : strcmp($a['id'], $b['id']);
         });
         return array_slice($tours, 0, 4);

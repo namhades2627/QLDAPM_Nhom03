@@ -184,7 +184,21 @@ $banners = [
                                     <?php endif; ?>
                                 </span>
                             </p>
-                            <div class="tour-bottom"><div><span>Giá từ / người lớn</span><p><?= $tour['price'] !== null ? '<strong>' . number_format($tour['price'], 0, ',', '.') . '</strong><span> ₫</span>' : 'Đang cập nhật' ?></p></div><a class="tour-detail" href="index.php?page=tour-detail&amp;type=<?= $escape($tour['type']) ?>&amp;id=<?= $escape($tour['id']) ?>" aria-label="Chi tiết <?= $escape($tour['name']) ?>"><svg class="icon"><use href="#i-arrow"/></svg></a></div>
+                            <?php
+                            $hasDiscount = !empty($tour['discount_percent']) && (int) $tour['discount_percent'] > 0 && $tour['price'] !== null;
+                            $oldPrice = $hasDiscount ? (int) round($tour['price'] / (1 - ((int) $tour['discount_percent'] / 100))) : null;
+                            ?>
+                            <div class="tour-bottom">
+                                <div>
+                                    <?php if ($hasDiscount && $oldPrice): ?>
+                                        <span class="promo-old-price"><del><?= number_format($oldPrice, 0, ',', '.') ?> ₫</del></span>
+                                    <?php else: ?>
+                                        <span>Giá từ / người lớn</span>
+                                    <?php endif; ?>
+                                    <p class="<?= $hasDiscount ? 'promo-sale-price' : '' ?>"><?= $tour['price'] !== null ? '<strong>' . number_format($tour['price'], 0, ',', '.') . '</strong><span> ₫</span>' : 'Đang cập nhật' ?></p>
+                                </div>
+                                <a class="tour-detail" href="index.php?page=tour-detail&amp;type=<?= $escape($tour['type']) ?>&amp;id=<?= $escape($tour['id']) ?>" aria-label="Chi tiết <?= $escape($tour['name']) ?>"><svg class="icon"><use href="#i-arrow"/></svg></a>
+                            </div>
                         </div>
                     </article>
                 <?php endforeach; ?>
@@ -211,7 +225,6 @@ $banners = [
                         <div class="tour-image-wrap">
                             <img src="<?= $escape($tour['image']) ?>" alt="<?= $escape($tour['destination']) ?>" width="600" height="450" loading="lazy">
                             <span class="tour-duration"><svg class="icon"><use href="#i-clock"/></svg><?= $escape($tour['duration']) ?></span>
-                            <span class="home-card-badge badge-season"><?= $escape($tour['season_badge'] ?? '🍁 Đúng mùa') ?></span>
                         </div>
                         <div class="tour-body">
                             <p class="tour-place"><?= $escape($tour['destination']) ?></p>
@@ -247,10 +260,18 @@ $banners = [
                                     <?php endif; ?>
                                 </span>
                             </p>
+                            <?php
+                            $hasDiscount = !empty($tour['discount_percent']) && (int) $tour['discount_percent'] > 0 && $tour['price'] !== null;
+                            $oldPrice = $hasDiscount ? (int) round($tour['price'] / (1 - ((int) $tour['discount_percent'] / 100))) : null;
+                            ?>
                             <div class="tour-bottom">
                                 <div>
-                                    <span>Giá từ / người lớn</span>
-                                    <p><?= $tour['price'] !== null ? '<strong>' . number_format($tour['price'], 0, ',', '.') . '</strong><span> ₫</span>' : 'Đang cập nhật' ?></p>
+                                    <?php if ($hasDiscount && $oldPrice): ?>
+                                        <span class="promo-old-price"><del><?= number_format($oldPrice, 0, ',', '.') ?> ₫</del></span>
+                                    <?php else: ?>
+                                        <span>Giá từ / người lớn</span>
+                                    <?php endif; ?>
+                                    <p class="<?= $hasDiscount ? 'promo-sale-price' : '' ?>"><?= $tour['price'] !== null ? '<strong>' . number_format($tour['price'], 0, ',', '.') . '</strong><span> ₫</span>' : 'Đang cập nhật' ?></p>
                                 </div>
                                 <a class="tour-detail" href="index.php?page=tour-detail&amp;type=<?= $escape($tour['type']) ?>&amp;id=<?= $escape($tour['id']) ?>" aria-label="Chi tiết <?= $escape($tour['name']) ?>"><svg class="icon"><use href="#i-arrow"/></svg></a>
                             </div>
@@ -272,7 +293,7 @@ $banners = [
                     <h2 id="promo-title">Tour khuyến mãi hôm nay</h2>
                     <p>Hành trình chất lượng với mức giá ưu đãi đặc biệt dành cho khách đặt sớm trong ngày.</p>
                 </div>
-                <a class="text-link" href="index.php?page=tours&amp;type=all" style="color:#d9381e;">Xem thêm ưu đãi <svg class="icon"><use href="#i-arrow"/></svg></a>
+                <a class="text-link" href="index.php?page=tours&amp;type=all&amp;sort=promo" style="color:#d9381e;">Xem thêm ưu đãi <svg class="icon"><use href="#i-arrow"/></svg></a>
             </div>
             <div class="tour-grid">
                 <?php foreach ($promoTours as $tour): ?>
@@ -280,9 +301,6 @@ $banners = [
                         <div class="tour-image-wrap">
                             <img src="<?= $escape($tour['image']) ?>" alt="<?= $escape($tour['destination']) ?>" width="600" height="450" loading="lazy">
                             <span class="tour-duration"><svg class="icon"><use href="#i-clock"/></svg><?= $escape($tour['duration']) ?></span>
-                            <?php if (!empty($tour['promo']['tag'])): ?>
-                                <span class="home-card-badge badge-promo">🔥 <?= $escape($tour['promo']['tag']) ?></span>
-                            <?php endif; ?>
                         </div>
                         <div class="tour-body">
                             <p class="tour-place"><?= $escape($tour['destination']) ?></p>

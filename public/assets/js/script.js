@@ -624,17 +624,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const bestSchedule = schedules.length ? schedules[0] : null;
         data.sortPrice = bestSchedule ? String(bestSchedule.adult_price) : '';
+        const discountPercent = Number(data.discount || 0);
         const priceElement = card.querySelector('[data-card-price]');
-        const priceLabel = card.querySelector('.catalog-card-bottom span, .card-price-label');
+        const priceWrap = card.querySelector('.catalog-card-bottom > div');
+        let oldPriceEl = card.querySelector('.promo-old-price');
+        let priceLabel = card.querySelector('.card-price-label');
 
         if (priceElement && data.sortPrice !== '') {
+            const currentPrice = Number(bestSchedule.adult_price);
             const amount = document.createElement('strong');
-            amount.textContent = new Intl.NumberFormat('vi-VN').format(Number(bestSchedule.adult_price));
+            amount.textContent = new Intl.NumberFormat('vi-VN').format(currentPrice);
             const currency = document.createElement('span');
             currency.textContent = ' ₫';
             priceElement.replaceChildren(amount, currency);
-            if (priceLabel) {
-                priceLabel.textContent = 'Giá từ / người lớn';
+
+            if (discountPercent > 0) {
+                const oldPrice = Math.round(currentPrice / (1 - (discountPercent / 100)));
+                priceElement.classList.add('promo-sale-price');
+                if (priceLabel) {
+                    priceLabel.remove();
+                }
+                if (!oldPriceEl && priceWrap) {
+                    oldPriceEl = document.createElement('span');
+                    oldPriceEl.className = 'promo-old-price';
+                    priceWrap.insertBefore(oldPriceEl, priceElement);
+                }
+                if (oldPriceEl) {
+                    oldPriceEl.innerHTML = `<del>${new Intl.NumberFormat('vi-VN').format(oldPrice)} ₫</del>`;
+                }
+            } else {
+                priceElement.classList.remove('promo-sale-price');
+                if (oldPriceEl) {
+                    oldPriceEl.remove();
+                }
+                if (!priceLabel && priceWrap) {
+                    priceLabel = document.createElement('span');
+                    priceLabel.className = 'card-price-label';
+                    priceLabel.textContent = 'Giá từ / người lớn';
+                    priceWrap.insertBefore(priceLabel, priceElement);
+                } else if (priceLabel) {
+                    priceLabel.textContent = 'Giá từ / người lớn';
+                }
             }
         } else if (priceElement) {
             priceElement.textContent = 'Đang cập nhật';
@@ -679,29 +709,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderResults() {
-        const filtered = cards.filter(matches);
+        const baseMatched = cards.filter(matches);
+        const sortValue = sortInput ? sortInput.value : 'default';
+
+        // Lọc theo combobox nếu người dùng chọn các bộ lọc đặc thù: theo mùa, giảm giá
+        const hasSeasonMatchCards = baseMatched.some(c => Number(c.dataset.seasonMatch || 0) === 1);
+        const filtered = baseMatched.filter(card => {
+            if (sortValue === 'promo') {
+                return Number(card.dataset.discount || 0) > 0;
+            }
+            if (sortValue === 'seasonal') {
+                const isMatch = Number(card.dataset.seasonMatch || 0) === 1;
+                const hasSeason = Boolean(card.dataset.season && card.dataset.season !== 'tat_ca');
+                return hasSeasonMatchCards ? isMatch : hasSeason;
+            }
+            return true;
+        });
+
         filtered.sort((a, b) => {
             let difference = 0;
-            if (sortInput.value === 'smart') {
-                difference = Number(b.dataset.smartScore || 0) - Number(a.dataset.smartScore || 0);
-            } else if (sortInput.value === 'featured') {
-                difference = Number(b.dataset.featured || 0) - Number(a.dataset.featured || 0);
-            } else if (sortInput.value === 'seasonal') {
-                const aMatch = Number(a.dataset.seasonMatch || 0) * 2 + (a.dataset.season ? 1 : 0);
-                const bMatch = Number(b.dataset.seasonMatch || 0) * 2 + (b.dataset.season ? 1 : 0);
+            if (sortValue === 'featured' || sortValue === 'booked') {
+                difference = Number(b.dataset.booked || 0) - Number(a.dataset.booked || 0);
+                if (difference === 0) {
+                    difference = Number(b.dataset.featured || 0) - Number(a.dataset.featured || 0);
+                }
+            } else if (sortValue === 'smart') {
+                const aMatch = Number(a.dataset.seasonMatch || 0) * 2 + (a.dataset.season && a.dataset.season !== 'tat_ca' ? 1 : 0);
+                const bMatch = Number(b.dataset.seasonMatch || 0) * 2 + (b.dataset.season && b.dataset.season !== 'tat_ca' ? 1 : 0);
                 difference = bMatch - aMatch;
-            } else if (sortInput.value === 'promo') {
+                if (difference === 0) {
+                    difference = Number(b.dataset.booked || 0) - Number(a.dataset.booked || 0);
+                }
+            } else if (sortValue === 'promo') {
                 difference = Number(b.dataset.discount || 0) - Number(a.dataset.discount || 0);
-            } else if (sortInput.value.startsWith('price-')) {
+                if (difference === 0) {
+                    difference = Number(b.dataset.booked || 0) - Number(a.dataset.booked || 0);
+                }
+            } else if (sortValue.startsWith('price-')) {
                 if (a.dataset.sortPrice === '' && b.dataset.sortPrice !== '') return 1;
                 if (b.dataset.sortPrice === '' && a.dataset.sortPrice !== '') return -1;
-                difference = sortInput.value === 'price-asc'
+                difference = sortValue === 'price-asc'
                     ? Number(a.dataset.sortPrice) - Number(b.dataset.sortPrice)
                     : Number(b.dataset.sortPrice) - Number(a.dataset.sortPrice);
-            } else if (sortInput.value === 'duration') {
+            } else if (sortValue === 'duration') {
                 difference = Number(a.dataset.days) - Number(b.dataset.days);
             }
-            return difference || Number(a.dataset.order) - Number(b.dataset.order);
+            return difference || (Number(b.dataset.booked || 0) - Number(a.dataset.booked || 0)) || (Number(a.dataset.order) - Number(b.dataset.order));
         });
         const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
         currentPage = Math.max(1, Math.min(currentPage, pageCount));

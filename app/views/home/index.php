@@ -293,7 +293,7 @@ $banners = [
                     <h2 id="promo-title">Tour khuyến mãi hôm nay</h2>
                     <p>Hành trình chất lượng với mức giá ưu đãi đặc biệt dành cho khách đặt sớm trong ngày.</p>
                 </div>
-                <a class="text-link" href="index.php?page=tours&amp;type=all" style="color:#d9381e;">Xem thêm ưu đãi <svg class="icon"><use href="#i-arrow"/></svg></a>
+                <a class="text-link" href="index.php?page=tours&amp;type=all&amp;sort=promo" style="color:#d9381e;">Xem thêm ưu đãi <svg class="icon"><use href="#i-arrow"/></svg></a>
             </div>
             <div class="tour-grid">
                 <?php foreach ($promoTours as $tour): ?>

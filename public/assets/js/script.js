@@ -709,29 +709,56 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderResults() {
-        const filtered = cards.filter(matches);
+        const baseMatched = cards.filter(matches);
+        const sortValue = sortInput ? sortInput.value : 'default';
+
+        // Lọc theo combobox nếu người dùng chọn các bộ lọc đặc thù: nổi bật, theo mùa, giảm giá
+        const hasSeasonMatchCards = baseMatched.some(c => Number(c.dataset.seasonMatch || 0) === 1);
+        const filtered = baseMatched.filter(card => {
+            if (sortValue === 'featured') {
+                return Number(card.dataset.featured || 0) === 1;
+            }
+            if (sortValue === 'promo') {
+                return Number(card.dataset.discount || 0) > 0;
+            }
+            if (sortValue === 'seasonal') {
+                const isMatch = Number(card.dataset.seasonMatch || 0) === 1;
+                const hasSeason = Boolean(card.dataset.season && card.dataset.season !== 'tat_ca');
+                return hasSeasonMatchCards ? isMatch : hasSeason;
+            }
+            return true;
+        });
+
         filtered.sort((a, b) => {
             let difference = 0;
-            if (sortInput.value === 'smart') {
+            if (sortValue === 'booked') {
+                difference = Number(b.dataset.booked || 0) - Number(a.dataset.booked || 0);
+            } else if (sortValue === 'smart') {
                 difference = Number(b.dataset.smartScore || 0) - Number(a.dataset.smartScore || 0);
-            } else if (sortInput.value === 'featured') {
-                difference = Number(b.dataset.featured || 0) - Number(a.dataset.featured || 0);
-            } else if (sortInput.value === 'seasonal') {
-                const aMatch = Number(a.dataset.seasonMatch || 0) * 2 + (a.dataset.season ? 1 : 0);
-                const bMatch = Number(b.dataset.seasonMatch || 0) * 2 + (b.dataset.season ? 1 : 0);
+            } else if (sortValue === 'featured') {
+                difference = Number(b.dataset.booked || 0) - Number(a.dataset.booked || 0);
+            } else if (sortValue === 'seasonal') {
+                const aMatch = Number(a.dataset.seasonMatch || 0) * 2 + (a.dataset.season && a.dataset.season !== 'tat_ca' ? 1 : 0);
+                const bMatch = Number(b.dataset.seasonMatch || 0) * 2 + (b.dataset.season && b.dataset.season !== 'tat_ca' ? 1 : 0);
                 difference = bMatch - aMatch;
-            } else if (sortInput.value === 'promo') {
+                if (difference === 0) {
+                    difference = Number(b.dataset.booked || 0) - Number(a.dataset.booked || 0);
+                }
+            } else if (sortValue === 'promo') {
                 difference = Number(b.dataset.discount || 0) - Number(a.dataset.discount || 0);
-            } else if (sortInput.value.startsWith('price-')) {
+                if (difference === 0) {
+                    difference = Number(b.dataset.booked || 0) - Number(a.dataset.booked || 0);
+                }
+            } else if (sortValue.startsWith('price-')) {
                 if (a.dataset.sortPrice === '' && b.dataset.sortPrice !== '') return 1;
                 if (b.dataset.sortPrice === '' && a.dataset.sortPrice !== '') return -1;
-                difference = sortInput.value === 'price-asc'
+                difference = sortValue === 'price-asc'
                     ? Number(a.dataset.sortPrice) - Number(b.dataset.sortPrice)
                     : Number(b.dataset.sortPrice) - Number(a.dataset.sortPrice);
-            } else if (sortInput.value === 'duration') {
+            } else if (sortValue === 'duration') {
                 difference = Number(a.dataset.days) - Number(b.dataset.days);
             }
-            return difference || Number(a.dataset.order) - Number(b.dataset.order);
+            return difference || (Number(b.dataset.booked || 0) - Number(a.dataset.booked || 0)) || (Number(a.dataset.order) - Number(b.dataset.order));
         });
         const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
         currentPage = Math.max(1, Math.min(currentPage, pageCount));

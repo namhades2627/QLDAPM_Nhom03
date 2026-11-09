@@ -4,6 +4,13 @@
 
 Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đặt trong `ontrip.sql`, người/AI thực hiện phải cập nhật nhật ký này trong cùng lần sửa. Ghi rõ ngày, thay đổi, ảnh hưởng dữ liệu, vị trí khối SQL và cách áp dụng. Không ghi ở đây các thao tác sử dụng website thông thường như đổi mật khẩu hoặc sửa hồ sơ cá nhân.
 
+## 08/11/2026 — Bổ sung seed dữ liệu 4 nhân viên hướng dẫn viên
+
+- Thêm tài khoản của 4 hướng dẫn viên (Tống Nhựt Nam, Trần Đăng Khoa, Tạ Hồng Quân, Nguyễn Quang Khanh) vào phần seed cài đặt của bảng `tai_khoan` trong `database/ontrip.sql`.
+- Phục vụ đồng bộ thông tin và avatar thực tế cho Trang Liên hệ (`page=lien_he`) và phân hệ Quản lý tài khoản nhân viên.
+- Dùng cú pháp `ON DUPLICATE KEY UPDATE id_tai_khoan = id_tai_khoan` nên không ghi đè hay ảnh hưởng đến dữ liệu đã có trên máy hiện tại.
+- **Máy mới:** import `ontrip.sql` sẽ tự có 4 nhân viên này. **Máy đã có:** không cần chạy lại vì tài khoản đã tồn tại.
+
 ## 08/11/2026 — Tính năng đánh giá tour cho khách hàng
 
 - Thêm bảng `danh_gia_tour`, lưu đánh giá của khách hàng cho tour bao gồm: số sao (1-5), tiêu đề, nội dung nhận xét, tài khoản đánh giá, đơn đặt liên kết (để xác nhận đã trải nghiệm tour), trạng thái hiển thị (`hien_thi`, `an`), thời điểm tạo và cập nhật.

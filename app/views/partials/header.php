@@ -48,7 +48,7 @@ $notificationData = $GLOBALS['customerNotifications'] ?? null;
                     </div>
                 </div>
             </div>
-            <a class="nav-link" href="#lien-he">Liên hệ</a>
+            <a class="nav-link<?= ($page ?? '') === 'lien_he' ? ' is-current' : '' ?>" href="index.php?page=lien_he" <?= ($page ?? '') === 'lien_he' ? 'aria-current="page"' : '' ?>>Liên hệ</a>
         </nav>
         <div class="nav-actions">
             <div class="nav-search">

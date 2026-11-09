@@ -4,6 +4,13 @@
 
 Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đặt trong `ontrip.sql`, người/AI thực hiện phải cập nhật nhật ký này trong cùng lần sửa. Ghi rõ ngày, thay đổi, ảnh hưởng dữ liệu, vị trí khối SQL và cách áp dụng. Không ghi ở đây các thao tác sử dụng website thông thường như đổi mật khẩu hoặc sửa hồ sơ cá nhân.
 
+## 08/11/2026 — Bổ sung seed dữ liệu 4 nhân viên hướng dẫn viên
+
+- Thêm tài khoản của 4 hướng dẫn viên (Tống Nhựt Nam, Trần Đăng Khoa, Tạ Hồng Quân, Nguyễn Quang Khanh) vào phần seed cài đặt của bảng `tai_khoan` trong `database/ontrip.sql`.
+- Phục vụ đồng bộ thông tin và avatar thực tế cho Trang Liên hệ (`page=lien_he`) và phân hệ Quản lý tài khoản nhân viên.
+- Dùng cú pháp `ON DUPLICATE KEY UPDATE id_tai_khoan = id_tai_khoan` nên không ghi đè hay ảnh hưởng đến dữ liệu đã có trên máy hiện tại.
+- **Máy mới:** import `ontrip.sql` sẽ tự có 4 nhân viên này. **Máy đã có:** không cần chạy lại vì tài khoản đã tồn tại.
+
 ## 08/11/2026 — Thông báo đơn đặt cho khách hàng
 
 - Thêm bảng `thong_bao`, lưu chủ đơn, đơn đặt, loại sự kiện, tiêu đề/nội dung, trạng thái đã đọc và thời điểm tạo. Khóa ngoại gắn với tài khoản/đơn; xóa đơn sẽ xóa thông báo của đơn. Khóa duy nhất `(id_don_dat, loai_thong_bao)` chống sự kiện trùng.

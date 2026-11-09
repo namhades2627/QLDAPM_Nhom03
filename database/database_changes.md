@@ -11,6 +11,15 @@ Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đ�
 - Dùng cú pháp `ON DUPLICATE KEY UPDATE id_tai_khoan = id_tai_khoan` nên không ghi đè hay ảnh hưởng đến dữ liệu đã có trên máy hiện tại.
 - **Máy mới:** import `ontrip.sql` sẽ tự có 4 nhân viên này. **Máy đã có:** không cần chạy lại vì tài khoản đã tồn tại.
 
+## 08/11/2026 — Tính năng đánh giá tour cho khách hàng
+
+- Thêm bảng `danh_gia_tour`, lưu đánh giá của khách hàng cho tour bao gồm: số sao (1-5), tiêu đề, nội dung nhận xét, tài khoản đánh giá, đơn đặt liên kết (để xác nhận đã trải nghiệm tour), trạng thái hiển thị (`hien_thi`, `an`), thời điểm tạo và cập nhật.
+- Ràng buộc khóa ngoại: Xóa tour hoặc tài khoản sẽ xóa đánh giá tương ứng (`ON DELETE CASCADE`), xóa đơn đặt sẽ giữ đánh giá nhưng gán null `id_don_dat` (`ON DELETE SET NULL`).
+- Tích hợp tính năng đánh giá trực tiếp trên trang chi tiết tour: biểu đồ tổng quan sao (điểm trung bình, thanh tỷ lệ % 1-5 sao), bộ lọc xem theo số sao, form gửi/chỉnh sửa đánh giá cho khách hàng đã đăng nhập, huy hiệu "✓ Đã trải nghiệm tour" cho khách đã đặt tour thành công, nút xóa/sửa đánh giá cá nhân.
+- Tích hợp nút đánh giá nhanh từ danh sách và chi tiết đơn đặt tour đã xác nhận/hoàn thành.
+- **Vị trí:** khối `BEGIN CAP_NHAT_2026_11_08_DANH_GIA_TOUR` / `END CAP_NHAT_2026_11_08_DANH_GIA_TOUR` trong `ontrip.sql`. Khối CREATE TABLE IF NOT EXISTS này an toàn khi chạy lại.
+- **Máy đã có database:** chọn `ontrip` trong phpMyAdmin → SQL → chạy riêng khối trên.
+
 ## 08/11/2026 — Thông báo đơn đặt cho khách hàng
 
 - Thêm bảng `thong_bao`, lưu chủ đơn, đơn đặt, loại sự kiện, tiêu đề/nội dung, trạng thái đã đọc và thời điểm tạo. Khóa ngoại gắn với tài khoản/đơn; xóa đơn sẽ xóa thông báo của đơn. Khóa duy nhất `(id_don_dat, loai_thong_bao)` chống sự kiện trùng.

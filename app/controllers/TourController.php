@@ -3,15 +3,32 @@
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../models/tour.php';
 require_once __DIR__ . '/../models/thoi_tiet.php';
+require_once __DIR__ . '/../models/danh_gia.php';
 
 /** Nhận tham số URL, gọi Model và truyền dữ liệu vào View. */
 class TourController
 {
     private TourModel $model;
+    private ?DanhGiaModel $danhGiaModel = null;
 
     public function __construct()
     {
         $this->model = new TourModel(getDatabaseConnection());
+    }
+
+    private function getDanhGiaModel(): DanhGiaModel
+    {
+        if ($this->danhGiaModel === null) {
+            $this->danhGiaModel = new DanhGiaModel(getDatabaseConnection());
+        }
+        return $this->danhGiaModel;
+    }
+
+    private function isAjaxRequest(): bool
+    {
+        return (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+            || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+            || (isset($_POST['ajax']) && $_POST['ajax'] === '1');
     }
 
     private function queryString(string $name): string
@@ -223,6 +240,96 @@ class TourController
         } else {
             $tour = $this->prepareImage($tour);
 
+            // Xử lý gửi hoặc xóa đánh giá của khách hàng
+            $action = $_POST['action'] ?? $this->queryString('action');
+            if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+                if ($action === 'submit_review') {
+                    $account = $_SESSION['tai_khoan'] ?? null;
+                    if (!$account) {
+                        if ($this->isAjaxRequest()) {
+                            header('Content-Type: application/json; charset=utf-8');
+                            echo json_encode(['success' => false, 'message' => 'Vui lòng đăng nhập để gửi đánh giá.']);
+                            return;
+                        }
+                        $_SESSION['review_flash'] = ['type' => 'error', 'message' => 'Vui lòng đăng nhập để gửi đánh giá.'];
+                        header('Location: index.php?page=login&redirect=' . urlencode('index.php?page=tour-detail&id=' . $tour['id'] . '#danh-gia'), true, 303);
+                        return;
+                    }
+
+                    $csrf = $_POST['csrf_token'] ?? '';
+                    if (!isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
+                        if ($this->isAjaxRequest()) {
+                            header('Content-Type: application/json; charset=utf-8');
+                            echo json_encode(['success' => false, 'message' => 'Phiên làm việc hết hạn hoặc token bảo mật không khớp.']);
+                            return;
+                        }
+                        $_SESSION['review_flash'] = ['type' => 'error', 'message' => 'Phiên làm việc hết hạn. Vui lòng thử lại.'];
+                        header('Location: index.php?page=tour-detail&id=' . urlencode($tour['id']) . '#danh-gia', true, 303);
+                        return;
+                    }
+
+                    $stars = filter_var($_POST['so_sao'] ?? 5, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 5]]) ?: 5;
+                    $title = is_string($_POST['tieu_de'] ?? null) ? trim($_POST['tieu_de']) : '';
+                    $content = is_string($_POST['noi_dung'] ?? null) ? trim($_POST['noi_dung']) : '';
+                    $orderId = $this->getDanhGiaModel()->getUserOrderIdForTour((int) $tour['id_tour'], (int) $account['id_tai_khoan']);
+
+                    $result = $this->getDanhGiaModel()->saveReview(
+                        (int) $tour['id_tour'],
+                        (int) $account['id_tai_khoan'],
+                        $stars,
+                        $content,
+                        $title,
+                        $orderId
+                    );
+
+                    if ($this->isAjaxRequest()) {
+                        header('Content-Type: application/json; charset=utf-8');
+                        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+                        return;
+                    }
+
+                    $_SESSION['review_flash'] = [
+                        'type' => $result['success'] ? 'success' : 'error',
+                        'message' => $result['message']
+                    ];
+                    header('Location: index.php?page=tour-detail&id=' . urlencode($tour['id']) . '#danh-gia', true, 303);
+                    return;
+                }
+
+                if ($action === 'delete_review') {
+                    $account = $_SESSION['tai_khoan'] ?? null;
+                    $reviewId = filter_var($_POST['id_danh_gia'] ?? 0, FILTER_VALIDATE_INT);
+                    $csrf = $_POST['csrf_token'] ?? '';
+
+                    if (!$account || !$reviewId || !isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
+                        if ($this->isAjaxRequest()) {
+                            header('Content-Type: application/json; charset=utf-8');
+                            echo json_encode(['success' => false, 'message' => 'Yêu cầu xóa đánh giá không hợp lệ.']);
+                            return;
+                        }
+                        $_SESSION['review_flash'] = ['type' => 'error', 'message' => 'Không thể xóa đánh giá này.'];
+                        header('Location: index.php?page=tour-detail&id=' . urlencode($tour['id']) . '#danh-gia', true, 303);
+                        return;
+                    }
+
+                    $isAdmin = ($account['vai_tro'] ?? '') === 'admin';
+                    $success = $this->getDanhGiaModel()->deleteReview((int) $reviewId, (int) $account['id_tai_khoan'], $isAdmin);
+
+                    if ($this->isAjaxRequest()) {
+                        header('Content-Type: application/json; charset=utf-8');
+                        echo json_encode(['success' => $success, 'message' => $success ? 'Đã xóa đánh giá của bạn.' : 'Không thể xóa đánh giá.'], JSON_UNESCAPED_UNICODE);
+                        return;
+                    }
+
+                    $_SESSION['review_flash'] = [
+                        'type' => $success ? 'success' : 'error',
+                        'message' => $success ? 'Đã xóa đánh giá của bạn.' : 'Không thể xóa đánh giá.'
+                    ];
+                    header('Location: index.php?page=tour-detail&id=' . urlencode($tour['id']) . '#danh-gia', true, 303);
+                    return;
+                }
+            }
+
             // Tìm lịch khởi hành được chọn: nếu truyền ?date= thì tìm, ngược lại lấy lịch đầu tiên
             $requestedDate = $this->queryString('date');
             if ($requestedDate !== '' && !empty($tour['schedules'])) {
@@ -263,6 +370,16 @@ class TourController
                 ], JSON_UNESCAPED_UNICODE);
                 return;
             }
+
+            // Dữ liệu đánh giá tour
+            $currentUserId = isset($_SESSION['tai_khoan']['id_tai_khoan']) ? (int) $_SESSION['tai_khoan']['id_tai_khoan'] : null;
+            $reviewStats = $this->getDanhGiaModel()->getTourRatingStats((int) $tour['id_tour']);
+            $reviews = $this->getDanhGiaModel()->getTourReviews((int) $tour['id_tour']);
+            $userReview = $currentUserId ? $this->getDanhGiaModel()->getUserReview((int) $tour['id_tour'], $currentUserId) : null;
+            $hasBooked = $currentUserId ? $this->getDanhGiaModel()->hasUserBookedTour((int) $tour['id_tour'], $currentUserId) : false;
+            $csrfToken = $_SESSION['csrf_token'] ?? '';
+            $reviewFlash = $_SESSION['review_flash'] ?? null;
+            unset($_SESSION['review_flash']);
 
             $relatedTours = array_values(array_filter(
                 $this->model->getPublishedTours($tourType),

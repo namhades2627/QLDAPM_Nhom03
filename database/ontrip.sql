@@ -303,6 +303,29 @@ CREATE TABLE IF NOT EXISTS `thong_bao` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- END CAP_NHAT_2026_11_08_THONG_BAO
 
+-- BEGIN CAP_NHAT_2026_11_08_DANH_GIA_TOUR
+-- Bang danh gia tour tu khach hang kem so sao, tieu de, nhan xet va trang thai hien thi
+CREATE TABLE IF NOT EXISTS `danh_gia_tour` (
+    `id_danh_gia` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_tour` INT UNSIGNED NOT NULL,
+    `id_tai_khoan` BIGINT UNSIGNED NOT NULL,
+    `id_don_dat` BIGINT UNSIGNED DEFAULT NULL,
+    `so_sao` TINYINT UNSIGNED NOT NULL,
+    `tieu_de` VARCHAR(150) DEFAULT NULL,
+    `noi_dung` TEXT NOT NULL,
+    `trang_thai` ENUM('hien_thi', 'an') NOT NULL DEFAULT 'hien_thi',
+    `tao_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `cap_nhat_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id_danh_gia`),
+    KEY `idx_danh_gia_tour_trang_thai` (`id_tour`, `trang_thai`),
+    KEY `idx_danh_gia_tai_khoan` (`id_tai_khoan`),
+    KEY `idx_danh_gia_don_dat` (`id_don_dat`),
+    CONSTRAINT `fk_danh_gia_tour` FOREIGN KEY (`id_tour`) REFERENCES `tour` (`id_tour`) ON DELETE CASCADE,
+    CONSTRAINT `fk_danh_gia_tai_khoan` FOREIGN KEY (`id_tai_khoan`) REFERENCES `tai_khoan` (`id_tai_khoan`) ON DELETE CASCADE,
+    CONSTRAINT `fk_danh_gia_don_dat` FOREIGN KEY (`id_don_dat`) REFERENCES `don_dat_tour` (`id_don_dat`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- END CAP_NHAT_2026_11_08_DANH_GIA_TOUR
+
 -- BEGIN CAP_NHAT_2026_11_01_THONG_TIN_DON_DAT
 -- Nâng cấp bảng đơn đặt cũ; giữ nguyên tiền, trạng thái và ngày cập nhật của đơn.
 -- Đơn cũ chưa có thông tin chụp lại chỉ có thể khôi phục từ tour/lịch hiện tại.

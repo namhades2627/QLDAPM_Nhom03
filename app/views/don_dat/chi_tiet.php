@@ -152,6 +152,12 @@ $statusNotes = [
                     </form>
                     <?php endif; ?>
 
+                    <?php if (in_array($order['trang_thai'], ['da_xac_nhan', 'hoan_thanh'], true)): ?>
+                    <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);">
+                        <a class="button button-primary" style="width: 100%; text-align: center; display: block;" href="index.php?page=tour-detail&amp;id=<?= $escape(rawurlencode($order['ma_tour'])) ?>#danh-gia">⭐ Đánh giá tour này</a>
+                    </div>
+                    <?php endif; ?>
+
                     <a class="booking-back-link" href="index.php?page=orders">← Về danh sách đơn</a>
                 </div>
             </aside>

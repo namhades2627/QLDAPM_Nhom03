@@ -129,8 +129,7 @@ $visibleCodes = array_column(array_slice($matchedTours, 0, $pageSize), 'id');
                 <div><h2 id="catalog-results-title">Danh sách tour</h2><p id="catalog-result-description" aria-live="polite"><strong><?= $initialCount ?></strong> tour · Hiển thị <?= min($pageSize, $initialCount) ?> tour</p></div>
                 <label class="catalog-sort"><span>Sắp xếp theo</span><select id="catalog-sort" name="sort">
                     <option value="default" <?= ($sort === '' || $sort === 'default') ? 'selected' : '' ?>>Mặc định</option>
-                    <option value="booked" <?= $sort === 'booked' ? 'selected' : '' ?>>Xếp theo số lượng đã đặt</option>
-                    <option value="featured" <?= $sort === 'featured' ? 'selected' : '' ?>>Tour nổi bật</option>
+                    <option value="featured" <?= ($sort === 'featured' || $sort === 'booked') ? 'selected' : '' ?>>Tour nổi bật (Đặt nhiều nhất)</option>
                     <option value="seasonal" <?= $sort === 'seasonal' ? 'selected' : '' ?>>Tour theo mùa</option>
                     <option value="promo" <?= $sort === 'promo' ? 'selected' : '' ?>>Tour giảm giá / Khuyến mãi</option>
                     <option value="price-asc" <?= $sort === 'price-asc' ? 'selected' : '' ?>>Giá tăng dần</option>

@@ -712,12 +712,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const baseMatched = cards.filter(matches);
         const sortValue = sortInput ? sortInput.value : 'default';
 
-        // Lọc theo combobox nếu người dùng chọn các bộ lọc đặc thù: nổi bật, theo mùa, giảm giá
+        // Lọc theo combobox nếu người dùng chọn các bộ lọc đặc thù: theo mùa, giảm giá
         const hasSeasonMatchCards = baseMatched.some(c => Number(c.dataset.seasonMatch || 0) === 1);
         const filtered = baseMatched.filter(card => {
-            if (sortValue === 'featured') {
-                return Number(card.dataset.featured || 0) === 1;
-            }
             if (sortValue === 'promo') {
                 return Number(card.dataset.discount || 0) > 0;
             }
@@ -731,13 +728,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filtered.sort((a, b) => {
             let difference = 0;
-            if (sortValue === 'booked') {
+            if (sortValue === 'featured' || sortValue === 'booked') {
                 difference = Number(b.dataset.booked || 0) - Number(a.dataset.booked || 0);
+                if (difference === 0) {
+                    difference = Number(b.dataset.featured || 0) - Number(a.dataset.featured || 0);
+                }
             } else if (sortValue === 'smart') {
-                difference = Number(b.dataset.smartScore || 0) - Number(a.dataset.smartScore || 0);
-            } else if (sortValue === 'featured') {
-                difference = Number(b.dataset.booked || 0) - Number(a.dataset.booked || 0);
-            } else if (sortValue === 'seasonal') {
                 const aMatch = Number(a.dataset.seasonMatch || 0) * 2 + (a.dataset.season && a.dataset.season !== 'tat_ca' ? 1 : 0);
                 const bMatch = Number(b.dataset.seasonMatch || 0) * 2 + (b.dataset.season && b.dataset.season !== 'tat_ca' ? 1 : 0);
                 difference = bMatch - aMatch;

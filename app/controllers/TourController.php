@@ -121,17 +121,12 @@ class TourController
             : (in_array($currentMonth, [12, 1, 2], true) ? 'dong'
             : (in_array($currentMonth, [3, 4], true) ? 'xuan' : 'ha'));
 
-        if ($sort === 'booked') {
+        if ($sort === 'featured' || $sort === 'booked') {
             usort($tours, static function ($a, $b) {
                 $diff = (int) ($b['booked_count'] ?? 0) <=> (int) ($a['booked_count'] ?? 0);
-                return $diff !== 0 ? $diff : strcmp($a['id'], $b['id']);
-            });
-        } elseif ($sort === 'featured') {
-            usort($tours, static function ($a, $b) {
-                $diff = (int) ($b['featured'] ?? 0) <=> (int) ($a['featured'] ?? 0);
                 if ($diff !== 0) return $diff;
-                $diffBooked = (int) ($b['booked_count'] ?? 0) <=> (int) ($a['booked_count'] ?? 0);
-                return $diffBooked !== 0 ? $diffBooked : strcmp($a['id'], $b['id']);
+                $diffFeatured = (int) ($b['featured'] ?? 0) <=> (int) ($a['featured'] ?? 0);
+                return $diffFeatured !== 0 ? $diffFeatured : strcmp($a['id'], $b['id']);
             });
         } elseif ($sort === 'seasonal') {
             usort($tours, static function ($a, $b) use ($currentSeason) {
@@ -180,9 +175,7 @@ class TourController
             'season' => $season,
         ];
         $matchedTours = $this->model->filterTours($tours, $filters);
-        if ($sort === 'featured') {
-            $matchedTours = array_values(array_filter($matchedTours, static fn($t) => !empty($t['featured'])));
-        } elseif ($sort === 'promo') {
+        if ($sort === 'promo') {
             $matchedTours = array_values(array_filter($matchedTours, static fn($t) => !empty($t['discount_percent']) && (int) $t['discount_percent'] > 0));
         } elseif ($sort === 'seasonal') {
             $seasonMatched = array_values(array_filter($matchedTours, static fn($t) => ($t['season'] ?? '') === $currentSeason));

@@ -57,6 +57,7 @@ if (!empty($itineraryWeather)) {
             <div><span>ĐIỂM ĐẾN</span><strong><?= $escape($tour['destination']) ?></strong></div>
             <div><span>THỜI LƯỢNG</span><strong><?= $escape($tour['duration']) ?></strong></div>
             <div><span>KHỞI HÀNH TỪ</span><strong><?= $escape($tour['origin'] ?: 'Đang cập nhật') ?></strong></div>
+            <div><span>ĐÃ ĐẶT THÀNH CÔNG</span><strong><?= !empty($tour['booked_count']) ? number_format($tour['booked_count'], 0, ',', '.') . ' khách' : 'Chưa có khách' ?></strong></div>
         </div>
         <div class="detail-layout">
             <div class="detail-content">

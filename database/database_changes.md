@@ -4,6 +4,14 @@
 
 Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đặt trong `ontrip.sql`, người/AI thực hiện phải cập nhật nhật ký này trong cùng lần sửa. Ghi rõ ngày, thay đổi, ảnh hưởng dữ liệu, vị trí khối SQL và cách áp dụng. Không ghi ở đây các thao tác sử dụng website thông thường như đổi mật khẩu hoặc sửa hồ sơ cá nhân.
 
+## 09/11/2026 — Hiển thị số lượng khách đã đặt tour thành công trên thẻ tour
+
+- Cập nhật truy vấn tính tổng số lượng khách hàng đã đặt tour (`SUM(so_nguoi_lon + so_tre_em)`) theo tour trong `TourModel::getPublishedTours()`, chỉ tính các đơn đặt tour không bị hủy (`trang_thai <> 'da_huy'`).
+- Hiển thị thông tin số lượng khách đã đặt ngay dưới phần thời gian khởi hành trên tất cả các thẻ tour tại trang chủ (`app/views/home/index.php`), trang danh sách tour (`app/views/tour/index.php`) và thanh thông tin nhanh ở chi tiết tour (`app/views/tour/detail.php`).
+- Bổ sung seed dữ liệu mẫu các đơn đặt tour đã xác nhận và hoàn thành cho các tour phổ biến (Sapa, Hà Giang, Hạ Long, Bà Nà Hills).
+- **Vị trí:** khối `BEGIN CAP_NHAT_2026_11_09_DON_DAT_SEED` / `END CAP_NHAT_2026_11_09_DON_DAT_SEED` ở cuối `ontrip.sql`. Dùng `WHERE NOT EXISTS` an toàn khi chạy lại nhiều lần.
+- **Máy đã có database:** chọn `ontrip` trong phpMyAdmin → SQL → chạy khối trên.
+
 ## 08/11/2026 — Tính năng đánh giá tour cho khách hàng
 
 - Thêm bảng `danh_gia_tour`, lưu đánh giá của khách hàng cho tour bao gồm: số sao (1-5), tiêu đề, nội dung nhận xét, tài khoản đánh giá, đơn đặt liên kết (để xác nhận đã trải nghiệm tour), trạng thái hiển thị (`hien_thi`, `an`), thời điểm tạo và cập nhật.

@@ -747,7 +747,7 @@ a, button, input, select { outline-offset: 5px; }
 .catalog-grid .tour-body h3 { min-height: 56px; font-size: 15px; line-height: 1.5; margin-bottom: 10px; }
 .catalog-grid .tour-meta { font-size: 11px; margin-top: 4px; display: flex; align-items: center; gap: 6px; color: var(--muted); }
 .catalog-grid .tour-meta .icon { width: 14px; height: 14px; color: var(--orange); flex-shrink: 0; }
-.tour-schedule-meta { font-size: 11px; margin-top: 6px; display: flex; align-items: baseline; gap: 6px; color: #6e6258; flex-wrap: wrap; }
+.tour-schedule-meta { font-size: 11px; margin-top: 5px; display: flex; align-items: baseline; gap: 6px; color: #6e6258; flex-wrap: wrap; }
 .tour-schedule-meta .icon { width: 14px; height: 14px; color: var(--orange); flex-shrink: 0; position: relative; top: 2px; }
 .tour-schedule-text { flex: 1; min-width: 0; display: inline-flex; align-items: center; flex-wrap: wrap; gap: 5px; }
 .schedule-intro { color: #786f66; font-size: 11px; }
@@ -756,6 +756,11 @@ a, button, input, select { outline-offset: 5px; }
 .date-pill { display: inline-block; padding: 1px 6px; font-size: 10.5px; border-radius: 3px; background: #fdf5ef; color: var(--orange-dark); border: 1px solid #fae1d0; line-height: 1.35; font-weight: 600; }
 .date-pill-more { display: inline-block; padding: 1px 4px; font-size: 10px; color: #8c8278; background: #f3efe9; border-radius: 3px; line-height: 1.35; font-weight: 500; }
 .schedule-empty { color: var(--muted); font-style: italic; font-size: 10.5px; }
+.tour-booked-meta { font-size: 11px; margin-top: 5px; display: flex; align-items: baseline; gap: 6px; color: #786f66; line-height: 1.4; }
+.tour-booked-meta .icon { width: 12px; height: 12px; color: #16a34a; flex-shrink: 0; position: relative; top: 1.5px; }
+.tour-booked-text { font-size: 11px; color: #786f66; display: inline-flex; align-items: baseline; gap: 4px; }
+.tour-booked-text strong { color: #15803d; font-weight: 700; font-size: 11.5px; }
+.tour-booked-empty { color: var(--muted); font-style: italic; font-size: 10.5px; }
 .catalog-card-bottom { border-top: 1px solid var(--line); margin-top: 17px; padding-top: 12px; }
 .catalog-card-bottom > div > span { font-size: 10px; color: var(--muted); }
 .catalog-card-bottom p { color: var(--orange); margin: 2px 0 12px; line-height: 1.5; }

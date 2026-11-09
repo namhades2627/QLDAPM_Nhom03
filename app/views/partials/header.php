@@ -27,27 +27,9 @@ $notificationData = $GLOBALS['customerNotifications'] ?? null;
             <span class="brand-word">On<span>Trip</span><small>ĐI & KHÁM PHÁ</small></span>
         </a>
         <nav id="main-navigation" class="main-navigation" aria-label="Điều hướng chính">
-            <a class="nav-link<?= $isHomePage ? ' is-current' : '' ?>" href="index.php" <?= $isHomePage ? 'aria-current="page"' : '' ?>>Trang chủ</a>
+            <a class="nav-link<?= $isHomePage ? ' is-current' : '' ?>" href="index.php"<?= $isHomePage ? ' aria-current="page"' : '' ?>>Trang chủ</a>
             <a class="nav-link" href="#gioi-thieu">Giới thiệu</a>
-            <div class="dropdown">
-                <button class="nav-link dropdown-toggle<?= $isToursPage ? ' is-current' : '' ?>" type="button" aria-expanded="false" aria-controls="tour-menu">Tour <svg class="icon chevron-down"><use href="#i-chevron"/></svg></button>
-                <div id="tour-menu" class="dropdown-menu tour-menu">
-                    <div class="tour-menu-column" role="group" aria-labelledby="domestic-menu-title">
-                        <p id="domestic-menu-title" class="tour-menu-title">Tour trong nước</p>
-                        <a href="index.php?page=tours&amp;type=domestic" data-tour-type="domestic" data-tour-region="" <?= $isToursPage && $tourType === 'domestic' && $tourRegion === '' ? 'class="is-selected"' : '' ?>>Tất cả tour trong nước</a>
-                        <a href="index.php?page=tours&amp;type=domestic&amp;region=north" data-tour-type="domestic" data-tour-region="north" <?= $isToursPage && $tourType === 'domestic' && $tourRegion === 'north' ? 'class="is-selected"' : '' ?>>Miền Bắc</a>
-                        <a href="index.php?page=tours&amp;type=domestic&amp;region=central" data-tour-type="domestic" data-tour-region="central" <?= $isToursPage && $tourType === 'domestic' && $tourRegion === 'central' ? 'class="is-selected"' : '' ?>>Miền Trung</a>
-                        <a href="index.php?page=tours&amp;type=domestic&amp;region=south" data-tour-type="domestic" data-tour-region="south" <?= $isToursPage && $tourType === 'domestic' && $tourRegion === 'south' ? 'class="is-selected"' : '' ?>>Miền Nam</a>
-                    </div>
-                    <div class="tour-menu-column" role="group" aria-labelledby="international-menu-title">
-                        <p id="international-menu-title" class="tour-menu-title">Tour quốc tế</p>
-                        <a href="index.php?page=tours&amp;type=international" data-tour-type="international" data-tour-region="" <?= $isToursPage && $tourType === 'international' && $tourRegion === '' ? 'class="is-selected"' : '' ?>>Tất cả tour quốc tế</a>
-                        <a href="index.php?page=tours&amp;type=international&amp;region=asia" data-tour-type="international" data-tour-region="asia" <?= $isToursPage && $tourType === 'international' && $tourRegion === 'asia' ? 'class="is-selected"' : '' ?>>Châu Á</a>
-                        <a href="index.php?page=tours&amp;type=international&amp;region=europe" data-tour-type="international" data-tour-region="europe" <?= $isToursPage && $tourType === 'international' && $tourRegion === 'europe' ? 'class="is-selected"' : '' ?>>Châu Âu</a>
-                        <a href="index.php?page=tours&amp;type=international&amp;region=americas-oceania" data-tour-type="international" data-tour-region="americas-oceania" <?= $isToursPage && $tourType === 'international' && $tourRegion === 'americas-oceania' ? 'class="is-selected"' : '' ?>>Châu Mỹ – Châu Úc</a>
-                    </div>
-                </div>
-            </div>
+            <a class="nav-link<?= $isToursPage ? ' is-current' : '' ?>" href="index.php?page=tours"<?= $isToursPage ? ' aria-current="page"' : '' ?>>Tour</a>
             <a class="nav-link" href="#lien-he">Liên hệ</a>
         </nav>
         <div class="nav-actions">

@@ -52,7 +52,7 @@ $visibleCodes = array_column(array_slice($matchedTours, 0, $pageSize), 'id');
             <div class="catalog-intro-row">
                 <div>
                     <h1><?= $typeTitle ?><span aria-hidden="true">.</span></h1>
-                    <p class="catalog-intro-text"><?= $tourType === 'domestic' ? 'Những miền đất thân quen, những trải nghiệm mới.' : 'Khám phá văn hóa và cảnh sắc qua những hành trình mới.' ?></p>
+                    <p class="catalog-intro-text"><?= $tourType === 'domestic' ? 'Những miền đất thân quen, những trải nghiệm mới.' : ($tourType === 'international' ? 'Khám phá văn hóa và cảnh sắc qua những hành trình mới.' : 'Khám phá các hành trình du lịch trong nước và quốc tế hấp dẫn nhất.') ?></p>
                     <p class="catalog-search-summary" <?= $searchSummary && $initialCount > 0 ? '' : 'hidden' ?>><?= $escape(implode(' · ', $searchSummary)) ?></p>
                 </div>
                 <form class="catalog-quick-search" role="search" aria-label="Tìm nhanh trong danh sách tour">
@@ -151,6 +151,16 @@ $visibleCodes = array_column(array_slice($matchedTours, 0, $pageSize), 'id');
                             <div class="catalog-card-top"><p class="tour-place"><?= $escape($tour['destination']) ?></p></div>
                             <h3><?= $escape($tour['name']) ?></h3>
                             <p class="tour-meta"><svg class="icon"><use href="#i-pin"/></svg><span data-card-origin><?= $tour['origin'] !== '' ? 'Khởi hành từ ' . $escape($tour['origin']) : 'Chưa có lịch khởi hành' ?></span></p>
+                            <p class="tour-booked-meta">
+                                <svg class="icon"><use href="#i-user"/></svg>
+                                <span class="tour-booked-text">
+                                    <?php if (!empty($tour['booked_count']) && $tour['booked_count'] > 0): ?>
+                                        <strong><?= number_format($tour['booked_count'], 0, ',', '.') ?></strong> khách đã đặt thành công
+                                    <?php else: ?>
+                                        <span class="tour-booked-empty">Chưa có lượt đặt thành công</span>
+                                    <?php endif; ?>
+                                </span>
+                            </p>
                             <p class="tour-schedule-meta">
                                 <svg class="icon"><use href="#i-calendar"/></svg>
                                 <span class="tour-schedule-text" data-card-schedules>

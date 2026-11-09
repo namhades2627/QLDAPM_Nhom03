@@ -1117,3 +1117,42 @@ INSERT INTO `tai_khoan` (`ho_ten`, `email`, `so_dien_thoai`, `mat_khau`, `vai_tr
     ('Nhân viên OnTrip', 'nhanvien@gmail.com', '0900000002', '$2y$10$0gnunfYVmmayw87.Sq/n6eKDeOf2py1qEyy4r0.m.eVpzFZGtj9vu', 'nhan_vien'),
     ('Khách hàng OnTrip', 'khachhang@gmail.com', '0900000003', '$2y$10$2/VNP7hIDmHevHCbIhl.MO3xZEQGwNFISdrjHiOEaM2avqnESllQ2', 'khach_hang')
 ON DUPLICATE KEY UPDATE `id_tai_khoan` = `id_tai_khoan`;
+
+-- BEGIN CAP_NHAT_2026_11_09_DON_DAT_SEED
+-- Seed du lieu don dat va thanh toan mau cho mot so tour pho bien
+INSERT INTO `don_dat_tour` (`ma_don`, `id_tai_khoan`, `id_lich_khoi_hanh`, `ma_tour`, `ten_tour`, `ngay_khoi_hanh`, `diem_khoi_hanh`, `gia_nguoi_lon`, `gia_tre_em`, `so_nguoi_lon`, `so_tre_em`, `tong_goc`, `muc_giam`, `tien_giam`, `tong_thanh_toan`, `ho_ten`, `email`, `so_dien_thoai`, `trang_thai`)
+SELECT 'OT26110101', 3, 1, 'mb01', 'Hà Nội – Sapa – Fansipan – Lào Cai – Hạ Long', '2026-12-05', 'TP. Hồ Chí Minh', 3290000, 2303000, 4, 1, 15463000, 5, 773150, 14689850, 'Trần Minh Hoàng', 'khachhang@gmail.com', '0900000003', 'da_xac_nhan'
+WHERE NOT EXISTS (SELECT 1 FROM `don_dat_tour` WHERE `ma_don` = 'OT26110101');
+
+INSERT INTO `don_dat_tour` (`ma_don`, `id_tai_khoan`, `id_lich_khoi_hanh`, `ma_tour`, `ten_tour`, `ngay_khoi_hanh`, `diem_khoi_hanh`, `gia_nguoi_lon`, `gia_tre_em`, `so_nguoi_lon`, `so_tre_em`, `tong_goc`, `muc_giam`, `tien_giam`, `tong_thanh_toan`, `ho_ten`, `email`, `so_dien_thoai`, `trang_thai`)
+SELECT 'OT26110102', 3, 1, 'mb01', 'Hà Nội – Sapa – Fansipan – Lào Cai – Hạ Long', '2026-12-05', 'TP. Hồ Chí Minh', 3290000, 2303000, 18, 2, 63826000, 8, 5106080, 58719920, 'Công ty Công nghệ Á Châu', 'contact@asiatech.vn', '0912345678', 'hoan_thanh'
+WHERE NOT EXISTS (SELECT 1 FROM `don_dat_tour` WHERE `ma_don` = 'OT26110102');
+
+INSERT INTO `don_dat_tour` (`ma_don`, `id_tai_khoan`, `id_lich_khoi_hanh`, `ma_tour`, `ten_tour`, `ngay_khoi_hanh`, `diem_khoi_hanh`, `gia_nguoi_lon`, `gia_tre_em`, `so_nguoi_lon`, `so_tre_em`, `tong_goc`, `muc_giam`, `tien_giam`, `tong_thanh_toan`, `ho_ten`, `email`, `so_dien_thoai`, `trang_thai`)
+SELECT 'OT26110103', 3, 2, 'mb01', 'Hà Nội – Sapa – Fansipan – Lào Cai – Hạ Long', '2027-01-09', 'TP. Hồ Chí Minh', 3290000, 2303000, 15, 3, 56259000, 8, 4500720, 51758280, 'Đoàn gia đình Nguyễn Văn', 'nguyenvan@gmail.com', '0988776655', 'da_xac_nhan'
+WHERE NOT EXISTS (SELECT 1 FROM `don_dat_tour` WHERE `ma_don` = 'OT26110103');
+
+INSERT INTO `don_dat_tour` (`ma_don`, `id_tai_khoan`, `id_lich_khoi_hanh`, `ma_tour`, `ten_tour`, `ngay_khoi_hanh`, `diem_khoi_hanh`, `gia_nguoi_lon`, `gia_tre_em`, `so_nguoi_lon`, `so_tre_em`, `tong_goc`, `muc_giam`, `tien_giam`, `tong_thanh_toan`, `ho_ten`, `email`, `so_dien_thoai`, `trang_thai`)
+SELECT 'OT26110201', 3, 4, 'mb02', 'Hà Giang – Đồng Văn – Sông Nho Quế – Pác Bó – Bản Giốc – Ba Bể', '2026-12-12', 'TP. Hồ Chí Minh', 4590000, 3213000, 8, 2, 43146000, 8, 3451680, 39694320, 'CLB Nhiếp ảnh Trẻ', 'photo@club.vn', '0933221100', 'da_xac_nhan'
+WHERE NOT EXISTS (SELECT 1 FROM `don_dat_tour` WHERE `ma_don` = 'OT26110201');
+
+INSERT INTO `don_dat_tour` (`ma_don`, `id_tai_khoan`, `id_lich_khoi_hanh`, `ma_tour`, `ten_tour`, `ngay_khoi_hanh`, `diem_khoi_hanh`, `gia_nguoi_lon`, `gia_tre_em`, `so_nguoi_lon`, `so_tre_em`, `tong_goc`, `muc_giam`, `tien_giam`, `tong_thanh_toan`, `ho_ten`, `email`, `so_dien_thoai`, `trang_thai`)
+SELECT 'OT26110202', 3, 5, 'mb02', 'Hà Giang – Đồng Văn – Sông Nho Quế – Pác Bó – Bản Giốc – Ba Bể', '2027-01-16', 'TP. Hồ Chí Minh', 4590000, 3213000, 14, 1, 67473000, 8, 5397840, 62075160, 'Nhóm phượt xuyên Việt', 'xuyenviet@gmail.com', '0944556677', 'hoan_thanh'
+WHERE NOT EXISTS (SELECT 1 FROM `don_dat_tour` WHERE `ma_don` = 'OT26110202');
+
+INSERT INTO `don_dat_tour` (`ma_don`, `id_tai_khoan`, `id_lich_khoi_hanh`, `ma_tour`, `ten_tour`, `ngay_khoi_hanh`, `diem_khoi_hanh`, `gia_nguoi_lon`, `gia_tre_em`, `so_nguoi_lon`, `so_tre_em`, `tong_goc`, `muc_giam`, `tien_giam`, `tong_thanh_toan`, `ho_ten`, `email`, `so_dien_thoai`, `trang_thai`)
+SELECT 'OT26110401', 3, 10, 'mb04', 'Hạ Long – Du thuyền – Hang Sửng Sốt', '2026-12-26', 'TP. Hồ Chí Minh', 5290000, 3703000, 12, 4, 78292000, 8, 6263360, 72028640, 'Gia đình Bác sĩ Tuấn', 'tuanbs@gmail.com', '0977889900', 'da_xac_nhan'
+WHERE NOT EXISTS (SELECT 1 FROM `don_dat_tour` WHERE `ma_don` = 'OT26110401');
+
+INSERT INTO `don_dat_tour` (`ma_don`, `id_tai_khoan`, `id_lich_khoi_hanh`, `ma_tour`, `ten_tour`, `ngay_khoi_hanh`, `diem_khoi_hanh`, `gia_nguoi_lon`, `gia_tre_em`, `so_nguoi_lon`, `so_tre_em`, `tong_goc`, `muc_giam`, `tien_giam`, `tong_thanh_toan`, `ho_ten`, `email`, `so_dien_thoai`, `trang_thai`)
+SELECT 'OT26110402', 3, 10, 'mb04', 'Hạ Long – Du thuyền – Hang Sửng Sốt', '2026-12-26', 'TP. Hồ Chí Minh', 5290000, 3703000, 18, 0, 95220000, 8, 7617600, 87602400, 'Hiệp hội Doanh nhân Trẻ', 'doanhnhan@hanoi.vn', '0911223344', 'hoan_thanh'
+WHERE NOT EXISTS (SELECT 1 FROM `don_dat_tour` WHERE `ma_don` = 'OT26110402');
+
+INSERT INTO `don_dat_tour` (`ma_don`, `id_tai_khoan`, `id_lich_khoi_hanh`, `ma_tour`, `ten_tour`, `ngay_khoi_hanh`, `diem_khoi_hanh`, `gia_nguoi_lon`, `gia_tre_em`, `so_nguoi_lon`, `so_tre_em`, `tong_goc`, `muc_giam`, `tien_giam`, `tong_thanh_toan`, `ho_ten`, `email`, `so_dien_thoai`, `trang_thai`)
+SELECT 'OT26110901', 3, 25, 'mt04', 'Đà Nẵng – Bà Nà Hills – Cầu Vàng – Hội An', '2026-12-26', 'TP. Hồ Chí Minh', 4990000, 3493000, 24, 6, 139770000, 8, 11181600, 128588400, 'Trường Quốc tế Saigon Star', 'saigonstar@edu.vn', '0909123456', 'hoan_thanh'
+WHERE NOT EXISTS (SELECT 1 FROM `don_dat_tour` WHERE `ma_don` = 'OT26110901');
+
+INSERT INTO `don_dat_tour` (`ma_don`, `id_tai_khoan`, `id_lich_khoi_hanh`, `ma_tour`, `ten_tour`, `ngay_khoi_hanh`, `diem_khoi_hanh`, `gia_nguoi_lon`, `gia_tre_em`, `so_nguoi_lon`, `so_tre_em`, `tong_goc`, `muc_giam`, `tien_giam`, `tong_thanh_toan`, `ho_ten`, `email`, `so_dien_thoai`, `trang_thai`)
+SELECT 'OT26110902', 3, 25, 'mt04', 'Đà Nẵng – Bà Nà Hills – Cầu Vàng – Hội An', '2026-12-26', 'TP. Hồ Chí Minh', 4990000, 3493000, 12, 3, 70359000, 8, 5628720, 64730280, 'Gia đình chú Bảy', 'chubay@gmail.com', '0987654321', 'da_xac_nhan'
+WHERE NOT EXISTS (SELECT 1 FROM `don_dat_tour` WHERE `ma_don` = 'OT26110902');
+-- END CAP_NHAT_2026_11_09_DON_DAT_SEED

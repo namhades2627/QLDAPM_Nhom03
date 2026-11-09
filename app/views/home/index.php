@@ -154,6 +154,16 @@ $banners = [
                         <div class="tour-body">
                             <p class="tour-place"><?= $escape($tour['destination']) ?></p><h3><?= $escape($tour['name']) ?></h3>
                             <p class="tour-meta"><svg class="icon"><use href="#i-pin"/></svg><?= $tour['origin'] !== '' ? 'Từ ' . $escape($tour['origin']) : 'Chưa có lịch khởi hành' ?></p>
+                            <p class="tour-booked-meta">
+                                <svg class="icon"><use href="#i-user"/></svg>
+                                <span class="tour-booked-text">
+                                    <?php if (!empty($tour['booked_count']) && $tour['booked_count'] > 0): ?>
+                                        <strong><?= number_format($tour['booked_count'], 0, ',', '.') ?></strong> khách đã đặt thành công
+                                    <?php else: ?>
+                                        <span class="tour-booked-empty">Chưa có lượt đặt thành công</span>
+                                    <?php endif; ?>
+                                </span>
+                            </p>
                             <p class="tour-schedule-meta">
                                 <svg class="icon"><use href="#i-calendar"/></svg>
                                 <span class="tour-schedule-text">
@@ -207,6 +217,16 @@ $banners = [
                             <p class="tour-place"><?= $escape($tour['destination']) ?></p>
                             <h3><?= $escape($tour['name']) ?></h3>
                             <p class="tour-meta"><svg class="icon"><use href="#i-pin"/></svg><?= $tour['origin'] !== '' ? 'Từ ' . $escape($tour['origin']) : 'Chưa có lịch khởi hành' ?></p>
+                            <p class="tour-booked-meta">
+                                <svg class="icon"><use href="#i-user"/></svg>
+                                <span class="tour-booked-text">
+                                    <?php if (!empty($tour['booked_count']) && $tour['booked_count'] > 0): ?>
+                                        <strong><?= number_format($tour['booked_count'], 0, ',', '.') ?></strong> khách đã đặt thành công
+                                    <?php else: ?>
+                                        <span class="tour-booked-empty">Chưa có lượt đặt thành công</span>
+                                    <?php endif; ?>
+                                </span>
+                            </p>
                             <p class="tour-schedule-meta">
                                 <svg class="icon"><use href="#i-calendar"/></svg>
                                 <span class="tour-schedule-text">
@@ -268,6 +288,16 @@ $banners = [
                             <p class="tour-place"><?= $escape($tour['destination']) ?></p>
                             <h3><?= $escape($tour['name']) ?></h3>
                             <p class="tour-meta"><svg class="icon"><use href="#i-pin"/></svg><?= $tour['origin'] !== '' ? 'Từ ' . $escape($tour['origin']) : 'Chưa có lịch khởi hành' ?></p>
+                            <p class="tour-booked-meta">
+                                <svg class="icon"><use href="#i-user"/></svg>
+                                <span class="tour-booked-text">
+                                    <?php if (!empty($tour['booked_count']) && $tour['booked_count'] > 0): ?>
+                                        <strong><?= number_format($tour['booked_count'], 0, ',', '.') ?></strong> khách đã đặt thành công
+                                    <?php else: ?>
+                                        <span class="tour-booked-empty">Chưa có lượt đặt thành công</span>
+                                    <?php endif; ?>
+                                </span>
+                            </p>
                             <p class="tour-schedule-meta">
                                 <svg class="icon"><use href="#i-calendar"/></svg>
                                 <span class="tour-schedule-text">

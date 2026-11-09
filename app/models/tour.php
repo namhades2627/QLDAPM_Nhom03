@@ -93,6 +93,21 @@ class TourModel
             $needs[$need['id_tour']][] = $need['ma_nhu_cau'];
         }
 
+        // Đếm số lượng khách hàng đã đặt tour thành công (không tính đơn đã hủy)
+        $statement = $this->connection->prepare(
+            "SELECT l.id_tour,
+                    COALESCE(SUM(dd.so_nguoi_lon + dd.so_tre_em), 0) AS booked_count
+             FROM don_dat_tour dd
+             JOIN lich_khoi_hanh l ON l.id_lich_khoi_hanh = dd.id_lich_khoi_hanh
+             WHERE l.id_tour IN ($placeholders) AND dd.trang_thai <> 'da_huy'
+             GROUP BY l.id_tour"
+        );
+        $statement->execute($ids);
+        $bookedCounts = [];
+        foreach ($statement->fetchAll() as $row) {
+            $bookedCounts[(int) $row['id_tour']] = (int) $row['booked_count'];
+        }
+
         foreach ($tours as &$tour) {
             $tour['days'] = (int) $tour['days'];
             $tour['duration'] = $tour['days'] . ' ngày ' . ($tour['days'] - 1) . ' đêm';
@@ -103,6 +118,7 @@ class TourModel
             $tour['origin'] = implode(', ', $tour['origins']);
             // Giá từ là giá thấp nhất trong các lịch còn mở nhận đặt.
             $tour['price'] = $tour['schedules'] ? min(array_column($tour['schedules'], 'adult_price')) : null;
+            $tour['booked_count'] = $bookedCounts[$tour['id_tour']] ?? 0;
         }
         unset($tour);
         return $tours;

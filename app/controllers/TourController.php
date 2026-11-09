@@ -59,17 +59,19 @@ class TourController
     {
         $page = 'tours';
         $requestedType = $this->queryString('type');
-        $tourType = in_array($requestedType, ['domestic', 'international', 'all'], true) ? $requestedType : 'domestic';
-        $typeTitle = $tourType === 'all' ? 'Kết quả tìm tour' : ($tourType === 'domestic' ? 'Tour trong nước' : 'Tour quốc tế');
+        $keyword = mb_substr($this->queryString('q'), 0, 255, 'UTF-8');
+        $rawQuery = mb_substr($this->queryString('raw_q'), 0, 255, 'UTF-8');
+        $displayQuery = $rawQuery !== '' ? $rawQuery : $keyword;
+        $tourType = in_array($requestedType, ['domestic', 'international', 'all'], true) ? $requestedType : 'all';
+        $typeTitle = $tourType === 'all'
+            ? ($displayQuery !== '' ? 'Kết quả tìm tour' : 'Tất cả tour du lịch')
+            : ($tourType === 'domestic' ? 'Tour trong nước' : 'Tour quốc tế');
         $domesticRegions = $this->model->getRegions('domestic');
         $internationalRegions = $this->model->getRegions('international');
         $regionNames = $tourType === 'all' ? array_merge($domesticRegions, $internationalRegions)
             : ($tourType === 'domestic' ? $domesticRegions : $internationalRegions);
         $requestedRegion = $this->queryString('region');
         $tourRegion = isset($regionNames[$requestedRegion]) ? $requestedRegion : '';
-        $keyword = mb_substr($this->queryString('q'), 0, 255, 'UTF-8');
-        $rawQuery = mb_substr($this->queryString('raw_q'), 0, 255, 'UTF-8');
-        $displayQuery = $rawQuery !== '' ? $rawQuery : $keyword;
         $catalogNeeds = $this->model->getNeeds();
         $tours = $tourType === 'all'
             ? array_merge($this->model->getPublishedTours('domestic'), $this->model->getPublishedTours('international'))

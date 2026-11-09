@@ -4,12 +4,13 @@
 
 Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đặt trong `ontrip.sql`, người/AI thực hiện phải cập nhật nhật ký này trong cùng lần sửa. Ghi rõ ngày, thay đổi, ảnh hưởng dữ liệu, vị trí khối SQL và cách áp dụng. Không ghi ở đây các thao tác sử dụng website thông thường như đổi mật khẩu hoặc sửa hồ sơ cá nhân.
 
-## 08/11/2026 — Bổ sung seed dữ liệu 4 nhân viên hướng dẫn viên
+## 09/11/2026 — Hiển thị số lượng khách đã đặt tour thành công trên thẻ tour
 
-- Thêm tài khoản của 4 hướng dẫn viên (Tống Nhựt Nam, Trần Đăng Khoa, Tạ Hồng Quân, Nguyễn Quang Khanh) vào phần seed cài đặt của bảng `tai_khoan` trong `database/ontrip.sql`.
-- Phục vụ đồng bộ thông tin và avatar thực tế cho Trang Liên hệ (`page=lien_he`) và phân hệ Quản lý tài khoản nhân viên.
-- Dùng cú pháp `ON DUPLICATE KEY UPDATE id_tai_khoan = id_tai_khoan` nên không ghi đè hay ảnh hưởng đến dữ liệu đã có trên máy hiện tại.
-- **Máy mới:** import `ontrip.sql` sẽ tự có 4 nhân viên này. **Máy đã có:** không cần chạy lại vì tài khoản đã tồn tại.
+- Cập nhật truy vấn tính tổng số lượng khách hàng đã đặt tour (`SUM(so_nguoi_lon + so_tre_em)`) theo tour trong `TourModel::getPublishedTours()`, chỉ tính các đơn đặt tour không bị hủy (`trang_thai <> 'da_huy'`).
+- Hiển thị thông tin số lượng khách đã đặt ngay dưới phần thời gian khởi hành trên tất cả các thẻ tour tại trang chủ (`app/views/home/index.php`), trang danh sách tour (`app/views/tour/index.php`) và thanh thông tin nhanh ở chi tiết tour (`app/views/tour/detail.php`).
+- Bổ sung seed dữ liệu mẫu các đơn đặt tour đã xác nhận và hoàn thành cho các tour phổ biến (Sapa, Hà Giang, Hạ Long, Bà Nà Hills).
+- **Vị trí:** khối `BEGIN CAP_NHAT_2026_11_09_DON_DAT_SEED` / `END CAP_NHAT_2026_11_09_DON_DAT_SEED` ở cuối `ontrip.sql`. Dùng `WHERE NOT EXISTS` an toàn khi chạy lại nhiều lần.
+- **Máy đã có database:** chọn `ontrip` trong phpMyAdmin → SQL → chạy khối trên.
 
 ## 08/11/2026 — Tính năng đánh giá tour cho khách hàng
 

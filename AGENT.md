@@ -86,6 +86,7 @@ Phần ảnh đại diện hiện được xử lý trong `AdminController` bằ
 | Đánh giá tour | Mới có giao diện trạng thái trống, chưa có bảng và chức năng gửi đánh giá. |
 | Google, quên mật khẩu/OTP | Chưa triển khai. |
 | Điều chỉnh lịch trình theo thời tiết/mùa vụ | Là hướng nghiệp vụ dự kiến, chưa có API hoặc xử lý. Chỉ bổ sung khi được giao và đã chốt quy tắc. |
+| Trang liên hệ & Hướng dẫn viên | **Đã triển khai (08/11/2026).** Route `page=lien_he` (alias `contact`). Bố cục thông minh, form gửi yêu cầu có CSRF và flash session. Phần đội ngũ 4 hướng dẫn viên (Tống Nhựt Nam, Trần Đăng Khoa, Tạ Hồng Quân, Nguyễn Quang Khanh) đồng bộ avatar động từ cột `hinh_anh` của bảng `tai_khoan` trong Quản lý tài khoản (admin). FAQ accordion và kênh liên hệ trực tiếp. |
 
 Giá, lịch trình và lịch đi trong SQL là **dữ liệu demo phục vụ học tập**. Không trình bày sức chứa thành chỗ còn hoặc dữ liệu minh họa thành giao dịch đã xác nhận.
 
@@ -116,6 +117,7 @@ Giá, lịch trình và lịch đi trong SQL là **dữ liệu demo phục vụ 
 | Tệp View cũ | `app/views/tai_khoan/login.php`, `register.php` còn trong thư mục nhưng router hiện gọi TaiKhoanController rồi nạp `layout.php`; không thêm xử lý xác thực vào các wrapper này |
 | Navbar/footer khách hàng | `app/views/partials/header.php`, `footer.php`; không dùng làm khung quản trị |
 | Lỗi database khách hàng | `app/views/errors/database.php`; ghi chi tiết lỗi vào log, không đưa exception/SQL ra giao diện |
+| Trang liên hệ & Hướng dẫn viên | `app/controllers/LienHeController.php` → `app/views/lien_he.php`; `app/models/lien_he.php` (lớp `LienHeModel`) truy vấn 4 hướng dẫn viên từ bảng `tai_khoan` và kiểm tra avatar thực tế |
 | Database/kết nối | `database/ontrip.sql`, `config/database.php` |
 | Nâng cấp đơn đặt cũ (01/11/2026) | Khối `CAP_NHAT_2026_11_01_THONG_TIN_DON_DAT` bổ sung thông tin tour/lịch và địa chỉ còn thiếu trong `don_dat_tour`. Điền thông tin NULL từ tour/lịch hiện tại, giữ nguyên tiền, trạng thái, mốc thời gian và dữ liệu đã chụp; xem giới hạn khôi phục trong `database/database_changes.md`. |
 | Nâng cấp mùa vụ/ưu đãi tour (01/11/2026) | Bảng `tour` cũ cần chạy khối `CAP_NHAT_2026_11_01_MUA_VU_UU_DAI` trong `ontrip.sql` để thêm các cột `mua_vu`, `phan_tram_giam`, `nhan_uu_dai` và hai chỉ mục trước seed. `CREATE TABLE IF NOT EXISTS` không nâng cấp bảng cũ. Khối giữ dữ liệu hiện có và chạy lại được; xem `database/database_changes.md`. |

@@ -1503,6 +1503,98 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+
+// Trang Lien he: tuong tac muot ma cho cac the chu de tu van
+document.addEventListener('DOMContentLoaded', () => {
+    const contactForm = document.querySelector('.contact-form');
+    if (!contactForm) return;
+
+    const topicPills = contactForm.querySelectorAll('.topic-pill');
+    topicPills.forEach(pill => {
+        const radio = pill.querySelector('input[type="radio"]');
+        if (!radio) return;
+        radio.addEventListener('change', () => {
+            topicPills.forEach(p => p.classList.remove('is-active'));
+            if (radio.checked) pill.classList.add('is-active');
+        });
+    });
+});
+
+
+// Trang Lien he: slider banner rieng biet (hoan toan doc lap voi trang chu, chuyen slide sau 7s)
+document.addEventListener('DOMContentLoaded', () => {
+    const slider = document.querySelector('.contact-slider');
+    if (!slider) return;
+
+    const slides = [...slider.querySelectorAll('.contact-slider-slide')];
+    const dots = [...slider.querySelectorAll('.contact-slider-dot')];
+    const prevBtn = slider.querySelector('.contact-slider-prev');
+    const nextBtn = slider.querySelector('.contact-slider-next');
+    if (!slides.length) return;
+
+    const INTERVAL = 7000;
+    let current = 0;
+    let timer = null;
+    let isHovered = false;
+
+    function goTo(index) {
+        current = (index + slides.length) % slides.length;
+        slides.forEach((slide, i) => {
+            const active = i === current;
+            slide.classList.toggle('is-active', active);
+            slide.setAttribute('aria-hidden', String(!active));
+        });
+        dots.forEach((dot, i) => {
+            const active = i === current;
+            dot.classList.toggle('is-active', active);
+            dot.setAttribute('aria-current', String(active));
+        });
+    }
+
+    function resetTimer() {
+        clearInterval(timer);
+        if (!isHovered && !document.hidden) {
+            timer = setInterval(() => goTo(current + 1), INTERVAL);
+        }
+    }
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            goTo(current - 1);
+            resetTimer();
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            goTo(current + 1);
+            resetTimer();
+        });
+    }
+
+    dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+            goTo(index);
+            resetTimer();
+        });
+    });
+
+    slider.addEventListener('mouseenter', () => {
+        isHovered = true;
+        resetTimer();
+    });
+
+    slider.addEventListener('mouseleave', () => {
+        isHovered = false;
+        resetTimer();
+    });
+
+    document.addEventListener('visibilitychange', resetTimer);
+
+    goTo(0);
+    resetTimer();
+});
+
 // Tính năng Đánh giá tour (Review & Rating System)
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Phản hồi nhãn đánh giá sao tương tác

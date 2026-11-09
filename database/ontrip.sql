@@ -1115,7 +1115,11 @@ COMMIT;
 INSERT INTO `tai_khoan` (`ho_ten`, `email`, `so_dien_thoai`, `mat_khau`, `vai_tro`) VALUES
     ('Quản trị viên OnTrip', 'admin@gmail.com', '0900000001', '$2y$10$ufw0tc9NxMFsAod9bkqz6eFK53E6fIBS1yARkatM0vejO4BRUKL6e', 'admin'),
     ('Nhân viên OnTrip', 'nhanvien@gmail.com', '0900000002', '$2y$10$0gnunfYVmmayw87.Sq/n6eKDeOf2py1qEyy4r0.m.eVpzFZGtj9vu', 'nhan_vien'),
-    ('Khách hàng OnTrip', 'khachhang@gmail.com', '0900000003', '$2y$10$2/VNP7hIDmHevHCbIhl.MO3xZEQGwNFISdrjHiOEaM2avqnESllQ2', 'khach_hang')
+    ('Khách hàng OnTrip', 'khachhang@gmail.com', '0900000003', '$2y$10$2/VNP7hIDmHevHCbIhl.MO3xZEQGwNFISdrjHiOEaM2avqnESllQ2', 'khach_hang'),
+    ('Tống Nhựt Nam', 'nam@gmail.com', '0784131231', '$2y$10$bXxTemO7UEE/QMyRdr1NeumXxpp54YO9qk8tFsvTJJJLJDr8YjT3m', 'nhan_vien'),
+    ('Trần Đăng Khoa', 'khoa@gmail.com', '0834134311', '$2y$10$5hyFU0G6p5a0lnDqNx40/.m3vU44cpE9z3utc4X95XYKUMM94byqq', 'nhan_vien'),
+    ('Tạ Hồng Quân', 'quan@gmail.com', '0583412951', '$2y$10$oUSJqlU8w79AzeCe2QgC0u9h3k4HkvTo2KvwOkicK4R.xIF76YVGS', 'nhan_vien'),
+    ('Nguyễn Quang Khanh', 'khanh@gmail.com', '0581238512', '$2y$10$ofixmcOeHoyohnzYe2BDH.ePwk0m0QDh5zwmf6nSoc/s4ECRplXWK', 'nhan_vien')
 ON DUPLICATE KEY UPDATE `id_tai_khoan` = `id_tai_khoan`;
 
 -- BEGIN CAP_NHAT_2026_11_09_DON_DAT_SEED

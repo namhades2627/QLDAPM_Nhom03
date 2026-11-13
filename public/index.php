@@ -9,7 +9,7 @@ session_start([
 if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 // Điều hướng trang chủ và các trang tour qua Controller tương ứng.
 $requestedPage = $_GET['page'] ?? '';
-$page = in_array($requestedPage, ['tours', 'tour-detail', 'booking', 'orders', 'thong_bao', 'lien_he', 'contact', 'login', 'register', 'logout', 'admin'], true) ? $requestedPage : 'home';
+$page = in_array($requestedPage, ['tours', 'tour-detail', 'booking', 'orders', 'thong_bao', 'tu_van', 'lien_he', 'contact', 'login', 'register', 'logout', 'admin'], true) ? $requestedPage : 'home';
 if ($page === 'contact') $page = 'lien_he';
 if ($page === 'admin') {
     header('Location: ../admin/', true, 303);
@@ -36,6 +36,20 @@ if (isset($_SESSION['tai_khoan']) && !in_array($page, ['login', 'register', 'log
         require __DIR__ . '/../app/views/errors/database.php';
         return;
     }
+}
+if ($page === 'tu_van') {
+    require_once __DIR__ . '/../app/controllers/TuVanController.php';
+    try {
+        (new TuVanController())->index();
+    } catch (PDOException $exception) {
+        error_log('OnTrip consultation chat error: ' . $exception->getMessage());
+        http_response_code(503);
+        if (($_GET['messages'] ?? '') === '1' || str_contains(strtolower($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json')) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'message' => 'Chưa thể tải cuộc trò chuyện. Vui lòng thử lại.'], JSON_UNESCAPED_UNICODE);
+        } else require __DIR__ . '/../app/views/errors/database.php';
+    }
+    return;
 }
 if ($page === 'thong_bao') {
     require_once __DIR__ . '/../app/controllers/ThongBaoController.php';

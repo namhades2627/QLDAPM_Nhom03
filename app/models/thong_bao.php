@@ -44,7 +44,20 @@ class ThongBaoModel
 
     private function ownedRows(): string
     {
-        return ' FROM thong_bao n JOIN don_dat_tour d ON d.id_don_dat = n.id_don_dat AND d.id_tai_khoan = n.id_tai_khoan WHERE n.id_tai_khoan = ?';
+        return ' FROM thong_bao n' . $this->ownedJoins() . $this->ownedWhere();
+    }
+
+    private function ownedJoins(): string
+    {
+        return ' LEFT JOIN don_dat_tour d ON d.id_don_dat = n.id_don_dat
+            LEFT JOIN tin_nhan_tu_van m ON m.id_tin_nhan = n.id_tin_nhan
+            LEFT JOIN yeu_cau_tu_van y ON y.id_yeu_cau = m.id_yeu_cau';
+    }
+
+    private function ownedWhere(): string
+    {
+        return " WHERE n.id_tai_khoan = ? AND ((n.id_don_dat IS NOT NULL AND d.id_tai_khoan = n.id_tai_khoan)
+            OR (n.id_tin_nhan IS NOT NULL AND y.id_tai_khoan = n.id_tai_khoan AND m.vai_tro_gui = 'nhan_vien'))";
     }
 
     public function unreadCount(int $accountId): int
@@ -69,16 +82,16 @@ class ThongBaoModel
 
     public function readOne(int $accountId, int $id): ?string
     {
-        $query = $this->connection->prepare('SELECT d.ma_don' . $this->ownedRows() . ' AND n.id_thong_bao = ?');
+        $query = $this->connection->prepare('SELECT d.ma_don, m.id_yeu_cau' . $this->ownedRows() . ' AND n.id_thong_bao = ?');
         $query->execute([$accountId, $id]);
-        $code = $query->fetchColumn();
-        if ($code === false) return null;
-        $this->connection->prepare('UPDATE thong_bao n JOIN don_dat_tour d ON d.id_don_dat = n.id_don_dat AND d.id_tai_khoan = n.id_tai_khoan SET n.da_doc = 1 WHERE n.id_tai_khoan = ? AND n.id_thong_bao = ?')->execute([$accountId, $id]);
-        return (string) $code;
+        $row = $query->fetch();
+        if (!$row) return null;
+        $this->connection->prepare('UPDATE thong_bao n' . $this->ownedJoins() . ' SET n.da_doc = 1' . $this->ownedWhere() . ' AND n.id_thong_bao = ?')->execute([$accountId, $id]);
+        return $row['ma_don'] !== null ? 'index.php?page=orders&id=' . rawurlencode($row['ma_don']) : 'index.php?page=tu_van&view=' . (int) $row['id_yeu_cau'];
     }
 
     public function readAll(int $accountId): void
     {
-        $this->connection->prepare('UPDATE thong_bao n JOIN don_dat_tour d ON d.id_don_dat = n.id_don_dat AND d.id_tai_khoan = n.id_tai_khoan SET n.da_doc = 1 WHERE n.id_tai_khoan = ? AND n.da_doc = 0')->execute([$accountId]);
+        $this->connection->prepare('UPDATE thong_bao n' . $this->ownedJoins() . ' SET n.da_doc = 1' . $this->ownedWhere() . ' AND n.da_doc = 0')->execute([$accountId]);
     }
 }

@@ -3523,3 +3523,158 @@ a.touchpoint-item:hover {
         padding-top: 18px;
     }
 }
+
+/* Yeu cau tu van: form cong khai va noi dung quan tri. */
+.consultation-honeypot { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.admin-consultations .consultation-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; margin-bottom:24px; }
+.admin-consultations .consultation-stats > a { padding:22px; display:flex; justify-content:space-between; align-items:center; color:var(--muted); }
+.admin-consultations .consultation-stats strong { font-size:28px; color:var(--ink); }
+.admin-consultations .consultation-detail { margin-bottom:28px; padding:26px; }
+.admin-consultations .consultation-detail-heading { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:24px; }
+.admin-consultations .consultation-detail h2 { font-size:22px; margin-top:8px; }
+.admin-consultations .consultation-detail h3 { font-size:15px; margin-bottom:12px; }
+.admin-consultations .consultation-detail-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:32px; }
+.admin-consultations .consultation-metadata { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-bottom:26px; }
+.admin-consultations dt, .admin-consultations label { color:var(--muted); font-size:12px; font-weight:500; }
+.admin-consultations dd { margin:5px 0 0; font-size:14px; overflow-wrap:anywhere; }
+.admin-consultations .consultation-content { white-space:pre-wrap; overflow-wrap:anywhere; padding:18px; border:1px solid var(--line); border-radius:8px; background:var(--surface); font-size:14px; }
+.admin-consultations .consultation-editor { display:flex; flex-direction:column; gap:9px; }
+.admin-consultations input:not([type=hidden]), .admin-consultations select, .admin-consultations textarea { width:100%; min-width:0; border:1px solid var(--line); border-radius:7px; padding:11px 12px; background:var(--panel-bg); font-size:13px; color:var(--ink); }
+.admin-consultations .consultation-help { color:var(--muted); font-size:12px; line-height:1.7; }
+.admin-consultations .consultation-editor .button { align-self:flex-start; margin-top:8px; }
+.admin-consultations .consultation-editor > a, .admin-consultations .consultation-detail-heading > a { font-size:12px; color:var(--orange-dark); }
+.admin-consultations .consultation-filters { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) auto auto; align-items:end; gap:16px; padding:24px; }
+.admin-consultations .consultation-filters label { display:block; margin-bottom:8px; }
+.admin-consultations .consultation-filters > a { align-self:center; font-size:12px; }
+.admin-consultations .consultation-table-scroll { overflow-x:auto; }
+.admin-consultations table { width:100%; min-width:850px; }
+.admin-consultations td { vertical-align:top; }
+.admin-consultations td small { display:block; font-size:11px; color:var(--muted); margin-top:4px; }
+.admin-consultations .consultation-status { display:inline-block; white-space:nowrap; border-radius:20px; padding:5px 10px; font-size:11px; }
+.admin-consultations .status-moi { background:#fff1dc; color:#86520b; }
+.admin-consultations .status-dang_xu_ly { background:#edf0fc; color:#4253a0; }
+.admin-consultations .status-da_xu_ly { background:#eaf4ee; color:#366b4d; }
+.admin-consultations .consultation-pagination { padding:20px 24px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px; color:var(--muted); font-size:12px; }
+.admin-consultations .consultation-pagination > div { display:flex; gap:20px; }
+@media (max-width:1050px) {
+ .admin-consultations .consultation-filters { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+ .admin-consultations .consultation-detail-grid { grid-template-columns:minmax(0,1fr); }
+}
+@media (max-width:600px) {
+ .admin-consultations .consultation-stats { gap:8px; }
+ .admin-consultations .consultation-stats > a { padding:14px 10px; flex-direction:column; font-size:11px; gap:6px; }
+ .admin-consultations .consultation-filters { grid-template-columns:minmax(0,1fr); padding:18px; }
+ .admin-consultations .consultation-detail { padding:18px; }
+ .admin-consultations .consultation-metadata { grid-template-columns:minmax(0,1fr); }
+}
+
+/* Phan hoi khi gui tu van, chi ap dung cho form lien he. */
+.contact-feedback { outline:none; scroll-margin-top:110px; }
+.contact-feedback.is-visible { animation:contactFeedbackIn .3s ease-out both; }
+.contact-feedback > svg { flex-shrink:0; margin-top:2px; }
+.contact-feedback p { margin:4px 0 0; overflow-wrap:anywhere; }
+.contact-form .contact-submit-btn:disabled { cursor:wait; opacity:.8; transform:none; }
+.contact-form .contact-submit-btn.is-loading > svg { display:none; }
+.contact-submit-spinner { width:18px; height:18px; border:2px solid #ffffff66; border-top-color:#fff; border-radius:50%; animation:contactSubmitSpin .75s linear infinite; }
+@keyframes contactFeedbackIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes contactSubmitSpin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) {
+ .contact-feedback.is-visible, .contact-submit-spinner { animation:none; }
+}
+
+/* Hoi thoai khach hang va nhan vien; dung chung trong hai giao dien. */
+.contact-chat-account { font-size:13px; margin-bottom:20px; color:var(--muted); }
+.contact-chat-account a, .contact-feedback a, .chat-start-link { color:var(--orange-dark); font-weight:600; }
+.contact-feedback a { display:inline-block; margin-top:10px; }
+.contact-chat-login { display:grid; gap:20px; justify-items:start; font-size:14px; color:var(--muted); }
+.customer-chat-layout { display:grid; grid-template-columns:minmax(240px,.8fr) minmax(0,2fr); gap:24px; align-items:start; }
+.chat-inbox, .consultation-chat, .chat-placeholder { background:var(--panel-bg); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+.chat-inbox-item { display:flex; flex-direction:column; gap:8px; padding:20px; border-bottom:1px solid var(--line); font-size:13px; }
+.chat-inbox-item.is-active { background:var(--orange-light); box-shadow:inset 3px 0 var(--orange); }
+.chat-inbox-item span { color:var(--muted); overflow-wrap:anywhere; }
+.chat-inbox-item small { color:var(--muted); font-size:11px; }
+.chat-inbox-pages { display:flex; justify-content:center; gap:18px; padding:16px; font-size:12px; }
+.chat-placeholder { padding:44px 28px; }
+.chat-placeholder h2 { font-size:21px; margin-bottom:14px; }
+.chat-placeholder p { color:var(--muted); font-size:14px; }
+.consultation-chat { margin-bottom:28px; }
+.consultation-chat .consultation-chat-heading { padding:22px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:16px; align-items:start; }
+.consultation-chat h2 { font-size:20px; }
+.consultation-chat-heading p { color:var(--muted); font-size:12px; margin-top:8px; }
+.consultation-chat .chat-refresh { color:var(--orange-dark); background:var(--surface); border-radius:6px; padding:8px 10px; font-size:12px; flex-shrink:0; }
+.consultation-chat .chat-status { font-size:12px; color:var(--muted); padding:0 22px; overflow-wrap:anywhere; }
+.consultation-chat .chat-status:not(:empty) { padding-block:12px; }
+.consultation-chat .chat-scroll { height:420px; overflow-y:auto; overscroll-behavior:contain; padding:22px; background:var(--surface); }
+.consultation-chat .chat-messages { display:flex; flex-direction:column; }
+.consultation-chat .chat-bubble { width:fit-content; max-width:86%; padding:14px 16px; border:1px solid var(--line); border-radius:12px 12px 12px 3px; background:var(--panel-bg); margin-bottom:16px; overflow-wrap:anywhere; }
+.consultation-chat .chat-bubble.is-own { margin-left:auto; background:var(--orange-light); border-color:#e8c9b8; border-radius:12px 12px 3px 12px; }
+.consultation-chat .chat-bubble strong { display:block; font-size:11px; color:var(--orange-dark); margin-bottom:6px; }
+.consultation-chat .chat-bubble p { font-size:14px; white-space:pre-wrap; line-height:1.7; }
+.consultation-chat .chat-bubble time { display:block; color:var(--muted); font-size:10px; margin-top:8px; }
+.consultation-chat .chat-older { display:block; margin:0 auto 18px; padding:8px 12px; background:var(--panel-bg); border:1px solid var(--line); border-radius:20px; font-size:12px; }
+.consultation-chat .chat-compose { padding:20px 22px; }
+.consultation-chat .chat-compose label { display:block; margin-bottom:8px; font-size:13px; font-weight:600; }
+.consultation-chat .chat-compose > div { display:flex; gap:12px; align-items:end; }
+.consultation-chat .chat-compose textarea { width:100%; min-width:0; border:1px solid var(--line); border-radius:8px; padding:12px; background:var(--panel-bg); color:var(--ink); font-size:14px; resize:vertical; }
+.consultation-chat .chat-compose .button { flex-shrink:0; min-width:80px; }
+.consultation-chat .chat-compose small { display:block; color:var(--muted); font-size:11px; margin-top:10px; }
+@media (max-width:760px) {
+ .customer-chat-layout { grid-template-columns:minmax(0,1fr); }
+ .chat-inbox { max-height:260px; overflow-y:auto; }
+ .consultation-chat .chat-scroll { height:370px; padding:16px; }
+ .consultation-chat .chat-bubble { max-width:94%; }
+ .consultation-chat .consultation-chat-heading, .consultation-chat .chat-compose { padding:18px; }
+ .consultation-chat .chat-compose > div { flex-direction:column; align-items:stretch; }
+ .consultation-chat .chat-compose .button { align-self:flex-end; }
+}
+/* Lịch sử chat cố định trên trang Liên hệ. */
+.contact-chat-widget { position:fixed; right:max(24px,env(safe-area-inset-right)); bottom:max(24px,env(safe-area-inset-bottom)); z-index:90; }
+.contact-chat-launcher { display:flex; align-items:center; justify-content:center; width:58px; height:58px; margin-left:auto; border-radius:50%; color:#fff; background:var(--orange,#c96532); box-shadow:0 6px 22px #50250c30; text-decoration:none; }
+.contact-chat-launcher:hover,.contact-chat-launcher:focus-visible { color:#fff; background:#ad5028; outline:3px solid #f2c4a4; outline-offset:3px; }
+.contact-chat-window { width:min(460px,calc(100vw - 32px)); height:min(660px,calc(100dvh - 112px)); margin-bottom:14px; background:var(--panel-bg,#fffaf5); border:1px solid var(--line,#e9dfd5); border-radius:16px; box-shadow:0 12px 48px #30221826; overflow:hidden; }
+.contact-chat-window[hidden] { display:none; }
+.contact-chat-window-heading { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--line,#e9dfd5); }
+.contact-chat-window-heading button { border:0; background:transparent; font-size:26px; line-height:1; padding:4px 8px; color:inherit; }
+.contact-chat-window iframe { display:block; width:100%; height:calc(100% - 63px); border:0; }
+.contact-chat-login { padding:24px; }
+.chat-embedded .booking-main { padding:16px 0; }
+.chat-embedded .booking-heading { margin-bottom:18px; }
+.chat-embedded .booking-heading h1 { font-size:21px; }
+.chat-embedded .booking-heading .detail-kicker { display:none; }
+.chat-embedded .customer-chat-layout { grid-template-columns:minmax(0,1fr); gap:16px; }
+.chat-embedded .chat-inbox { max-height:190px; overflow:auto; }
+.chat-embedded .chat-scroll { height:260px; }
+.chat-embedded .consultation-chat-heading { padding:14px; }
+.chat-embedded .consultation-chat-heading h2 { font-size:18px; }
+@media(max-width:600px) { .contact-chat-widget { right:16px; bottom:max(16px,env(safe-area-inset-bottom)); } }
+/* Hộp thư tư vấn quản trị: danh sách khách và khung trả lời. */
+.admin-chat-layout { display:grid; grid-template-columns:minmax(260px,320px) minmax(0,1fr); gap:20px; align-items:start; }
+.admin-chat-inbox,.admin-chat-conversation { min-width:0; overflow:hidden; }
+.admin-chat-search { padding:20px; border-bottom:1px solid var(--line); }
+.admin-chat-search label { display:block; font-weight:700; margin-bottom:12px; }
+.admin-chat-search>div { display:flex; gap:8px; }
+.admin-chat-search input { width:100%; min-width:0; border:1px solid var(--line); border-radius:8px; padding:10px 12px; background:var(--panel-bg); color:inherit; font:inherit; font-size:13px; }
+.admin-chat-search .button { min-height:42px; padding:8px 14px; }
+.admin-chat-search>a { display:inline-block; margin-top:10px; font-size:12px; }
+.admin-chat-threads { max-height:560px; overflow:auto; }
+.admin-chat-thread { display:block; padding:18px 20px; border-bottom:1px solid var(--line); text-decoration:none; color:inherit; }
+.admin-chat-thread:hover,.admin-chat-thread.is-active { background:#fff0e5; }
+.admin-chat-thread.is-active { box-shadow:inset 3px 0 #c96532; }
+.admin-chat-thread strong,.admin-chat-thread span { display:block; }
+.admin-chat-thread strong { font-size:14px; margin-bottom:5px; }
+.admin-chat-thread span { font-size:12px; color:#a6532b; }
+.admin-chat-thread p { font-size:13px; line-height:1.6; margin:8px 0; overflow-wrap:anywhere; color:var(--muted); }
+.admin-chat-thread time { font-size:11px; color:var(--muted); }
+.admin-chat-pagination { display:flex; justify-content:space-between; gap:10px; padding:16px 20px; font-size:12px; }
+.admin-chat-customer { padding:22px 24px; border-bottom:1px solid var(--line); overflow-wrap:anywhere; }
+.admin-chat-customer h2 { margin:0 0 6px; font-size:20px; }
+.admin-chat-customer p { margin:0 0 5px; font-size:13px; }
+.admin-chat-customer span { color:var(--muted); font-size:12px; }
+.admin-chat-conversation .consultation-chat { border:0; margin:0; box-shadow:none; }
+.admin-chat-conversation .consultation-chat-heading h2 { display:none; }
+.admin-chat-conversation .consultation-chat-heading { padding:14px 24px; }
+.admin-chat-conversation .chat-scroll { height:clamp(300px,44vh,520px); }
+.admin-chat-empty { padding:32px 24px; color:var(--muted); line-height:1.7; }
+.admin-chat-empty h2 { font-size:20px; color:var(--ink); }
+@media(max-width:1000px) { .admin-chat-layout { grid-template-columns:minmax(220px,.8fr) minmax(0,1.5fr); gap:14px; } }
+@media(max-width:760px) { .admin-chat-layout { grid-template-columns:minmax(0,1fr); } .admin-chat-threads { max-height:240px; } .admin-chat-customer { padding:18px; } .admin-chat-conversation .chat-compose { flex-direction:column; } }

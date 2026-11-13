@@ -4,6 +4,15 @@
 
 Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đặt trong `ontrip.sql`, người/AI thực hiện phải cập nhật nhật ký này trong cùng lần sửa. Ghi rõ ngày, thay đổi, ảnh hưởng dữ liệu, vị trí khối SQL và cách áp dụng. Không ghi ở đây các thao tác sử dụng website thông thường như đổi mật khẩu hoặc sửa hồ sơ cá nhân.
 
+## 13/11/2026 — Sửa lỗi `#1005` khi tạo bảng `danh_gia_tour` (khóa ngoại sai kiểu)
+
+- **Nguyên nhân:** `danh_gia_tour.id_tour` khai báo `INT UNSIGNED` nhưng `tour.id_tour` là `BIGINT UNSIGNED`. Hai kiểu không khớp tuyệt đối nên MySQL trả `errno: 150 "Foreign key constraint is incorrectly formed"` cho `fk_danh_gia_tour`, và cả câu `CREATE TABLE` thất bại.
+- **Thay đổi:** đổi `danh_gia_tour.id_tour` từ `INT UNSIGNED` thành `BIGINT UNSIGNED` cho khớp `tour.id_tour`. Hai cột còn lại (`id_tai_khoan`, `id_don_dat`) vốn đã đúng `BIGINT UNSIGNED` nên giữ nguyên.
+- Chỉ sửa kiểu cột trong phần CREATE; không đổi tên bảng/cột, không đổi chỉ mục, không đổi hành vi `ON DELETE` (`CASCADE` cho tour/tài khoản, `SET NULL` cho đơn đặt). Model `app/models/danh_gia.php` đã dùng `BIGINT UNSIGNED` từ trước nên không cần sửa.
+- **Vị trí:** khối `BEGIN CAP_NHAT_2026_11_08_DANH_GIA_TOUR` / `END CAP_NHAT_2026_11_08_DANH_GIA_TOUR` trong `ontrip.sql`.
+- **Máy đã có database:** không cần thao tác nếu bảng `danh_gia_tour` đã tồn tại và hoạt động (cột đã đúng `BIGINT`). Nếu lần import trước dừng ở khối này thì bảng chưa được tạo — chạy lại riêng khối trên sau khi lấy code mới. Nếu bảng đã tạo được nhưng cột `id_tour` là `INT` (tạo từ phiên bản SQL cũ), cần `ALTER TABLE danh_gia_tour MODIFY id_tour BIGINT UNSIGNED NOT NULL;` rồi kiểm tra lại ràng buộc.
+- **Đã kiểm tra:** import toàn bộ `ontrip.sql` vào database tạm trên MySQL của XAMPP — tạo đủ 13 bảng, `danh_gia_tour` có 3 khóa ngoại với `id_tour`/`id_tai_khoan`/`id_don_dat` đều `bigint(20) unsigned`. Database tạm đã được xóa.
+
 ## 09/11/2026 — Hiển thị số lượng khách đã đặt tour thành công trên thẻ tour
 
 - Cập nhật truy vấn tính tổng số lượng khách hàng đã đặt tour (`SUM(so_nguoi_lon + so_tre_em)`) theo tour trong `TourModel::getPublishedTours()`, chỉ tính các đơn đặt tour không bị hủy (`trang_thai <> 'da_huy'`).

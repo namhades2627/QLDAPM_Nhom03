@@ -14,6 +14,9 @@
  * @var bool $authRequired
  * @var bool $notFound
  * @var string $csrfToken
+ * @var string $scheduleNotice
+ * @var string $loginUrl
+ * @var string $registerUrl
  */
 $page = 'booking';
 $escape = static fn($value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -36,8 +39,8 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="assets/css/style.css?v=20261108-notifications">
-    <script src="assets/js/script.js?v=20261108-notifications" defer></script>
+    <link rel="stylesheet" href="assets/css/style.css?v=20261113-booking">
+    <script src="assets/js/script.js?v=20261113-booking" defer></script>
 </head>
 <body class="booking-page">
 <?php require __DIR__ . '/../partials/header.php'; ?>
@@ -52,7 +55,7 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
         <header class="booking-heading">
             <span class="detail-kicker">YÊU CẦU ĐẶT TOUR</span>
             <h1><?= $escape($notFound ? 'Đặt tour' : $tourName) ?></h1>
-            <p><?= $notFound ? 'Tour này hiện không có lịch khởi hành đang mở nhận đặt.' : 'Chọn lịch khởi hành, nhập thông tin liên hệ và người tham gia, sau đó gửi yêu cầu để OnTrip xác nhận.' ?></p>
+            <p><?= $notFound ? 'Tour này hiện không có lịch khởi hành đang mở nhận đặt.' : 'Nhập thông tin người tham gia và thông tin liên hệ, sau đó gửi yêu cầu để OnTrip xác nhận.' ?></p>
         </header>
 
         <?php if ($notFound): ?>
@@ -66,8 +69,8 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
                 <h2>Đăng nhập để đặt tour</h2>
                 <p>OnTrip lưu đơn đặt theo tài khoản để bạn theo dõi trạng thái đơn và thanh toán mô phỏng.</p>
                 <div class="booking-auth-actions">
-                    <a class="button button-primary" href="index.php?page=login">Đăng nhập</a>
-                    <a class="button booking-secondary-button" href="index.php?page=register">Tạo tài khoản</a>
+                    <a class="button button-primary" href="<?= $escape($loginUrl) ?>">Đăng nhập</a>
+                    <a class="button booking-secondary-button" href="<?= $escape($registerUrl) ?>">Tạo tài khoản</a>
                 </div>
             </section>
             <aside class="booking-sidebar" aria-label="Thông tin lịch khởi hành">
@@ -88,30 +91,20 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
         <div class="booking-layout">
             <form class="booking-form" method="post" action="index.php?page=booking&amp;type=<?= $tourType ?>&amp;id=<?= $escape($code) ?>" data-booking-form data-adult-price="<?= (int) $adultPrice ?>" data-child-price="<?= (int) $childPrice ?>">
                 <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
+                <?php if ($selectedSchedule): ?>
+                <input type="hidden" name="id_lich_khoi_hanh" value="<?= (int) $selectedSchedule['id'] ?>">
+                <?php endif; ?>
                 <?php if ($message !== ''): ?>
                 <div class="auth-message" role="alert"><?= $escape($message) ?></div>
                 <?php endif; ?>
-
-                <section class="booking-card" aria-labelledby="booking-schedule-title">
-                    <div class="booking-card-heading"><span class="booking-step" aria-hidden="true">1</span><div><h2 id="booking-schedule-title">Chọn lịch khởi hành</h2><p>Giá và số chỗ được kiểm tra lại trên máy chủ khi bạn gửi yêu cầu.</p></div></div>
-                    <?php if (isset($errors['id_lich_khoi_hanh'])): ?><p class="booking-error"><?= $escape($errors['id_lich_khoi_hanh']) ?></p><?php endif; ?>
-                    <div class="booking-schedules" role="radiogroup" aria-label="Lịch khởi hành">
-                        <?php foreach ($schedules as $schedule): $soldOut = (int) $schedule['seats_left'] < 1; ?>
-                        <label class="booking-schedule<?= $soldOut ? ' is-sold-out' : '' ?>">
-                            <input type="radio" name="id_lich_khoi_hanh" value="<?= (int) $schedule['id'] ?>" data-adult-price="<?= (int) $schedule['adult_price'] ?>" data-child-price="<?= (int) $schedule['child_price'] ?>" data-seats-left="<?= (int) $schedule['seats_left'] ?>" data-date="<?= date('d/m/Y', strtotime($schedule['date'])) ?>" data-origin="<?= $escape($schedule['origin']) ?>" <?= (int) $schedule['id'] === (int) ($selectedSchedule['id'] ?? 0) ? 'checked' : '' ?> <?= $soldOut ? 'disabled' : '' ?>>
-                            <span>
-                                <strong><?= date('d/m/Y', strtotime($schedule['date'])) ?></strong>
-                                <small><?= $escape($schedule['origin']) ?></small>
-                                <small><?= $money($schedule['adult_price']) ?> / người lớn</small>
-                                <em><?= $soldOut ? 'Đã hết chỗ' : 'Còn ' . (int) $schedule['seats_left'] . ' chỗ' ?></em>
-                            </span>
-                        </label>
-                        <?php endforeach; ?>
-                    </div>
-                </section>
+                <?php if (isset($errors['id_lich_khoi_hanh'])): ?>
+                <div class="auth-message" role="alert"><?= $escape($errors['id_lich_khoi_hanh']) ?> <a href="<?= $escape($tourDetailUrl) ?>">Chọn lịch khác</a></div>
+                <?php elseif ($scheduleNotice !== ''): ?>
+                <p class="booking-hint"><?= $escape($scheduleNotice) ?> <a href="<?= $escape($tourDetailUrl) ?>">Đổi lịch khởi hành</a></p>
+                <?php endif; ?>
 
                 <section class="booking-card" aria-labelledby="booking-guest-title">
-                    <div class="booking-card-heading"><span class="booking-step" aria-hidden="true">2</span><div><h2 id="booking-guest-title">Người tham gia</h2><p>Mỗi khách chiếm một chỗ. Cần ít nhất một người lớn trong đơn.</p></div></div>
+                    <div class="booking-card-heading"><span class="booking-step" aria-hidden="true">1</span><div><h2 id="booking-guest-title">Người tham gia</h2><p>Mỗi khách chiếm một chỗ. Cần ít nhất một người lớn trong đơn.</p></div></div>
                     <?php if (isset($errors['khach'])): ?><p class="booking-error"><?= $escape($errors['khach']) ?></p><?php endif; ?>
                     <div class="booking-guests" data-participant-list>
                         <?php foreach ($participants as $index => $participant): ?>
@@ -140,7 +133,7 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
                 </section>
 
                 <section class="booking-card" aria-labelledby="booking-contact-title">
-                    <div class="booking-card-heading"><span class="booking-step" aria-hidden="true">3</span><div><h2 id="booking-contact-title">Thông tin liên hệ</h2><p>OnTrip dùng thông tin này để xác nhận đơn đặt tour.</p></div></div>
+                    <div class="booking-card-heading"><span class="booking-step" aria-hidden="true">2</span><div><h2 id="booking-contact-title">Thông tin liên hệ</h2><p>OnTrip dùng thông tin này để xác nhận đơn đặt tour.</p></div></div>
                     <div class="booking-fields">
                         <label class="booking-field"><span>Họ và tên <b>*</b></span><input type="text" name="ho_ten" value="<?= $escape($values['ho_ten']) ?>" maxlength="120" minlength="2" autocomplete="name" aria-invalid="<?= isset($errors['ho_ten']) ? 'true' : 'false' ?>" required><?php if (isset($errors['ho_ten'])): ?><em class="booking-error"><?= $escape($errors['ho_ten']) ?></em><?php endif; ?></label>
                         <label class="booking-field"><span>Email <b>*</b></span><input type="email" name="email" value="<?= $escape($values['email']) ?>" maxlength="254" autocomplete="email" aria-invalid="<?= isset($errors['email']) ? 'true' : 'false' ?>" required><?php if (isset($errors['email'])): ?><em class="booking-error"><?= $escape($errors['email']) ?></em><?php endif; ?></label>

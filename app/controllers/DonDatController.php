@@ -69,6 +69,28 @@ class DonDatController
         return $year >= 1900 && $value <= date('Y-m-d');
     }
 
+    /** Lịch khởi hành theo id trong danh sách đang mở nhận đặt. */
+    private function findSchedule(array $schedules, int $id): ?array
+    {
+        foreach ($schedules as $schedule) {
+            if ((int) $schedule['id'] === $id) {
+                return $schedule;
+            }
+        }
+        return null;
+    }
+
+    /** Lịch gần nhất còn chỗ, dùng khi lịch khách chọn không còn nhận đặt. */
+    private function nearestAvailableSchedule(array $schedules): ?array
+    {
+        foreach ($schedules as $schedule) {
+            if ((int) $schedule['seats_left'] > 0) {
+                return $schedule;
+            }
+        }
+        return null;
+    }
+
     public function form(): void
     {
         header('Cache-Control: no-store');
@@ -88,10 +110,8 @@ class DonDatController
             'ghi_chu' => '',
         ];
         $participants = [['ho_ten' => '', 'loai_khach' => 'nguoi_lon', 'ngay_sinh' => '', 'ghi_chu' => '']];
+        // Lịch khởi hành do trang chi tiết tour truyền sang, biểu mẫu không cho chọn lại.
         $selectedId = $this->queryInteger('schedule');
-        if ($selectedId === 0 && $schedules) {
-            $selectedId = (int) $schedules[0]['id'];
-        }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($authRequired) {
@@ -129,15 +149,9 @@ class DonDatController
                     $errors['ghi_chu'] = 'Ghi chú tối đa 500 ký tự.';
                 }
 
-                $schedule = null;
-                foreach ($schedules as $item) {
-                    if ((int) $item['id'] === $selectedId) {
-                        $schedule = $item;
-                        break;
-                    }
-                }
+                $schedule = $this->findSchedule($schedules, $selectedId);
                 if ($schedule === null) {
-                    $errors['id_lich_khoi_hanh'] = 'Vui lòng chọn một lịch khởi hành còn nhận đặt.';
+                    $errors['id_lich_khoi_hanh'] = 'Lịch khởi hành này không còn nhận đặt.';
                 }
 
                 $adults = 0;
@@ -186,14 +200,24 @@ class DonDatController
             }
         }
 
-        $selectedSchedule = null;
-        foreach ($schedules as $item) {
-            if ((int) $item['id'] === $selectedId) {
-                $selectedSchedule = $item;
-                break;
-            }
+        // Nếu lịch khách chọn không còn nhận đặt thì tạm dùng lịch gần nhất còn chỗ và báo cho khách đổi lịch.
+        $selectedSchedule = $this->findSchedule($schedules, $selectedId)
+            ?? $this->nearestAvailableSchedule($schedules)
+            ?? ($schedules[0] ?? null);
+        $scheduleNotice = '';
+        if ($selectedSchedule !== null && (int) $selectedSchedule['seats_left'] < 1) {
+            $scheduleNotice = 'Lịch khởi hành này đã hết chỗ.';
+        } elseif ($selectedSchedule !== null && (int) $selectedSchedule['id'] !== $selectedId) {
+            $scheduleNotice = 'Lịch bạn chọn không còn nhận đặt, OnTrip tạm chọn lịch gần nhất còn chỗ.';
         }
+        $selectedId = (int) ($selectedSchedule['id'] ?? 0);
         $notFound = !$schedules;
+        $bookingUrl = 'index.php?page=booking&type=' . $tourType . '&id=' . rawurlencode($code);
+        if ($selectedSchedule !== null) {
+            $bookingUrl .= '&schedule=' . $selectedId;
+        }
+        $loginUrl = 'index.php?page=login&redirect=' . rawurlencode($bookingUrl);
+        $registerUrl = 'index.php?page=register&redirect=' . rawurlencode($bookingUrl);
         $adultPrice = $selectedSchedule['adult_price'] ?? 0;
         $childPrice = $selectedSchedule['child_price'] ?? 0;
         $adultCount = 0;
@@ -213,7 +237,7 @@ class DonDatController
     {
         header('Cache-Control: no-store');
         if (!isset($_SESSION['tai_khoan'])) {
-            header('Location: index.php?page=login', true, 303);
+            header('Location: index.php?page=login&redirect=' . rawurlencode('index.php?page=orders'), true, 303);
             return;
         }
         $accountId = (int) $_SESSION['tai_khoan']['id_tai_khoan'];

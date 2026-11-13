@@ -307,7 +307,7 @@ CREATE TABLE IF NOT EXISTS `thong_bao` (
 -- Bang danh gia tour tu khach hang kem so sao, tieu de, nhan xet va trang thai hien thi
 CREATE TABLE IF NOT EXISTS `danh_gia_tour` (
     `id_danh_gia` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `id_tour` INT UNSIGNED NOT NULL,
+    `id_tour` BIGINT UNSIGNED NOT NULL,
     `id_tai_khoan` BIGINT UNSIGNED NOT NULL,
     `id_don_dat` BIGINT UNSIGNED DEFAULT NULL,
     `so_sao` TINYINT UNSIGNED NOT NULL,

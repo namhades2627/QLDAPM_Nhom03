@@ -1441,9 +1441,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderSummary() {
         if (!summary) return;
-        const schedule = form.querySelector('input[name="id_lich_khoi_hanh"]:checked');
-        const adultPrice = Number((schedule && schedule.dataset.adultPrice) || form.dataset.adultPrice || 0);
-        const childPrice = Number((schedule && schedule.dataset.childPrice) || form.dataset.childPrice || 0);
+        // Lịch khởi hành đã chốt ở trang chi tiết tour nên đơn giá lấy từ form.
+        const adultPrice = Number(form.dataset.adultPrice || 0);
+        const childPrice = Number(form.dataset.childPrice || 0);
         let adults = 0;
         let children = 0;
         rows().forEach(row => { if (typeOf(row) === 'tre_em') children += 1; else adults += 1; });
@@ -1470,12 +1470,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setText('[data-summary-discount-rate]', `${rate}%`);
         setText('[data-summary-discount-amount]', `−${money(discount)}`);
         setText('[data-summary-total]', money(subtotal - discount));
-        const meta = summary.querySelector('[data-summary-schedule]');
-        if (meta) {
-            meta.textContent = schedule
-                ? `Khởi hành ${schedule.dataset.date} · ${schedule.dataset.origin}`
-                : 'Chưa chọn lịch khởi hành';
-        }
     }
 
     form.querySelectorAll('[data-add-participant]').forEach(button => {
@@ -1501,10 +1495,6 @@ document.addEventListener('DOMContentLoaded', () => {
         row.remove();
         renumber();
         renderSummary();
-    });
-
-    form.querySelectorAll('input[name="id_lich_khoi_hanh"]').forEach(input => {
-        input.addEventListener('change', renderSummary);
     });
 
     renumber();

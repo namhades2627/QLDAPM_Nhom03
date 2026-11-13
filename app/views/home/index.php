@@ -43,8 +43,8 @@ $banners = [
     <meta name="theme-color" content="#df6024">
     <title>OnTrip — Đi một chuyến, thêm một câu chuyện</title>
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
-    <link rel="stylesheet" href="assets/css/style.css?v=20261108-notifications">
-    <script src="assets/js/script.js?v=20261108-notifications" defer></script>
+    <link rel="stylesheet" href="assets/css/style.css?v=20261113-booking">
+    <script src="assets/js/script.js?v=20261113-booking" defer></script>
 </head>
 <body>
 <?php require __DIR__ . '/../partials/header.php'; ?>

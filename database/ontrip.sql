@@ -258,7 +258,9 @@ CREATE TABLE IF NOT EXISTS `chi_tiet_don_dat` (
     `thu_tu` TINYINT UNSIGNED NOT NULL,
     `ho_ten` VARCHAR(120) NOT NULL,
     `loai_khach` ENUM('nguoi_lon', 'tre_em') NOT NULL,
+    `gioi_tinh` ENUM('nam', 'nu') NOT NULL DEFAULT 'nam',
     `ngay_sinh` DATE DEFAULT NULL,
+    `cccd` VARCHAR(30) DEFAULT NULL,
     `ghi_chu` VARCHAR(255) DEFAULT NULL,
     PRIMARY KEY (`id_chi_tiet_don_dat`),
     UNIQUE KEY `uq_chi_tiet_don_dat_thu_tu` (`id_don_dat`, `thu_tu`),
@@ -1160,3 +1162,27 @@ INSERT INTO `don_dat_tour` (`ma_don`, `id_tai_khoan`, `id_lich_khoi_hanh`, `ma_t
 SELECT 'OT26110902', 3, 25, 'mt04', 'Đà Nẵng – Bà Nà Hills – Cầu Vàng – Hội An', '2026-12-26', 'TP. Hồ Chí Minh', 4990000, 3493000, 12, 3, 70359000, 8, 5628720, 64730280, 'Gia đình chú Bảy', 'chubay@gmail.com', '0987654321', 'da_xac_nhan'
 WHERE NOT EXISTS (SELECT 1 FROM `don_dat_tour` WHERE `ma_don` = 'OT26110902');
 -- END CAP_NHAT_2026_11_09_DON_DAT_SEED
+
+-- BEGIN CAP_NHAT_2026_11_13_HANH_KHACH_CCCD_GIOI_TINH
+-- Bổ sung cột gioi_tinh và cccd cho bảng chi_tiet_don_dat
+DROP PROCEDURE IF EXISTS sp_upgrade_chi_tiet_don_dat;
+DELIMITER $$
+CREATE PROCEDURE sp_upgrade_chi_tiet_don_dat()
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'chi_tiet_don_dat' AND COLUMN_NAME = 'gioi_tinh'
+    ) THEN
+        ALTER TABLE `chi_tiet_don_dat` ADD COLUMN `gioi_tinh` ENUM('nam', 'nu') NOT NULL DEFAULT 'nam' AFTER `loai_khach`;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'chi_tiet_don_dat' AND COLUMN_NAME = 'cccd'
+    ) THEN
+        ALTER TABLE `chi_tiet_don_dat` ADD COLUMN `cccd` VARCHAR(30) DEFAULT NULL AFTER `ngay_sinh`;
+    END IF;
+END $$
+DELIMITER ;
+CALL sp_upgrade_chi_tiet_don_dat();
+DROP PROCEDURE IF EXISTS sp_upgrade_chi_tiet_don_dat;
+-- END CAP_NHAT_2026_11_13_HANH_KHACH_CCCD_GIOI_TINH

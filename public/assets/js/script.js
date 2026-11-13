@@ -1407,7 +1407,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ===== ĐẶT TOUR: THÊM NGƯỜI THAM GIA VÀ ĐỒNG BỘ TẠM TÍNH ===== */
-// Tạm tính chỉ để khách hình dung; máy chủ kiểm tra lại số chỗ và đơn giá khi lưu đơn.
+// Quản lý danh sách Người tham gia (Dynamic Form + JS) & Tạm tính đơn đặt
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('[data-booking-form]');
     const money = value => `${new Intl.NumberFormat('vi-VN').format(value)} ₫`;
@@ -1423,78 +1423,232 @@ document.addEventListener('DOMContentLoaded', () => {
     const list = form.querySelector('[data-participant-list]');
     const summary = document.querySelector('[data-booking-summary]');
     if (!list) return;
+
+    const seatsLeft = parseInt(form.dataset.seatsLeft || '99', 10);
+    const departureDate = form.dataset.departureDate || '';
     const rows = () => [...list.querySelectorAll('[data-participant]')];
     const typeOf = row => (row.dataset.type === 'tre_em' ? 'tre_em' : 'nguoi_lon');
 
+    // Hàm tính tuổi dựa trên ngày sinh và ngày khởi hành
+    function calculateAge(birthDateStr, departureDateStr) {
+        if (!birthDateStr) return null;
+        const birth = new Date(birthDateStr);
+        if (isNaN(birth.getTime())) return null;
+        const ref = departureDateStr ? new Date(departureDateStr) : new Date();
+        let age = ref.getFullYear() - birth.getFullYear();
+        const m = ref.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && ref.getDate() < birth.getDate())) {
+            age--;
+        }
+        return age;
+    }
+
+    // Kiểm tra tính hợp lệ về độ tuổi của hành khách
+    function validatePassengerAge(row) {
+        const type = typeOf(row);
+        const dobInput = row.querySelector('[data-field="ngay_sinh"]');
+        if (!dobInput) return;
+        const dobVal = dobInput.value;
+        const warningEl = row.querySelector('[data-age-warning]');
+
+        if (!dobVal) {
+            if (warningEl) {
+                warningEl.hidden = true;
+                warningEl.textContent = '';
+            }
+            return;
+        }
+
+        const age = calculateAge(dobVal, departureDate);
+        if (!warningEl) return;
+
+        if (age === null || age < 0) {
+            warningEl.textContent = 'Ngày sinh không thể lớn hơn ngày khởi hành.';
+            warningEl.className = 'booking-guest-age-note is-error';
+            warningEl.hidden = false;
+        } else if (type === 'nguoi_lon' && age < 12) {
+            warningEl.textContent = `Tuổi tính được: ${age} tuổi. Người lớn phải từ 12 tuổi trở lên tính đến ngày khởi hành.`;
+            warningEl.className = 'booking-guest-age-note is-error';
+            warningEl.hidden = false;
+        } else if (type === 'tre_em' && age >= 12) {
+            warningEl.textContent = `Tuổi tính được: ${age} tuổi. Trẻ em phải dưới 12 tuổi tính đến ngày khởi hành. Vui lòng chọn Người lớn.`;
+            warningEl.className = 'booking-guest-age-note is-error';
+            warningEl.hidden = false;
+        } else {
+            warningEl.hidden = true;
+            warningEl.textContent = '';
+        }
+    }
+
+    // Đánh số lại thứ tự, cập nhật name dạng passengers[index][field] và kiểm soát nút Xóa, nút Thêm
     function renumber() {
         const counts = { nguoi_lon: 0, tre_em: 0 };
-        rows().forEach(row => {
+        const allRows = rows();
+
+        allRows.forEach((row, index) => {
             const type = typeOf(row);
             counts[type] += 1;
+
+            // Nhãn hiển thị: Người lớn 1, Người lớn 2, Trẻ em 1...
             const label = row.querySelector('[data-participant-label]');
-            if (label) label.textContent = `${type === 'tre_em' ? 'Trẻ em' : 'Người lớn'} ${counts[type]}`;
-            const remove = row.querySelector('[data-remove-participant]');
-            if (remove) remove.disabled = type !== 'tre_em' && counts.nguoi_lon <= 1;
+            if (label) {
+                const labelText = `${type === 'tre_em' ? 'Trẻ em' : 'Người lớn'} ${counts[type]}`;
+                label.textContent = labelText;
+            }
+
+            // Đồng bộ tên input theo đúng mảng passengers[index][field] trong PHP
+            row.querySelectorAll('input, select').forEach(fieldEl => {
+                const fieldName = fieldEl.dataset.field;
+                if (fieldName) {
+                    fieldEl.name = `passengers[${index}][${fieldName}]`;
+                }
+            });
+
+            // Nút xóa: vô hiệu hóa ở Người lớn 1 vì bắt buộc có ít nhất 1 người lớn
+            const removeBtn = row.querySelector('[data-remove-participant]');
+            if (removeBtn) {
+                const isAdult1 = (type === 'nguoi_lon' && counts.nguoi_lon === 1);
+                removeBtn.disabled = isAdult1;
+                if (isAdult1) {
+                    removeBtn.setAttribute('title', 'Người lớn 1 là bắt buộc, không thể xóa');
+                } else {
+                    removeBtn.removeAttribute('title');
+                }
+            }
+
+            // Kiểm tra độ tuổi theo ngày sinh đã nhập
+            validatePassengerAge(row);
         });
+
+        // Kiểm soát giới hạn chỗ còn lại của lịch khởi hành
+        const totalGuests = counts.nguoi_lon + counts.tre_em;
+        const remaining = Math.max(0, seatsLeft - totalGuests);
+        const limitReached = totalGuests >= seatsLeft || totalGuests >= 99;
+
+        form.querySelectorAll('[data-add-participant]').forEach(button => {
+            button.disabled = limitReached;
+            if (limitReached) {
+                button.setAttribute('title', `Đã đạt giới hạn tối đa ${seatsLeft} chỗ của chuyến`);
+            } else {
+                button.removeAttribute('title');
+            }
+        });
+
+        const seatsRemainingEl = form.querySelector('[data-seats-remaining]');
+        if (seatsRemainingEl) {
+            seatsRemainingEl.textContent = remaining;
+        }
+
+        const seatsWarningEl = form.querySelector('[data-seats-warning]');
+        if (seatsWarningEl) {
+            seatsWarningEl.hidden = !limitReached;
+        }
+
         return counts;
     }
 
-    function renderSummary() {
+    // Phần 3: Tính lại tổng tiền và áp dụng chiết khấu nhóm lên cột Tạm tính bên phải
+    function renderSummary(counts) {
         if (!summary) return;
-        // Lịch khởi hành đã chốt ở trang chi tiết tour nên đơn giá lấy từ form.
         const adultPrice = Number(form.dataset.adultPrice || 0);
         const childPrice = Number(form.dataset.childPrice || 0);
-        let adults = 0;
-        let children = 0;
-        rows().forEach(row => { if (typeOf(row) === 'tre_em') children += 1; else adults += 1; });
+
+        const currentCounts = counts || {
+            nguoi_lon: rows().filter(r => typeOf(r) !== 'tre_em').length,
+            tre_em: rows().filter(r => typeOf(r) === 'tre_em').length
+        };
+        const adults = currentCounts.nguoi_lon;
+        const children = currentCounts.tre_em;
+
         const adultTotal = adults * adultPrice;
         const childTotal = children * childPrice;
         const subtotal = adultTotal + childTotal;
         const guests = adults + children;
-        const rate = guests >= 10 ? 8 : guests >= 5 ? 5 : 0;
+
+        // Ưu đãi nhóm theo quy tắc OnTrip:
+        // 1-4 khách: 0%
+        // 5-9 khách: 5%
+        // Từ 10 khách: 8%
+        const rate = guests >= 10 ? 8 : (guests >= 5 ? 5 : 0);
         const discount = Math.round(subtotal * rate / 100);
+        const totalPayment = subtotal - discount;
+
         const setText = (selector, value) => {
-            const element = summary.querySelector(selector);
-            if (element) element.textContent = value;
+            const el = summary.querySelector(selector);
+            if (el) el.textContent = value;
         };
 
         setText('[data-summary-adult-count]', adults);
         setText('[data-summary-adult-total]', money(adultTotal));
         setText('[data-summary-child-count]', children);
         setText('[data-summary-child-total]', money(childTotal));
+
         const childLine = summary.querySelector('[data-summary-child-line]');
-        if (childLine) childLine.hidden = children === 0;
+        if (childLine) childLine.hidden = (children === 0);
+
         setText('[data-summary-subtotal]', money(subtotal));
+
         const discountLine = summary.querySelector('[data-summary-discount-line]');
-        if (discountLine) discountLine.hidden = rate === 0;
+        if (discountLine) discountLine.hidden = (rate === 0);
         setText('[data-summary-discount-rate]', `${rate}%`);
         setText('[data-summary-discount-amount]', `−${money(discount)}`);
-        setText('[data-summary-total]', money(subtotal - discount));
+        setText('[data-summary-total]', money(totalPayment));
+
+        // Bắn Custom Event để các listener bên ngoài (nếu có) nhận dữ liệu
+        form.dispatchEvent(new CustomEvent('booking:summary-updated', {
+            bubbles: true,
+            detail: { adults, children, guests, subtotal, rate, discount, totalPayment }
+        }));
     }
 
+    // Bắt sự kiện thêm hành khách (+ Thêm người lớn / + Thêm trẻ em)
     form.querySelectorAll('[data-add-participant]').forEach(button => {
         button.addEventListener('click', () => {
+            const currentTotal = rows().length;
+            if (currentTotal >= seatsLeft || currentTotal >= 99) {
+                window.alert(`Lịch khởi hành này chỉ còn ${seatsLeft} chỗ trống.`);
+                return;
+            }
+
             const type = button.dataset.addParticipant === 'tre_em' ? 'tre_em' : 'nguoi_lon';
             const template = form.querySelector(`[data-participant-template="${type}"]`);
             if (!template) return;
+
             list.appendChild(template.content.cloneNode(true));
-            renumber();
-            renderSummary();
+            const newCounts = renumber();
+            renderSummary(newCounts);
+
             const added = rows().pop();
-            const input = added && added.querySelector('input[name="khach[ho_ten][]"]');
+            const input = added && added.querySelector('[data-field="ho_ten"]');
             if (input) input.focus();
         });
     });
 
+    // Bắt sự kiện xóa hành khách (vô hiệu hóa ở Người lớn 1)
     list.addEventListener('click', event => {
         const button = event.target.closest('[data-remove-participant]');
-        if (!button) return;
+        if (!button || button.disabled) return;
         const row = button.closest('[data-participant]');
         if (!row) return;
-        if (typeOf(row) !== 'tre_em' && rows().filter(item => typeOf(item) !== 'tre_em').length <= 1) return;
+
+        // Chặn xóa nếu là Người lớn 1
+        const allRows = rows();
+        const adultRows = allRows.filter(item => typeOf(item) !== 'tre_em');
+        if (typeOf(row) === 'nguoi_lon' && (row === adultRows[0] || adultRows.length <= 1)) {
+            return;
+        }
+
         row.remove();
-        renumber();
-        renderSummary();
+        const newCounts = renumber();
+        renderSummary(newCounts);
+    });
+
+    // Bắt sự kiện thay đổi ngày sinh để validate độ tuổi tức thì
+    list.addEventListener('change', event => {
+        if (event.target.matches('[data-field="ngay_sinh"]')) {
+            const row = event.target.closest('[data-participant]');
+            if (row) validatePassengerAge(row);
+        }
     });
 
     renumber();

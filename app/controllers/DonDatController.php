@@ -29,37 +29,73 @@ class DonDatController
         return $value === false || $value < 1 ? 0 : $value;
     }
 
-    /** Danh sách người tham gia gửi lên theo bốn mảng song song. */
+    /** Danh sách người tham gia gửi lên, hỗ trợ mảng passengers[] và tương thích mảng khach[]. */
     private function submittedParticipants(): array
     {
+        if (isset($_POST['passengers']) && is_array($_POST['passengers'])) {
+            $participants = [];
+            foreach ($_POST['passengers'] as $p) {
+                if (!is_array($p)) {
+                    continue;
+                }
+                $participants[] = [
+                    'ho_ten' => is_string($p['ho_ten'] ?? null) ? trim($p['ho_ten']) : '',
+                    'loai_khach' => (($p['loai_khach'] ?? '') === 'tre_em') ? 'tre_em' : 'nguoi_lon',
+                    'gioi_tinh' => (($p['gioi_tinh'] ?? '') === 'nu') ? 'nu' : 'nam',
+                    'ngay_sinh' => is_string($p['ngay_sinh'] ?? null) ? trim($p['ngay_sinh']) : '',
+                    'cccd' => is_string($p['cccd'] ?? null) ? trim($p['cccd']) : '',
+                    'ghi_chu' => is_string($p['ghi_chu'] ?? null) ? trim($p['ghi_chu']) : '',
+                ];
+            }
+            return $participants;
+        }
+
         $names = $_POST['khach']['ho_ten'] ?? [];
         $types = $_POST['khach']['loai_khach'] ?? [];
+        $genders = $_POST['khach']['gioi_tinh'] ?? [];
         $birthdays = $_POST['khach']['ngay_sinh'] ?? [];
+        $cccds = $_POST['khach']['cccd'] ?? [];
         $notes = $_POST['khach']['ghi_chu'] ?? [];
-        if (!is_array($names) || !is_array($types) || !is_array($birthdays) || !is_array($notes)) {
+        if (!is_array($names) || !is_array($types)) {
             return [];
         }
         $names = array_values($names);
         $types = array_values($types);
-        $birthdays = array_values($birthdays);
-        $notes = array_values($notes);
+        $genders = is_array($genders) ? array_values($genders) : [];
+        $birthdays = is_array($birthdays) ? array_values($birthdays) : [];
+        $cccds = is_array($cccds) ? array_values($cccds) : [];
+        $notes = is_array($notes) ? array_values($notes) : [];
         $participants = [];
         foreach ($names as $index => $name) {
             $participants[] = [
                 'ho_ten' => is_string($name) ? trim($name) : '',
                 'loai_khach' => (($types[$index] ?? '') === 'tre_em') ? 'tre_em' : 'nguoi_lon',
+                'gioi_tinh' => (($genders[$index] ?? '') === 'nu') ? 'nu' : 'nam',
                 'ngay_sinh' => is_string($birthdays[$index] ?? null) ? trim($birthdays[$index]) : '',
+                'cccd' => is_string($cccds[$index] ?? null) ? trim($cccds[$index]) : '',
                 'ghi_chu' => is_string($notes[$index] ?? null) ? trim($notes[$index]) : '',
             ];
         }
         return $participants;
     }
 
-    /** Kiểm tra ngày sinh: bỏ trống được, nếu nhập phải là ngày hợp lệ trong quá khứ. */
+    /** Tính tuổi dựa trên ngày sinh và ngày tham chiếu (ngày khởi hành hoặc hiện tại). */
+    private function calculateAge(string $birthday, string $refDateStr): ?int
+    {
+        $birth = DateTimeImmutable::createFromFormat('!Y-m-d', $birthday);
+        $ref = DateTimeImmutable::createFromFormat('!Y-m-d', $refDateStr);
+        if (!$birth || !$ref) {
+            return null;
+        }
+        $diff = $birth->diff($ref);
+        return $diff->invert ? -1 : $diff->y;
+    }
+
+    /** Kiểm tra ngày sinh: bắt buộc là ngày hợp lệ trong quá khứ. */
     private function isValidBirthday(string $value): bool
     {
         if ($value === '') {
-            return true;
+            return false;
         }
         $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
         if (!$date || $date->format('Y-m-d') !== $value) {
@@ -109,7 +145,7 @@ class DonDatController
             'dia_chi' => '',
             'ghi_chu' => '',
         ];
-        $participants = [['ho_ten' => '', 'loai_khach' => 'nguoi_lon', 'ngay_sinh' => '', 'ghi_chu' => '']];
+        $participants = [['ho_ten' => '', 'loai_khach' => 'nguoi_lon', 'gioi_tinh' => 'nam', 'ngay_sinh' => '', 'cccd' => '', 'ghi_chu' => '']];
         // Lịch khởi hành do trang chi tiết tour truyền sang, biểu mẫu không cho chọn lại.
         $selectedId = $this->queryInteger('schedule');
 
@@ -156,21 +192,46 @@ class DonDatController
 
                 $adults = 0;
                 $children = 0;
+                $depDate = $schedule['ngay_khoi_hanh'] ?? date('Y-m-d');
                 foreach ($participants as $index => $participant) {
+                    $guestNum = $index + 1;
+                    $guestLabel = ($participant['loai_khach'] === 'tre_em' ? 'Trẻ em ' : 'Người lớn ') . $guestNum;
                     $length = mb_strlen($participant['ho_ten'], 'UTF-8');
                     if ($length < 2 || $length > 120) {
-                        $errors['khach-' . $index] = 'Họ tên khách cần từ 2 đến 120 ký tự.';
+                        $errors['khach-' . $index] = 'Họ tên khách thứ ' . $guestNum . ' cần từ 2 đến 120 ký tự.';
                     }
-                    if (!$this->isValidBirthday($participant['ngay_sinh'])) {
-                        $errors['khach-' . $index] = 'Ngày sinh không hợp lệ.';
-                    }
-                    if (mb_strlen($participant['ghi_chu'], 'UTF-8') > 255) {
-                        $errors['khach-' . $index] = 'Ghi chú của khách tối đa 255 ký tự.';
-                    }
-                    if ($participant['loai_khach'] === 'tre_em') {
-                        $children++;
+                    if ($participant['ngay_sinh'] === '') {
+                        $errors['khach-' . $index] = 'Vui lòng nhập ngày sinh cho khách thứ ' . $guestNum . '.';
+                    } elseif (!$this->isValidBirthday($participant['ngay_sinh'])) {
+                        $errors['khach-' . $index] = 'Ngày sinh của khách thứ ' . $guestNum . ' không hợp lệ.';
                     } else {
+                        $age = $this->calculateAge($participant['ngay_sinh'], $depDate);
+                        if ($participant['loai_khach'] === 'nguoi_lon') {
+                            if ($age !== null && $age < 12) {
+                                $errors['khach-' . $index] = 'Khách thứ ' . $guestNum . ' là Người lớn nhưng ngày sinh tính được ' . $age . ' tuổi (yêu cầu từ 12 tuổi trở lên).';
+                            }
+                        } else {
+                            if ($age !== null && $age >= 12) {
+                                $errors['khach-' . $index] = 'Khách thứ ' . $guestNum . ' là Trẻ em nhưng ngày sinh tính được ' . $age . ' tuổi (yêu cầu dưới 12 tuổi).';
+                            }
+                        }
+                    }
+
+                    if ($participant['loai_khach'] === 'nguoi_lon') {
                         $adults++;
+                        $cccd = trim($participant['cccd'] ?? '');
+                        if ($cccd === '') {
+                            $existing = $errors['khach-' . $index] ?? '';
+                            $errors['khach-' . $index] = $existing !== '' ? $existing . ' Bắt buộc nhập CCCD / Hộ chiếu cho người lớn.' : 'Bắt buộc nhập CCCD / Hộ chiếu cho khách thứ ' . $guestNum . ' (người lớn).';
+                        } elseif (mb_strlen($cccd, 'UTF-8') < 6 || mb_strlen($cccd, 'UTF-8') > 30) {
+                            $errors['khach-' . $index] = 'CCCD / Hộ chiếu của khách thứ ' . $guestNum . ' không hợp lệ (từ 6 đến 30 ký tự).';
+                        }
+                    } else {
+                        $children++;
+                    }
+
+                    if (mb_strlen($participant['ghi_chu'], 'UTF-8') > 255) {
+                        $errors['khach-' . $index] = 'Ghi chú của khách thứ ' . $guestNum . ' tối đa 255 ký tự.';
                     }
                 }
                 if ($adults < 1) {

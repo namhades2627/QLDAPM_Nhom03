@@ -86,7 +86,9 @@ $statusNotes = [
                         <li>
                             <span class="order-participant-type"><?= $participant['loai_khach'] === 'tre_em' ? 'Trẻ em' : 'Người lớn' ?></span>
                             <strong><?= $escape($participant['ho_ten']) ?></strong>
+                            <span><?= ($participant['gioi_tinh'] ?? 'nam') === 'nu' ? 'Nữ' : 'Nam' ?></span>
                             <span><?= $participant['ngay_sinh'] ? 'Sinh ' . date('d/m/Y', strtotime($participant['ngay_sinh'])) : 'Chưa cung cấp ngày sinh' ?></span>
+                            <?php if (!empty($participant['cccd'])): ?><span>CCCD: <?= $escape($participant['cccd']) ?></span><?php endif; ?>
                             <?php if ($participant['ghi_chu'] !== ''): ?><em><?= $escape($participant['ghi_chu']) ?></em><?php endif; ?>
                         </li>
                         <?php endforeach; ?>

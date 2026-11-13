@@ -244,23 +244,47 @@ class DonDatModel
             ]);
             $orderId = (int) $this->connection->lastInsertId();
 
-            $insertParticipant = $this->connection->prepare(
-                'INSERT INTO chi_tiet_don_dat (id_don_dat, thu_tu, ho_ten, loai_khach, ngay_sinh, ghi_chu)
-                 VALUES (?, ?, ?, ?, ?, ?)'
-            );
+            $hasExtendedColumns = true;
+            try {
+                $insertParticipant = $this->connection->prepare(
+                    'INSERT INTO chi_tiet_don_dat (id_don_dat, thu_tu, ho_ten, loai_khach, gioi_tinh, ngay_sinh, cccd, ghi_chu)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+                );
+            } catch (Throwable) {
+                $hasExtendedColumns = false;
+                $insertParticipant = $this->connection->prepare(
+                    'INSERT INTO chi_tiet_don_dat (id_don_dat, thu_tu, ho_ten, loai_khach, ngay_sinh, ghi_chu)
+                     VALUES (?, ?, ?, ?, ?, ?)'
+                );
+            }
             $order = 0;
             foreach ($participants as $participant) {
                 $order++;
                 $birthday = $participant['ngay_sinh'] ?? '';
                 $note = $participant['ghi_chu'] ?? '';
-                $insertParticipant->execute([
-                    $orderId,
-                    $order,
-                    $participant['ho_ten'] ?? '',
-                    ($participant['loai_khach'] ?? '') === 'tre_em' ? 'tre_em' : 'nguoi_lon',
-                    $birthday === '' ? null : $birthday,
-                    $note === '' ? null : $note,
-                ]);
+                if ($hasExtendedColumns) {
+                    $gender = (($participant['gioi_tinh'] ?? '') === 'nu') ? 'nu' : 'nam';
+                    $cccd = trim((string) ($participant['cccd'] ?? ''));
+                    $insertParticipant->execute([
+                        $orderId,
+                        $order,
+                        $participant['ho_ten'] ?? '',
+                        ($participant['loai_khach'] ?? '') === 'tre_em' ? 'tre_em' : 'nguoi_lon',
+                        $gender,
+                        $birthday === '' ? null : $birthday,
+                        $cccd === '' ? null : $cccd,
+                        $note === '' ? null : $note,
+                    ]);
+                } else {
+                    $insertParticipant->execute([
+                        $orderId,
+                        $order,
+                        $participant['ho_ten'] ?? '',
+                        ($participant['loai_khach'] ?? '') === 'tre_em' ? 'tre_em' : 'nguoi_lon',
+                        $birthday === '' ? null : $birthday,
+                        $note === '' ? null : $note,
+                    ]);
+                }
             }
 
             $this->connection->commit();
@@ -319,11 +343,19 @@ class DonDatModel
     /** @return array<int, array<string, mixed>> */
     private function getParticipants(int $orderId): array
     {
-        $statement = $this->connection->prepare(
-            'SELECT ho_ten, loai_khach, ngay_sinh, ghi_chu FROM chi_tiet_don_dat WHERE id_don_dat = ? ORDER BY thu_tu'
-        );
-        $statement->execute([$orderId]);
-        return $statement->fetchAll();
+        try {
+            $statement = $this->connection->prepare(
+                'SELECT ho_ten, loai_khach, gioi_tinh, ngay_sinh, cccd, ghi_chu FROM chi_tiet_don_dat WHERE id_don_dat = ? ORDER BY thu_tu'
+            );
+            $statement->execute([$orderId]);
+            return $statement->fetchAll();
+        } catch (Throwable) {
+            $statement = $this->connection->prepare(
+                'SELECT ho_ten, loai_khach, ngay_sinh, ghi_chu FROM chi_tiet_don_dat WHERE id_don_dat = ? ORDER BY thu_tu'
+            );
+            $statement->execute([$orderId]);
+            return $statement->fetchAll();
+        }
     }
 
     private function normalizeOrder(array $order): array

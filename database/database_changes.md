@@ -4,6 +4,14 @@
 
 Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đặt trong `ontrip.sql`, người/AI thực hiện phải cập nhật nhật ký này trong cùng lần sửa. Ghi rõ ngày, thay đổi, ảnh hưởng dữ liệu, vị trí khối SQL và cách áp dụng. Không ghi ở đây các thao tác sử dụng website thông thường như đổi mật khẩu hoặc sửa hồ sơ cá nhân.
 
+## 13/11/2026 — Bổ sung cột giới tính và CCCD cho người tham gia đặt tour
+
+- **Thay đổi:** Bổ sung cột `gioi_tinh` ENUM('nam', 'nu') NOT NULL DEFAULT 'nam' và `cccd` VARCHAR(30) DEFAULT NULL cho bảng `chi_tiet_don_dat` để phục vụ quản lý thông tin hành khách tham gia chuyến đi chi tiết.
+- **Ảnh hưởng dữ liệu:** Không làm thay đổi hoặc mất dữ liệu hiện có. Các bản ghi người tham gia cũ tự nhận `gioi_tinh = 'nam'` và `cccd = NULL`.
+- **Vị trí:** Khối `BEGIN CAP_NHAT_2026_11_13_HANH_KHACH_CCCD_GIOI_TINH` / `END CAP_NHAT_2026_11_13_HANH_KHACH_CCCD_GIOI_TINH` ở cuối file `ontrip.sql`, và cập nhật câu `CREATE TABLE IF NOT EXISTS chi_tiet_don_dat`.
+- **Máy đã có database:** Chọn database `ontrip` trong phpMyAdmin và chạy khối SQL trên (hoặc chạy lệnh `ALTER TABLE chi_tiet_don_dat ADD COLUMN IF NOT EXISTS gioi_tinh ENUM('nam', 'nu') NOT NULL DEFAULT 'nam' AFTER loai_khach; ALTER TABLE chi_tiet_don_dat ADD COLUMN IF NOT EXISTS cccd VARCHAR(30) DEFAULT NULL AFTER ngay_sinh;`).
+- **Đã kiểm tra:** Chạy lệnh trên MariaDB của XAMPP máy phát triển thành công; bảng `chi_tiet_don_dat` có đủ 9 cột.
+
 ## 13/11/2026 — Sửa lỗi `#1005` khi tạo bảng `danh_gia_tour` (khóa ngoại sai kiểu)
 
 - **Nguyên nhân:** `danh_gia_tour.id_tour` khai báo `INT UNSIGNED` nhưng `tour.id_tour` là `BIGINT UNSIGNED`. Hai kiểu không khớp tuyệt đối nên MySQL trả `errno: 150 "Foreign key constraint is incorrectly formed"` cho `fk_danh_gia_tour`, và cả câu `CREATE TABLE` thất bại.

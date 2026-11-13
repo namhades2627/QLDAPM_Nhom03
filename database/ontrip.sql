@@ -210,6 +210,44 @@ CALL `_ontrip_cap_nhat_hinh_anh`();
 DROP PROCEDURE `_ontrip_cap_nhat_hinh_anh`;
 -- END CAP_NHAT_2026_10_30_HINH_ANH
 
+-- BEGIN CAP_NHAT_2026_11_13_YEU_CAU_TU_VAN
+CREATE TABLE IF NOT EXISTS `yeu_cau_tu_van` (
+    `id_yeu_cau` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `ma_yeu_cau` VARCHAR(24) NOT NULL,
+    `id_tai_khoan` BIGINT UNSIGNED DEFAULT NULL,
+    `ho_ten` VARCHAR(120) NOT NULL,
+    `so_dien_thoai` VARCHAR(20) NOT NULL,
+    `email` VARCHAR(254) NOT NULL,
+    `chu_de` ENUM('tu_van_tour','dat_tour_doan','thanh_toan_ve','gop_y_dich_vu') NOT NULL,
+    `noi_dung` TEXT NOT NULL,
+    `trang_thai` ENUM('moi','dang_xu_ly','da_xu_ly') NOT NULL DEFAULT 'moi',
+    `id_nguoi_phu_trach` BIGINT UNSIGNED DEFAULT NULL,
+    `ghi_chu` TEXT NOT NULL DEFAULT '',
+    `id_nguoi_cap_nhat` BIGINT UNSIGNED DEFAULT NULL,
+    `phien_ban` INT UNSIGNED NOT NULL DEFAULT 1,
+    `ma_gui` CHAR(64) NOT NULL,
+    `dau_van` CHAR(64) NOT NULL,
+    `tao_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `cap_nhat_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id_yeu_cau`),
+    UNIQUE KEY `uq_tu_van_ma` (`ma_yeu_cau`),
+    UNIQUE KEY `uq_tu_van_gui` (`ma_gui`),
+    KEY `idx_tu_van_trang_thai` (`trang_thai`, `id_yeu_cau`),
+    KEY `idx_tu_van_dau_van` (`dau_van`, `tao_luc`),
+    CONSTRAINT `fk_tu_van_khach` FOREIGN KEY (`id_tai_khoan`) REFERENCES `tai_khoan` (`id_tai_khoan`) ON DELETE SET NULL,
+    CONSTRAINT `fk_tu_van_phu_trach` FOREIGN KEY (`id_nguoi_phu_trach`) REFERENCES `tai_khoan` (`id_tai_khoan`) ON DELETE SET NULL,
+    CONSTRAINT `fk_tu_van_cap_nhat` FOREIGN KEY (`id_nguoi_cap_nhat`) REFERENCES `tai_khoan` (`id_tai_khoan`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `gioi_han_tu_van` (
+    `khoa` CHAR(64) NOT NULL,
+    `so_luot` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    `het_han` DATETIME NOT NULL,
+    PRIMARY KEY (`khoa`),
+    KEY `idx_gioi_han_tu_van_het_han` (`het_han`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- END CAP_NHAT_2026_11_13_YEU_CAU_TU_VAN
+
 -- 8. Đặt tour: đơn đặt, người tham gia và thanh toán mô phỏng.
 -- Đơn giá, tổng tiền và mức giảm được chụp lại tại thời điểm đặt nên đổi giá
 -- hoặc đổi chính sách sau này không làm thay đổi đơn đã lập.
@@ -304,6 +342,45 @@ CREATE TABLE IF NOT EXISTS `thong_bao` (
     CONSTRAINT `fk_thong_bao_don_dat` FOREIGN KEY (`id_don_dat`) REFERENCES `don_dat_tour` (`id_don_dat`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- END CAP_NHAT_2026_11_08_THONG_BAO
+
+-- BEGIN CAP_NHAT_2026_11_13_HOI_THOAI_TU_VAN
+CREATE TABLE IF NOT EXISTS `tin_nhan_tu_van` (
+    `id_tin_nhan` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_yeu_cau` BIGINT UNSIGNED NOT NULL,
+    `id_nguoi_gui` BIGINT UNSIGNED DEFAULT NULL,
+    `ten_nguoi_gui` VARCHAR(120) NOT NULL,
+    `vai_tro_gui` ENUM('khach_hang','nhan_vien') NOT NULL,
+    `noi_dung` TEXT NOT NULL,
+    `ma_gui` CHAR(64) NOT NULL,
+    `tao_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id_tin_nhan`),
+    UNIQUE KEY `uq_tin_nhan_tu_van_gui` (`ma_gui`),
+    KEY `idx_tin_nhan_tu_van_hoi_thoai` (`id_yeu_cau`, `id_tin_nhan`),
+    KEY `idx_tin_nhan_tu_van_nguoi_gui` (`id_nguoi_gui`, `tao_luc`),
+    CONSTRAINT `fk_tin_nhan_tu_van_yeu_cau` FOREIGN KEY (`id_yeu_cau`) REFERENCES `yeu_cau_tu_van` (`id_yeu_cau`) ON DELETE CASCADE,
+    CONSTRAINT `fk_tin_nhan_tu_van_nguoi_gui` FOREIGN KEY (`id_nguoi_gui`) REFERENCES `tai_khoan` (`id_tai_khoan`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP PROCEDURE IF EXISTS `_ontrip_thong_bao_tu_van`;
+DELIMITER $$
+CREATE PROCEDURE `_ontrip_thong_bao_tu_van`()
+BEGIN
+    ALTER TABLE `thong_bao` MODIFY `id_don_dat` BIGINT UNSIGNED DEFAULT NULL,
+        MODIFY `loai_thong_bao` ENUM('xac_nhan_don','thanh_toan','huy_don','phan_hoi_tu_van') NOT NULL;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'thong_bao' AND COLUMN_NAME = 'id_tin_nhan') THEN
+        ALTER TABLE `thong_bao` ADD COLUMN `id_tin_nhan` BIGINT UNSIGNED DEFAULT NULL AFTER `id_don_dat`;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'thong_bao' AND INDEX_NAME = 'uq_thong_bao_tin_nhan') THEN
+        ALTER TABLE `thong_bao` ADD UNIQUE KEY `uq_thong_bao_tin_nhan` (`id_tin_nhan`);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = 'thong_bao' AND CONSTRAINT_NAME = 'fk_thong_bao_tin_nhan') THEN
+        ALTER TABLE `thong_bao` ADD CONSTRAINT `fk_thong_bao_tin_nhan` FOREIGN KEY (`id_tin_nhan`) REFERENCES `tin_nhan_tu_van` (`id_tin_nhan`) ON DELETE CASCADE;
+    END IF;
+END$$
+DELIMITER ;
+CALL `_ontrip_thong_bao_tu_van`();
+DROP PROCEDURE `_ontrip_thong_bao_tu_van`;
+-- END CAP_NHAT_2026_11_13_HOI_THOAI_TU_VAN
 
 -- BEGIN CAP_NHAT_2026_11_08_DANH_GIA_TOUR
 -- Bang danh gia tour tu khach hang kem so sao, tieu de, nhan xet va trang thai hien thi

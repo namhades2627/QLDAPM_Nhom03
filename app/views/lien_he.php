@@ -32,8 +32,8 @@ $contactBanners = [
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="assets/css/style.css?v=20261108-contact">
-    <script src="assets/js/script.js?v=20261108-contact" defer></script>
+    <link rel="stylesheet" href="assets/css/style.css?v=20261114-chat-widget">
+    <script src="assets/js/script.js?v=20261114-chat-widget" defer></script>
 </head>
 <body class="contact-page">
 
@@ -155,12 +155,14 @@ $contactBanners = [
                     <div class="contact-card contact-form-card">
                         <div class="contact-card-header">
                             <span class="contact-form-tag">Nhận tư vấn miễn phí</span>
-                            <h2 id="form-section-title" class="contact-card-title">Gửi lời nhắn cho OnTrip</h2>
+                            <h2 id="form-section-title" class="contact-card-title">Nhắn tin với OnTrip</h2>
                             <p class="contact-card-desc">
-                                Điền thông tin bên dưới, chuyên viên tư vấn sẽ liên hệ lại với bạn trong vòng 15 phút làm việc.
+                                Chia sẻ nhu cầu và trao đổi trực tiếp với nhân viên. Bấm biểu tượng chat ở góc dưới bên phải để xem lại lịch sử trò chuyện.
                             </p>
                         </div>
 
+                        <?php if ($canChat): ?>
+                        <p class="contact-chat-account">Xin chào, <?= $escape($account['ho_ten']) ?>. <a href="index.php?page=tu_van" data-contact-chat-open>Xem lịch sử trò chuyện →</a></p>
                         <?php if ($successMessage !== ''): ?>
                             <div class="contact-alert contact-alert-success" role="alert" tabindex="-1">
                                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -177,7 +179,14 @@ $contactBanners = [
                             </div>
                         <?php endif; ?>
 
-                        <form class="contact-form" method="post" action="index.php?page=lien_he" novalidate>
+                        <?php if (!empty($errors['form'])): ?><div class="contact-alert contact-alert-error" role="alert"><?= $escape($errors['form']) ?></div><?php endif; ?>
+                        <div class="contact-alert contact-feedback" data-contact-feedback role="status" aria-live="polite" aria-atomic="true" tabindex="-1" hidden>
+                            <svg data-contact-feedback-icon viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>
+                            <div><strong data-contact-feedback-title></strong><p data-contact-feedback-message></p><a data-contact-feedback-action hidden>Mở cuộc trò chuyện →</a></div>
+                        </div>
+                        <form class="contact-form" method="post" action="index.php?page=lien_he" data-contact-async novalidate>
+                            <input type="hidden" name="ma_gui" value="<?= $escape($formToken) ?>">
+                            <div class="consultation-honeypot" aria-hidden="true"><label for="contact-website">Để trống trường này</label><input type="text" id="contact-website" name="website" tabindex="-1" autocomplete="off"></div>
                             <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
 
                             <!-- CHỌN CHỦ ĐỀ NHANH (TOPIC PILLS) -->
@@ -203,32 +212,6 @@ $contactBanners = [
                                 </div>
                             </div>
 
-                            <div class="contact-fields-row">
-                                <div class="contact-field">
-                                    <label for="contact-name" class="contact-label">Họ và tên <span class="required" aria-hidden="true">*</span></label>
-                                    <input type="text" id="contact-name" name="ho_ten" class="contact-input <?= !empty($errors['ho_ten']) ? 'is-invalid' : '' ?>" value="<?= $escape($values['ho_ten']) ?>" placeholder="Ví dụ: Nguyễn Văn An" required autocomplete="name">
-                                    <?php if (!empty($errors['ho_ten'])): ?>
-                                        <p class="contact-error" role="alert"><?= $escape($errors['ho_ten']) ?></p>
-                                    <?php endif; ?>
-                                </div>
-
-                                <div class="contact-field">
-                                    <label for="contact-phone" class="contact-label">Số điện thoại <span class="required" aria-hidden="true">*</span></label>
-                                    <input type="tel" id="contact-phone" name="so_dien_thoai" class="contact-input <?= !empty($errors['so_dien_thoai']) ? 'is-invalid' : '' ?>" value="<?= $escape($values['so_dien_thoai']) ?>" placeholder="Ví dụ: 0912 345 678" required autocomplete="tel">
-                                    <?php if (!empty($errors['so_dien_thoai'])): ?>
-                                        <p class="contact-error" role="alert"><?= $escape($errors['so_dien_thoai']) ?></p>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-
-                            <div class="contact-field">
-                                <label for="contact-email" class="contact-label">Địa chỉ email <span class="required" aria-hidden="true">*</span></label>
-                                <input type="email" id="contact-email" name="email" class="contact-input <?= !empty($errors['email']) ? 'is-invalid' : '' ?>" value="<?= $escape($values['email']) ?>" placeholder="email@example.com" required autocomplete="email">
-                                <?php if (!empty($errors['email'])): ?>
-                                    <p class="contact-error" role="alert"><?= $escape($errors['email']) ?></p>
-                                <?php endif; ?>
-                            </div>
-
                             <div class="contact-field">
                                 <label for="contact-message" class="contact-label">Nội dung bạn muốn nhắn nhủ <span class="required" aria-hidden="true">*</span></label>
                                 <textarea id="contact-message" name="noi_dung" rows="4" class="contact-textarea <?= !empty($errors['noi_dung']) ? 'is-invalid' : '' ?>" placeholder="Hãy chia sẻ về điểm đến yêu thích, số lượng người tham gia hoặc thời gian dự kiến khởi hành..." required><?= $escape($values['noi_dung']) ?></textarea>
@@ -244,10 +227,13 @@ $contactBanners = [
                                 </button>
                                 <p class="contact-privacy-note">
                                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                    OnTrip cam kết bảo mật 100% thông tin cá nhân và không gửi thư rác.
+                                    Tin nhắn được lưu trong tài khoản. Chỉ bạn và đội ngũ OnTrip có thể xem cuộc trò chuyện.
                                 </p>
                             </div>
                         </form>
+                        <?php else: ?>
+                        <div class="contact-chat-login"><p>Đăng nhập tài khoản khách hàng để nhắn tin, xem phản hồi và nhận thông báo từ OnTrip.</p><a class="button button-primary" href="index.php?page=login&amp;redirect=<?= rawurlencode('index.php?page=lien_he#form-section-title') ?>">Đăng nhập để trò chuyện</a></div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -389,5 +375,18 @@ $contactBanners = [
 
 <?php require __DIR__ . '/partials/footer.php'; ?>
 
+
+<div class="contact-chat-widget" data-contact-chat-widget>
+<section class="contact-chat-window" id="contact-chat-window" aria-label="Lịch sử trò chuyện với OnTrip" hidden>
+<div class="contact-chat-window-heading"><strong>Trò chuyện với OnTrip</strong><button type="button" data-contact-chat-close aria-label="Đóng cửa sổ chat">×</button></div>
+<?php if ($canChat): ?>
+<iframe data-contact-chat-frame title="Lịch sử trò chuyện" data-src="index.php?page=tu_van&amp;embed=1"></iframe>
+<?php else: ?>
+<div class="contact-chat-login"><p>Đăng nhập để xem lịch sử và trò chuyện với nhân viên OnTrip.</p><a href="index.php?page=login&amp;redirect=<?= rawurlencode('index.php?page=lien_he#chat') ?>">Đăng nhập để trò chuyện →</a></div>
+<?php endif; ?>
+</section>
+<a class="contact-chat-launcher" href="index.php?page=tu_van" data-contact-chat-toggle aria-controls="contact-chat-window" aria-expanded="false" aria-label="Mở lịch sử trò chuyện">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z"/><path d="M8 11h8M8 15h5"/></svg>
+</a></div>
 </body>
 </html>

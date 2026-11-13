@@ -7,7 +7,7 @@
     <section class="notification-panel" aria-label="Thông báo gần đây">
         <div class="notification-panel-heading"><strong>Thông báo</strong><span><?= (int) $notificationData['unread'] ?> chưa đọc</span></div>
         <?php if (!$notificationData['items']): ?>
-            <p class="notification-empty">Bạn chưa có thông báo.<br>Thay đổi về đơn đặt sẽ xuất hiện ở đây.</p>
+            <p class="notification-empty">Bạn chưa có thông báo.<br>Cập nhật đơn đặt và phản hồi tư vấn sẽ xuất hiện ở đây.</p>
         <?php else: ?>
             <?php foreach ($notificationData['items'] as $notice): ?>
             <form method="post" action="index.php?page=thong_bao">

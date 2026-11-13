@@ -1868,3 +1868,315 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// Gui yeu cau tu van bang fetch; form POST thong thuong van dung duoc khi tat JS.
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('[data-contact-async]');
+    if (!form || !window.fetch || !window.FormData || !window.AbortController) return;
+    const card = form.closest('.contact-form-card');
+    const feedback = card.querySelector('[data-contact-feedback]');
+    const button = form.querySelector('.contact-submit-btn');
+    const label = button.querySelector('span');
+    const originalLabel = label.textContent;
+    const spinner = document.createElement('span');
+    spinner.className = 'contact-submit-spinner';
+    spinner.setAttribute('aria-hidden', 'true');
+    spinner.hidden = true;
+    button.append(spinner);
+    let sending = false;
+
+    function notify(success, message) {
+        feedback.classList.remove('is-visible', 'contact-alert-success', 'contact-alert-error');
+        feedback.classList.add(success ? 'contact-alert-success' : 'contact-alert-error');
+        feedback.querySelector('[data-contact-feedback-title]').textContent = success ? 'Đã gửi tin nhắn!' : 'Chưa gửi được tin nhắn';
+        feedback.querySelector('[data-contact-feedback-message]').textContent = message;
+        const feedbackAction = feedback.querySelector('[data-contact-feedback-action]');
+        if (feedbackAction) feedbackAction.hidden = true;
+        feedback.querySelector('[data-contact-feedback-icon]').toggleAttribute('hidden', !success);
+        feedback.setAttribute('role', success ? 'status' : 'alert');
+        feedback.setAttribute('aria-live', success ? 'polite' : 'assertive');
+        feedback.hidden = false;
+        requestAnimationFrame(() => feedback.classList.add('is-visible'));
+        feedback.focus({ preventScroll: true });
+        const rect = feedback.getBoundingClientRect();
+        if (rect.top < 90 || rect.bottom > window.innerHeight) {
+            feedback.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'center' });
+        }
+    }
+
+    function clearErrors() {
+        form.querySelectorAll('.contact-error').forEach(error => error.remove());
+        form.querySelectorAll('[aria-invalid], .is-invalid').forEach(input => {
+            input.classList.remove('is-invalid');
+            input.removeAttribute('aria-invalid');
+            input.removeAttribute('aria-describedby');
+        });
+        card.querySelectorAll('.contact-alert:not([data-contact-feedback])').forEach(alert => alert.remove());
+    }
+
+    function showFieldErrors(errors) {
+        for (const [name, message] of Object.entries(errors || {})) {
+            const input = form.elements.namedItem(name);
+            if (!(input instanceof HTMLElement) || !input.closest('.contact-field')) continue;
+            input.classList.add('is-invalid');
+            input.setAttribute('aria-invalid', 'true');
+            const error = document.createElement('p');
+            error.id = 'contact-async-error-' + name;
+            error.className = 'contact-error';
+            error.textContent = message;
+            input.setAttribute('aria-describedby', error.id);
+            input.closest('.contact-field').append(error);
+        }
+    }
+
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (sending) return;
+        sending = true;
+        clearErrors();
+        feedback.hidden = true;
+        const payload = new FormData(form);
+        button.disabled = true;
+        button.classList.add('is-loading');
+        label.textContent = 'Đang gửi tin nhắn…';
+        spinner.hidden = false;
+        form.setAttribute('aria-busy', 'true');
+        // Khoa cac truong khi dang gui de khong xoa nham noi dung vua sua sau khi gui.
+        const fields = [...form.querySelectorAll('input:not([type="hidden"]), textarea, select')].filter(input => !input.disabled);
+        fields.forEach(input => { input.disabled = true; });
+        const abort = new AbortController();
+        const timer = setTimeout(() => abort.abort(), 25000);
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST', body: payload, credentials: 'same-origin',
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                signal: abort.signal
+            });
+            if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('Unexpected response');
+            const data = await response.json();
+            if (response.ok && data.success === true) {
+                form.reset();
+                form.querySelectorAll('.topic-pill').forEach(pill => pill.classList.toggle('is-active', !!pill.querySelector('input:checked')));
+                notify(true, data.message);
+            } else {
+                showFieldErrors(data.errors);
+                notify(false, data.message || 'Vui lòng thử lại sau ít phút.');
+            }
+            const action = feedback.querySelector('[data-contact-feedback-action]');
+            const target = data.success ? data.conversation_url : data.login_url;
+            if (action && typeof target === 'string') {
+                const url = new URL(target, location.href);
+                if (url.origin === location.origin) {
+                    action.href = url.href;
+                    action.textContent = data.success ? 'Mở cuộc trò chuyện →' : 'Đăng nhập để tiếp tục →';
+                    action.hidden = false;
+                }
+            }
+            // Doi ma sau reset; giu ma cu neu mat mang de gui lai khong tao trung.
+            if (typeof data.form_token === 'string') {
+                form.elements.ma_gui.value = data.form_token;
+                form.elements.ma_gui.defaultValue = data.form_token;
+            }
+            if (typeof data.csrf_token === 'string') {
+                form.elements.csrf_token.value = data.csrf_token;
+                form.elements.csrf_token.defaultValue = data.csrf_token;
+            }
+        } catch (error) {
+            notify(false, 'Chưa nhận được xác nhận từ máy chủ. Nội dung vẫn được giữ lại; bạn có thể kiểm tra kết nối rồi bấm gửi lại.');
+        } finally {
+            clearTimeout(timer);
+            fields.forEach(input => { input.disabled = false; });
+            button.disabled = false;
+            button.classList.remove('is-loading');
+            spinner.hidden = true;
+            label.textContent = originalLabel;
+            form.removeAttribute('aria-busy');
+            sending = false;
+        }
+    });
+});
+
+// Hoi thoai tu van: gui nen va lay tin moi khi dang mo trang, khong tai lai trang.
+document.addEventListener('DOMContentLoaded', () => {
+    const chat = document.querySelector('[data-consultation-chat]');
+    if (!chat || !window.fetch || !window.AbortController) return;
+    const form = chat.querySelector('[data-chat-form]');
+    const messages = chat.querySelector('[data-chat-messages]');
+    const scroll = chat.querySelector('[data-chat-scroll]');
+    const older = chat.querySelector('[data-chat-older]');
+    const refresh = chat.querySelector('[data-chat-refresh]');
+    const status = chat.querySelector('[data-chat-status]');
+    const textarea = form.elements.noi_dung;
+    const button = form.querySelector('button[type="submit"]');
+    const role = chat.dataset.chatRole;
+    const baseUrl = new URL(chat.dataset.chatUrl, location.href);
+    const editor = chat.closest('.admin-consultations')?.querySelector('.consultation-editor');
+    let editorDirty = false;
+    if (editor) {
+        editor.addEventListener('input', () => { editorDirty = true; });
+        editor.addEventListener('change', () => { editorDirty = true; });
+    }
+    function syncWorkflow(workflow) {
+        if (!editor || editorDirty || !workflow) return;
+        const labels = { moi: 'Mới', dang_xu_ly: 'Đang xử lý', da_xu_ly: 'Đã xử lý' };
+        const next = { moi: ['moi', 'dang_xu_ly'], dang_xu_ly: ['dang_xu_ly', 'da_xu_ly'], da_xu_ly: ['da_xu_ly'] };
+        if (!next[workflow.trang_thai]) return;
+        editor.elements.trang_thai.replaceChildren(...next[workflow.trang_thai].map(value => new Option(labels[value], value, false, value === workflow.trang_thai)));
+        editor.elements.id_nguoi_phu_trach.value = workflow.id_nguoi_phu_trach || '0';
+        editor.elements.ghi_chu.value = workflow.ghi_chu;
+        editor.elements.phien_ban.value = workflow.phien_ban;
+        const currentStatus = editor.closest('.consultation-detail')?.querySelector('[data-chat-current-status]');
+        if (currentStatus) currentStatus.textContent = labels[workflow.trang_thai];
+    }
+    const known = new Set([...messages.querySelectorAll('[data-message-id]')].map(item => Number(item.dataset.messageId)));
+    let sending = false, fetching = false, stopped = false, pollError = false;
+    const controllers = new Set();
+    refresh.hidden = false;
+
+    async function request(url, options = {}) {
+        const controller = new AbortController();
+        controllers.add(controller);
+        const timeout = setTimeout(() => controller.abort(), 20000);
+        try {
+            const response = await fetch(url, { ...options, credentials: 'same-origin', signal: controller.signal,
+                headers: { Accept: 'application/json', ...(options.headers || {}) } });
+            if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('Phiên làm việc có thể đã hết hạn. Vui lòng tải lại trang hoặc đăng nhập lại.');
+            const data = await response.json();
+            if (!response.ok || data.success !== true) {
+                if ([401, 403, 404].includes(response.status)) stopped = true;
+                throw new Error(data.message || 'Chưa thể cập nhật cuộc trò chuyện.');
+            }
+            return data;
+        } finally { clearTimeout(timeout); controllers.delete(controller); }
+    }
+
+    function addItems(items, prepend = false, forceScroll = false) {
+        const nearEnd = scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 100;
+        const oldHeight = scroll.scrollHeight;
+        const fragment = document.createDocumentFragment();
+        for (const item of items || []) {
+            const id = Number(item.id_tin_nhan);
+            if (!Number.isSafeInteger(id) || known.has(id)) continue;
+            known.add(id);
+            const bubble = document.createElement('article');
+            bubble.className = 'chat-bubble';
+            if ((role === 'staff') === (item.vai_tro_gui === 'nhan_vien')) bubble.classList.add('is-own');
+            bubble.dataset.messageId = id;
+            const name = document.createElement('strong');
+            name.textContent = item.ten_nguoi_gui + (item.vai_tro_gui === 'nhan_vien' ? ' · OnTrip' : '');
+            const text = document.createElement('p'); text.textContent = item.noi_dung;
+            const time = document.createElement('time');
+            const date = new Date(String(item.tao_luc).replace(' ', 'T'));
+            time.textContent = Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            bubble.append(name, text, time); fragment.append(bubble);
+        }
+        if (prepend) { messages.prepend(fragment); scroll.scrollTop += scroll.scrollHeight - oldHeight; }
+        else { messages.append(fragment); if (nearEnd || forceScroll) scroll.scrollTop = scroll.scrollHeight; }
+    }
+
+    function updateBadge(count) {
+        if (!Number.isInteger(count)) return;
+        const toggle = document.querySelector('.notification-toggle');
+        if (!toggle) return;
+        toggle.setAttribute('aria-label', `Thông báo, ${count} chưa đọc`);
+        let badge = toggle.querySelector('.notification-count');
+        if (count > 0) {
+            if (!badge) { badge = document.createElement('span'); badge.className = 'notification-count'; badge.setAttribute('aria-hidden', 'true'); toggle.append(badge); }
+            badge.textContent = count > 99 ? '99+' : count;
+        } else if (badge) badge.remove();
+    }
+
+    async function load(previous = false) {
+        if (fetching || stopped || (document.hidden && !previous)) return;
+        fetching = true;
+        const url = new URL(baseUrl);
+        url.searchParams.set('messages', '1');
+        if (previous) url.searchParams.set('before', known.size ? Math.min(...known) : 0);
+        else if (known.size) url.searchParams.set('after', Math.max(...known));
+        try {
+            const data = await request(url);
+            addItems(data.items, previous);
+            syncWorkflow(data.workflow);
+            if (previous) older.hidden = !data.has_older;
+            if (typeof data.csrf_token === 'string' && !sending) form.elements.csrf_token.value = data.csrf_token;
+            updateBadge(data.unread_count);
+            if (pollError) { status.textContent = ''; pollError = false; }
+        } catch (error) {
+            status.textContent = error.name === 'AbortError' ? 'Kết nối chậm. Tin nhắn sẽ được cập nhật khi kết nối lại.' : error.message;
+            pollError = true;
+        } finally { fetching = false; }
+    }
+
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (sending || !textarea.value.trim()) return;
+        if (stopped) { status.textContent = 'Vui lòng tải lại trang hoặc đăng nhập lại để gửi tin.'; return; }
+        const payload = new FormData(form);
+        sending = true; button.disabled = true; textarea.readOnly = true;
+        button.textContent = 'Đang gửi…'; form.setAttribute('aria-busy', 'true');
+        status.textContent = ''; pollError = false;
+        try {
+            const data = await request(baseUrl, { method: 'POST', body: payload });
+            addItems(data.items, false, true);
+            syncWorkflow(data.workflow);
+            textarea.value = '';
+            form.elements.message_token.value = data.message_token;
+            status.textContent = 'Đã gửi tin nhắn.';
+        } catch (error) {
+            status.textContent = error.name === 'AbortError' || error instanceof TypeError
+                ? 'Chưa nhận được xác nhận. Tin nhắn được giữ lại; bấm gửi lại khi có kết nối.' : error.message;
+        } finally {
+            sending = false; button.disabled = false; textarea.readOnly = false;
+            button.textContent = 'Gửi'; form.removeAttribute('aria-busy');
+        }
+    });
+    textarea.addEventListener('keydown', event => {
+        if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); form.requestSubmit(); }
+    });
+    older.addEventListener('click', () => load(true));
+    refresh.addEventListener('click', () => { if (!stopped) load(); });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+    scroll.scrollTop = scroll.scrollHeight;
+    const timer = setInterval(() => load(), 8000);
+    window.addEventListener('pagehide', () => { clearInterval(timer); controllers.forEach(controller => controller.abort()); });
+});
+
+// Cửa sổ chat chỉ khởi tạo trên trang Liên hệ, tái sử dụng hội thoại đã phân quyền.
+(() => {
+    const widget = document.querySelector('[data-contact-chat-widget]');
+    if (!widget) return;
+    const panel = widget.querySelector('[data-contact-chat-frame]');
+    const windowEl = widget.querySelector('.contact-chat-window');
+    const toggle = widget.querySelector('[data-contact-chat-toggle]');
+    const close = () => {
+        windowEl.hidden = true;
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.focus();
+    };
+    const open = (url) => {
+        if (panel) {
+            if (url) {
+                const destination = new URL(url, location.href);
+                if (destination.origin !== location.origin) return;
+                destination.searchParams.set('embed', '1');
+                panel.src = destination.href;
+            } else if (!panel.getAttribute('src')) panel.src = panel.dataset.src;
+        }
+        windowEl.hidden = false;
+        toggle.setAttribute('aria-expanded', 'true');
+        widget.querySelector('[data-contact-chat-close]').focus();
+    };
+    toggle.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (windowEl.hidden) open(); else close();
+    });
+    widget.querySelector('[data-contact-chat-close]').addEventListener('click', close);
+    document.addEventListener('click', (event) => {
+        const link = event.target.closest('[data-contact-chat-open], [data-contact-feedback-action]');
+        if (!link || new URL(link.href).searchParams.get('page') !== 'tu_van') return;
+        event.preventDefault();
+        open(link.hasAttribute('data-contact-chat-open') ? null : link.href);
+    });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !windowEl.hidden) close(); });
+    if (location.hash === '#chat') open();
+})();

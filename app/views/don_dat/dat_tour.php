@@ -89,7 +89,7 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
         </div>
         <?php else: ?>
         <div class="booking-layout">
-            <form class="booking-form" method="post" action="index.php?page=booking&amp;type=<?= $tourType ?>&amp;id=<?= $escape($code) ?>" data-booking-form data-adult-price="<?= (int) $adultPrice ?>" data-child-price="<?= (int) $childPrice ?>">
+            <form class="booking-form" method="post" action="index.php?page=booking&amp;type=<?= $tourType ?>&amp;id=<?= $escape($code) ?>" data-booking-form data-adult-price="<?= (int) $adultPrice ?>" data-child-price="<?= (int) $childPrice ?>" data-seats-left="<?= (int) ($selectedSchedule['seats_left'] ?? 99) ?>" data-departure-date="<?= $selectedSchedule ? $escape($selectedSchedule['date']) : date('Y-m-d') ?>">
                 <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
                 <?php if ($selectedSchedule): ?>
                 <input type="hidden" name="id_lich_khoi_hanh" value="<?= (int) $selectedSchedule['id'] ?>">
@@ -109,26 +109,67 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
                     <div class="booking-guests" data-participant-list>
                         <?php foreach ($participants as $index => $participant): ?>
                         <?php
-                            $type = $participant['loai_khach'] === 'tre_em' ? 'tre_em' : 'nguoi_lon';
+                            $type = ($participant['loai_khach'] ?? '') === 'tre_em' ? 'tre_em' : 'nguoi_lon';
                             $guestLabels[$type]++;
                             $guestLabel = ($type === 'tre_em' ? 'Trẻ em ' : 'Người lớn ') . $guestLabels[$type];
                             $guestError = $errors['khach-' . $index] ?? '';
+                            $gender = ($participant['gioi_tinh'] ?? 'nam') === 'nu' ? 'nu' : 'nam';
+                            $cccd = $participant['cccd'] ?? '';
+                            $isFirstAdult = ($type === 'nguoi_lon' && $guestLabels['nguoi_lon'] === 1);
                         ?>
                         <div class="booking-guest" data-participant data-type="<?= $type ?>">
-                            <input type="hidden" name="khach[loai_khach][]" value="<?= $type ?>">
-                            <span class="booking-guest-label" data-participant-label><?= $escape($guestLabel) ?></span>
-                            <label class="booking-field"><span>Họ và tên <b>*</b></span><input type="text" name="khach[ho_ten][]" value="<?= $escape($participant['ho_ten']) ?>" maxlength="120" autocomplete="off" aria-invalid="<?= $guestError !== '' ? 'true' : 'false' ?>" required></label>
-                            <label class="booking-field"><span>Ngày sinh</span><input type="date" name="khach[ngay_sinh][]" value="<?= $escape($participant['ngay_sinh']) ?>" max="<?= date('Y-m-d') ?>" min="1900-01-01"></label>
-                            <label class="booking-field"><span>Ghi chú</span><input type="text" name="khach[ghi_chu][]" value="<?= $escape($participant['ghi_chu']) ?>" maxlength="255" placeholder="Ăn chay, dị ứng..."></label>
-                            <button class="booking-guest-remove" type="button" data-remove-participant aria-label="Xóa <?= $escape($guestLabel) ?>">Xóa</button>
+                            <input type="hidden" data-field="loai_khach" name="passengers[<?= $index ?>][loai_khach]" value="<?= $type ?>">
+                            <div class="booking-guest-header">
+                                <span class="booking-guest-label" data-participant-label><?= $escape($guestLabel) ?></span>
+                                <button class="booking-guest-remove" type="button" data-remove-participant aria-label="Xóa <?= $escape($guestLabel) ?>" <?= $isFirstAdult ? 'disabled title="Đơn đặt bắt buộc có ít nhất 1 người lớn"' : '' ?>>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    Xóa
+                                </button>
+                            </div>
+                            <div class="booking-guest-grid">
+                                <label class="booking-field">
+                                    <span>Họ và tên <b>*</b></span>
+                                    <input type="text" data-field="ho_ten" name="passengers[<?= $index ?>][ho_ten]" value="<?= $escape($participant['ho_ten'] ?? '') ?>" maxlength="120" placeholder="<?= $type === 'tre_em' ? 'Ví dụ: Nguyễn Văn B' : 'Ví dụ: Nguyễn Văn A' ?>" autocomplete="off" aria-invalid="<?= $guestError !== '' ? 'true' : 'false' ?>" required>
+                                </label>
+                                <label class="booking-field">
+                                    <span>Giới tính <b>*</b></span>
+                                    <select data-field="gioi_tinh" name="passengers[<?= $index ?>][gioi_tinh]">
+                                        <option value="nam" <?= $gender === 'nam' ? 'selected' : '' ?>>Nam</option>
+                                        <option value="nu" <?= $gender === 'nu' ? 'selected' : '' ?>>Nữ</option>
+                                    </select>
+                                </label>
+                                <label class="booking-field">
+                                    <span>Ngày sinh <b>*</b> <?= $type === 'tre_em' ? '(&lt; 12 tuổi)' : '(≥ 12 tuổi)' ?></span>
+                                    <input type="date" data-field="ngay_sinh" name="passengers[<?= $index ?>][ngay_sinh]" value="<?= $escape($participant['ngay_sinh'] ?? '') ?>" max="<?= date('Y-m-d') ?>" min="1900-01-01" required>
+                                </label>
+                                <label class="booking-field">
+                                    <span>CCCD / Hộ chiếu <?= $type === 'nguoi_lon' ? '<b>*</b>' : '<small style="color:var(--muted);font-weight:normal">(không bắt buộc)</small>' ?></span>
+                                    <input type="text" data-field="cccd" name="passengers[<?= $index ?>][cccd]" value="<?= $escape($cccd) ?>" maxlength="30" placeholder="<?= $type === 'nguoi_lon' ? 'Số CCCD hoặc Hộ chiếu' : 'Không bắt buộc với trẻ em' ?>" autocomplete="off" <?= $type === 'nguoi_lon' ? 'required' : '' ?>>
+                                </label>
+                                <label class="booking-field booking-field-full">
+                                    <span>Ghi chú riêng</span>
+                                    <input type="text" data-field="ghi_chu" name="passengers[<?= $index ?>][ghi_chu]" value="<?= $escape($participant['ghi_chu'] ?? '') ?>" maxlength="255" placeholder="Ăn chay, dị ứng, say xe...">
+                                </label>
+                            </div>
                             <?php if ($guestError !== ''): ?><p class="booking-error booking-guest-error"><?= $escape($guestError) ?></p><?php endif; ?>
+                            <div class="booking-guest-age-note" data-age-warning hidden></div>
                         </div>
                         <?php endforeach; ?>
                     </div>
                     <div class="booking-guest-actions">
-                        <button class="booking-add-guest" type="button" data-add-participant="nguoi_lon">+ Thêm người lớn</button>
-                        <button class="booking-add-guest" type="button" data-add-participant="tre_em">+ Thêm trẻ em</button>
+                        <button class="booking-add-guest" type="button" data-add-participant="nguoi_lon">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            Thêm người lớn
+                        </button>
+                        <button class="booking-add-guest" type="button" data-add-participant="tre_em">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            Thêm trẻ em
+                        </button>
+                        <div class="booking-seats-indicator">
+                            Chỗ còn nhận: <strong data-seats-remaining><?= (int) ($selectedSchedule['seats_left'] ?? 0) ?></strong> chỗ
+                        </div>
                     </div>
+                    <p class="booking-error" data-seats-warning hidden>Đã đạt số chỗ trống tối đa của lịch khởi hành này.</p>
                     <p class="booking-hint">Ưu đãi nhóm tính trên tổng số khách của cùng một đơn: 5–9 khách giảm 5%, từ 10 khách giảm 8%.</p>
                 </section>
 
@@ -150,22 +191,78 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
 
                 <template data-participant-template="nguoi_lon">
                     <div class="booking-guest" data-participant data-type="nguoi_lon">
-                        <input type="hidden" name="khach[loai_khach][]" value="nguoi_lon">
-                        <span class="booking-guest-label" data-participant-label>Người lớn</span>
-                        <label class="booking-field"><span>Họ và tên <b>*</b></span><input type="text" name="khach[ho_ten][]" value="" maxlength="120" autocomplete="off" required></label>
-                        <label class="booking-field"><span>Ngày sinh</span><input type="date" name="khach[ngay_sinh][]" value="" max="<?= date('Y-m-d') ?>" min="1900-01-01"></label>
-                        <label class="booking-field"><span>Ghi chú</span><input type="text" name="khach[ghi_chu][]" value="" maxlength="255" placeholder="Ăn chay, dị ứng..."></label>
-                        <button class="booking-guest-remove" type="button" data-remove-participant aria-label="Xóa người lớn">Xóa</button>
+                        <input type="hidden" data-field="loai_khach" name="passengers[0][loai_khach]" value="nguoi_lon">
+                        <div class="booking-guest-header">
+                            <span class="booking-guest-label" data-participant-label>Người lớn</span>
+                            <button class="booking-guest-remove" type="button" data-remove-participant aria-label="Xóa hành khách">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                Xóa
+                            </button>
+                        </div>
+                        <div class="booking-guest-grid">
+                            <label class="booking-field">
+                                <span>Họ và tên <b>*</b></span>
+                                <input type="text" data-field="ho_ten" name="passengers[0][ho_ten]" value="" maxlength="120" placeholder="Ví dụ: Nguyễn Văn A" autocomplete="off" required>
+                            </label>
+                            <label class="booking-field">
+                                <span>Giới tính <b>*</b></span>
+                                <select data-field="gioi_tinh" name="passengers[0][gioi_tinh]">
+                                    <option value="nam">Nam</option>
+                                    <option value="nu">Nữ</option>
+                                </select>
+                            </label>
+                            <label class="booking-field">
+                                <span>Ngày sinh <b>*</b> (≥ 12 tuổi)</span>
+                                <input type="date" data-field="ngay_sinh" name="passengers[0][ngay_sinh]" value="" max="<?= date('Y-m-d') ?>" min="1900-01-01" required>
+                            </label>
+                            <label class="booking-field">
+                                <span>CCCD / Hộ chiếu <b>*</b></span>
+                                <input type="text" data-field="cccd" name="passengers[0][cccd]" value="" maxlength="30" placeholder="Số CCCD hoặc Hộ chiếu" autocomplete="off" required>
+                            </label>
+                            <label class="booking-field booking-field-full">
+                                <span>Ghi chú riêng</span>
+                                <input type="text" data-field="ghi_chu" name="passengers[0][ghi_chu]" value="" maxlength="255" placeholder="Ăn chay, dị ứng, say xe...">
+                            </label>
+                        </div>
+                        <div class="booking-guest-age-note" data-age-warning hidden></div>
                     </div>
                 </template>
                 <template data-participant-template="tre_em">
                     <div class="booking-guest" data-participant data-type="tre_em">
-                        <input type="hidden" name="khach[loai_khach][]" value="tre_em">
-                        <span class="booking-guest-label" data-participant-label>Trẻ em</span>
-                        <label class="booking-field"><span>Họ và tên <b>*</b></span><input type="text" name="khach[ho_ten][]" value="" maxlength="120" autocomplete="off" required></label>
-                        <label class="booking-field"><span>Ngày sinh</span><input type="date" name="khach[ngay_sinh][]" value="" max="<?= date('Y-m-d') ?>" min="1900-01-01"></label>
-                        <label class="booking-field"><span>Ghi chú</span><input type="text" name="khach[ghi_chu][]" value="" maxlength="255" placeholder="Ăn chay, dị ứng..."></label>
-                        <button class="booking-guest-remove" type="button" data-remove-participant aria-label="Xóa trẻ em">Xóa</button>
+                        <input type="hidden" data-field="loai_khach" name="passengers[0][loai_khach]" value="tre_em">
+                        <div class="booking-guest-header">
+                            <span class="booking-guest-label" data-participant-label>Trẻ em</span>
+                            <button class="booking-guest-remove" type="button" data-remove-participant aria-label="Xóa hành khách">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                Xóa
+                            </button>
+                        </div>
+                        <div class="booking-guest-grid">
+                            <label class="booking-field">
+                                <span>Họ và tên <b>*</b></span>
+                                <input type="text" data-field="ho_ten" name="passengers[0][ho_ten]" value="" maxlength="120" placeholder="Ví dụ: Nguyễn Văn B" autocomplete="off" required>
+                            </label>
+                            <label class="booking-field">
+                                <span>Giới tính <b>*</b></span>
+                                <select data-field="gioi_tinh" name="passengers[0][gioi_tinh]">
+                                    <option value="nam">Nam</option>
+                                    <option value="nu">Nữ</option>
+                                </select>
+                            </label>
+                            <label class="booking-field">
+                                <span>Ngày sinh <b>*</b> (&lt; 12 tuổi)</span>
+                                <input type="date" data-field="ngay_sinh" name="passengers[0][ngay_sinh]" value="" max="<?= date('Y-m-d') ?>" min="1900-01-01" required>
+                            </label>
+                            <label class="booking-field">
+                                <span>CCCD / Hộ chiếu <small style="color:var(--muted);font-weight:normal">(không bắt buộc)</small></span>
+                                <input type="text" data-field="cccd" name="passengers[0][cccd]" value="" maxlength="30" placeholder="Không bắt buộc với trẻ em" autocomplete="off">
+                            </label>
+                            <label class="booking-field booking-field-full">
+                                <span>Ghi chú riêng</span>
+                                <input type="text" data-field="ghi_chu" name="passengers[0][ghi_chu]" value="" maxlength="255" placeholder="Ăn chay, dị ứng, say xe...">
+                            </label>
+                        </div>
+                        <div class="booking-guest-age-note" data-age-warning hidden></div>
                     </div>
                 </template>
             </form>

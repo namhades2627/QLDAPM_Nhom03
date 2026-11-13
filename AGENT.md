@@ -20,6 +20,10 @@ Tài liệu bàn giao cho thành viên và AI hỗ trợ phát triển. Cập nh
 
 Phần ảnh đại diện hiện được xử lý trong `AdminController` bằng `avatarUrl()`, `isManagedAvatar()`, `saveAvatar()`, `deleteAvatar()`; không còn file `tai_anh_dai_dien.php` hay thư mục `app/services/`. Giữ đầy đủ kiểm tra ảnh khi sửa các hàm này.
 
+### Điều hướng trang Liên hệ — 12/11/2026
+
+- **Điều hướng Liên hệ — 12/11/2026:** mục Liên hệ trên navbar dùng chung trỏ đến `index.php?page=lien_he`, đánh dấu `is-current` và `aria-current="page"` khi đang ở trang liên hệ. Không thay bằng `#lien-he` vì đó là vùng footer, không phải route trang.
+
 ### Thông báo khách hàng — 08/11/2026
 
 - Chuông trên header công khai chỉ hiện cho khách hàng đang hoạt động; dữ liệu header được front controller `public/index.php` chuẩn bị trong `$GLOBALS['customerNotifications']`, View không truy vấn SQL. Trang đầy đủ: `index.php?page=thong_bao`, phân trang 10 mục; dropdown hiện 5 thông báo mới nhất và số chưa đọc.

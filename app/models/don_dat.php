@@ -31,18 +31,46 @@ class DonDatModel
         $this->connection = $connection;
     }
 
-    /** Ưu đãi nhóm: 5–9 khách giảm 5%, từ 10 khách giảm 8%, chỉ áp dụng mức cao nhất. */
+    /** Ưu đãi nhóm: 5–9 khách giảm 5%, từ 10 khách giảm 10%, chỉ áp dụng mức cao nhất. */
     public static function discountRate(int $guests): int
     {
-        return $guests >= 10 ? 8 : ($guests >= 5 ? 5 : 0);
+        return $guests >= 10 ? 10 : ($guests >= 5 ? 5 : 0);
     }
 
-    /** Tính tiền của một đơn theo đơn giá lịch khởi hành; làm tròn tới đồng. */
-    public static function calculateTotals(int $adults, int $children, int $adultPrice, int $childPrice): array
+    public const PROMO_CODES = [
+        'ONTRIP10' => ['type' => 'percent', 'value' => 10, 'label' => 'Giảm 10% tổng đơn'],
+        'ONTRIP5'  => ['type' => 'percent', 'value' => 5,  'label' => 'Giảm 5% tổng đơn'],
+        'HE2026'   => ['type' => 'fixed',   'value' => 200000, 'label' => 'Giảm 200.000 ₫'],
+        'VIPTOUR'  => ['type' => 'fixed',   'value' => 500000, 'label' => 'Giảm 500.000 ₫'],
+        'KHAMPHA'  => ['type' => 'percent', 'value' => 8,  'label' => 'Giảm 8% tri ân khách hàng'],
+    ];
+
+    public static function checkPromoCode(string $code): ?array
+    {
+        $code = strtoupper(trim($code));
+        return self::PROMO_CODES[$code] ?? null;
+    }
+
+    /** Tính tiền của một đơn theo đơn giá lịch khởi hành và mã giảm giá; làm tròn tới đồng. */
+    public static function calculateTotals(int $adults, int $children, int $adultPrice, int $childPrice, string $promoCode = ''): array
     {
         $subtotal = $adults * $adultPrice + $children * $childPrice;
         $rate = self::discountRate($adults + $children);
-        $discount = (int) round($subtotal * $rate / 100);
+        $groupDiscount = (int) round($subtotal * $rate / 100);
+
+        $cleanPromo = strtoupper(trim($promoCode));
+        $promoInfo = self::checkPromoCode($cleanPromo);
+        $promoDiscount = 0;
+        if ($promoInfo !== null) {
+            if ($promoInfo['type'] === 'percent') {
+                $promoDiscount = (int) round($subtotal * $promoInfo['value'] / 100);
+            } else {
+                $promoDiscount = min(max(0, $subtotal - $groupDiscount), (int) $promoInfo['value']);
+            }
+        }
+
+        $totalDiscount = $groupDiscount + $promoDiscount;
+        $totalPayment = max(0, $subtotal - $totalDiscount);
 
         return [
             'so_nguoi_lon' => $adults,
@@ -50,8 +78,11 @@ class DonDatModel
             'so_khach' => $adults + $children,
             'tong_goc' => $subtotal,
             'muc_giam' => $rate,
-            'tien_giam' => $discount,
-            'tong_thanh_toan' => $subtotal - $discount,
+            'tien_giam' => $groupDiscount,
+            'ma_giam_gia' => $promoInfo ? $cleanPromo : '',
+            'tien_giam_voucher' => $promoDiscount,
+            'tong_giam' => $totalDiscount,
+            'tong_thanh_toan' => $totalPayment,
         ];
     }
 
@@ -206,42 +237,88 @@ class DonDatModel
                 throw new DomainException('Lịch khởi hành này chỉ còn ' . $seatsLeft . ' chỗ.');
             }
 
+            $promoCode = trim((string) ($contact['ma_giam_gia'] ?? ''));
+            $paymentMethod = (string) ($contact['phuong_thuc_thanh_toan'] ?? 'thanh_toan_sau');
+            if (!in_array($paymentMethod, ['thanh_toan_sau', 'chuyen_khoan', 'tai_van_phong'], true)) {
+                $paymentMethod = 'thanh_toan_sau';
+            }
+
             $totals = self::calculateTotals(
                 $adults,
                 $children,
                 (int) $schedule['gia_nguoi_lon'],
-                (int) $schedule['gia_tre_em']
+                (int) $schedule['gia_tre_em'],
+                $promoCode
             );
             $maDon = $this->makeMaDon($now);
-            $insert = $this->connection->prepare(
-                'INSERT INTO don_dat_tour (ma_don, id_tai_khoan, id_lich_khoi_hanh, ma_tour, ten_tour, ngay_khoi_hanh,
-                    diem_khoi_hanh, gia_nguoi_lon, gia_tre_em, so_nguoi_lon, so_tre_em, tong_goc, muc_giam, tien_giam,
-                    tong_thanh_toan, ho_ten, email, so_dien_thoai, dia_chi, ghi_chu, trang_thai)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            );
-            $insert->execute([
-                $maDon,
-                $accountId,
-                $scheduleId,
-                $schedule['ma_tour'],
-                $schedule['ten_tour'],
-                $schedule['ngay_khoi_hanh'],
-                $schedule['diem_khoi_hanh'],
-                (int) $schedule['gia_nguoi_lon'],
-                (int) $schedule['gia_tre_em'],
-                $totals['so_nguoi_lon'],
-                $totals['so_tre_em'],
-                $totals['tong_goc'],
-                $totals['muc_giam'],
-                $totals['tien_giam'],
-                $totals['tong_thanh_toan'],
-                $contact['ho_ten'] ?? '',
-                $contact['email'] ?? '',
-                $contact['so_dien_thoai'] ?? '',
-                ($contact['dia_chi'] ?? '') === '' ? null : $contact['dia_chi'],
-                ($contact['ghi_chu'] ?? '') === '' ? null : $contact['ghi_chu'],
-                'cho_xac_nhan',
-            ]);
+
+            $hasPaymentColumns = true;
+            try {
+                $insert = $this->connection->prepare(
+                    'INSERT INTO don_dat_tour (ma_don, id_tai_khoan, id_lich_khoi_hanh, ma_tour, ten_tour, ngay_khoi_hanh,
+                        diem_khoi_hanh, gia_nguoi_lon, gia_tre_em, so_nguoi_lon, so_tre_em, tong_goc, muc_giam, tien_giam,
+                        ma_giam_gia, tien_giam_voucher, phuong_thuc_thanh_toan,
+                        tong_thanh_toan, ho_ten, email, so_dien_thoai, dia_chi, ghi_chu, trang_thai)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                );
+                $insert->execute([
+                    $maDon,
+                    $accountId,
+                    $scheduleId,
+                    $schedule['ma_tour'],
+                    $schedule['ten_tour'],
+                    $schedule['ngay_khoi_hanh'],
+                    $schedule['diem_khoi_hanh'],
+                    (int) $schedule['gia_nguoi_lon'],
+                    (int) $schedule['gia_tre_em'],
+                    $totals['so_nguoi_lon'],
+                    $totals['so_tre_em'],
+                    $totals['tong_goc'],
+                    $totals['muc_giam'],
+                    $totals['tien_giam'],
+                    $totals['ma_giam_gia'] !== '' ? $totals['ma_giam_gia'] : null,
+                    $totals['tien_giam_voucher'],
+                    $paymentMethod,
+                    $totals['tong_thanh_toan'],
+                    $contact['ho_ten'] ?? '',
+                    $contact['email'] ?? '',
+                    $contact['so_dien_thoai'] ?? '',
+                    ($contact['dia_chi'] ?? '') === '' ? null : $contact['dia_chi'],
+                    ($contact['ghi_chu'] ?? '') === '' ? null : $contact['ghi_chu'],
+                    'cho_xac_nhan',
+                ]);
+            } catch (Throwable) {
+                // Fallback nếu database chưa có các cột thanh toán / voucher mở rộng
+                $insert = $this->connection->prepare(
+                    'INSERT INTO don_dat_tour (ma_don, id_tai_khoan, id_lich_khoi_hanh, ma_tour, ten_tour, ngay_khoi_hanh,
+                        diem_khoi_hanh, gia_nguoi_lon, gia_tre_em, so_nguoi_lon, so_tre_em, tong_goc, muc_giam, tien_giam,
+                        tong_thanh_toan, ho_ten, email, so_dien_thoai, dia_chi, ghi_chu, trang_thai)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                );
+                $insert->execute([
+                    $maDon,
+                    $accountId,
+                    $scheduleId,
+                    $schedule['ma_tour'],
+                    $schedule['ten_tour'],
+                    $schedule['ngay_khoi_hanh'],
+                    $schedule['diem_khoi_hanh'],
+                    (int) $schedule['gia_nguoi_lon'],
+                    (int) $schedule['gia_tre_em'],
+                    $totals['so_nguoi_lon'],
+                    $totals['so_tre_em'],
+                    $totals['tong_goc'],
+                    $totals['muc_giam'],
+                    $totals['tien_giam'],
+                    $totals['tong_thanh_toan'],
+                    $contact['ho_ten'] ?? '',
+                    $contact['email'] ?? '',
+                    $contact['so_dien_thoai'] ?? '',
+                    ($contact['dia_chi'] ?? '') === '' ? null : $contact['dia_chi'],
+                    ($contact['ghi_chu'] ?? '') === '' ? null : $contact['ghi_chu'],
+                    'cho_xac_nhan',
+                ]);
+            }
             $orderId = (int) $this->connection->lastInsertId();
 
             $hasExtendedColumns = true;
@@ -364,6 +441,9 @@ class DonDatModel
             'tong_goc', 'muc_giam', 'tien_giam', 'tong_thanh_toan'] as $key) {
             $order[$key] = (int) $order[$key];
         }
+        $order['tien_giam_voucher'] = isset($order['tien_giam_voucher']) ? (int) $order['tien_giam_voucher'] : 0;
+        $order['ma_giam_gia'] = (string) ($order['ma_giam_gia'] ?? '');
+        $order['phuong_thuc_thanh_toan'] = (string) ($order['phuong_thuc_thanh_toan'] ?? 'thanh_toan_sau');
         $order['so_khach'] = $order['so_nguoi_lon'] + $order['so_tre_em'];
         $order['da_thanh_toan'] = $order['ma_giao_dich'] !== null;
         $order['trang_thai_nhan'] = self::STATUS_LABELS[$order['trang_thai']] ?? $order['trang_thai'];

@@ -4,6 +4,14 @@
 
 Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đặt trong `ontrip.sql`, người/AI thực hiện phải cập nhật nhật ký này trong cùng lần sửa. Ghi rõ ngày, thay đổi, ảnh hưởng dữ liệu, vị trí khối SQL và cách áp dụng. Không ghi ở đây các thao tác sử dụng website thông thường như đổi mật khẩu hoặc sửa hồ sơ cá nhân.
 
+## 15/11/2026 — Bổ sung cột mã giảm giá, tiền giảm voucher và phương thức thanh toán cho đơn đặt tour
+
+- **Thay đổi:** Bổ sung các cột `ma_giam_gia` VARCHAR(50) DEFAULT NULL, `tien_giam_voucher` DECIMAL(14,0) NOT NULL DEFAULT 0, và `phuong_thuc_thanh_toan` VARCHAR(30) NOT NULL DEFAULT 'thanh_toan_sau' vào bảng `don_dat_tour`.
+- **Mục đích:** Hỗ trợ lưu trữ phương thức thanh toán khách lựa chọn (Thanh toán khi nhận xác nhận, Chuyển khoản ngân hàng, Thanh toán tại văn phòng) và thông tin chiết khấu voucher/mã giảm giá khi đặt tour.
+- **Vị trí:** Khối `BEGIN CAP_NHAT_2026_11_15_THANH_TOAN_VOUCHER` / `END CAP_NHAT_2026_11_15_THANH_TOAN_VOUCHER` ở cuối `ontrip.sql`, và cập nhật câu `CREATE TABLE IF NOT EXISTS don_dat_tour`.
+- **Máy đã có database:** Chạy khối SQL trên trong phpMyAdmin (hoặc chạy lệnh: `ALTER TABLE don_dat_tour ADD COLUMN IF NOT EXISTS ma_giam_gia VARCHAR(50) DEFAULT NULL AFTER tien_giam; ALTER TABLE don_dat_tour ADD COLUMN IF NOT EXISTS tien_giam_voucher DECIMAL(14,0) NOT NULL DEFAULT 0 AFTER ma_giam_gia; ALTER TABLE don_dat_tour ADD COLUMN IF NOT EXISTS phuong_thuc_thanh_toan VARCHAR(30) NOT NULL DEFAULT 'thanh_toan_sau' AFTER ghi_chu;`).
+- **Đã kiểm tra:** Chạy thành công trên MariaDB máy phát triển, không ảnh hưởng đơn cũ.
+
 ## 13/11/2026 — Hội thoại tư vấn hai chiều và thông báo phản hồi
 
 - Thêm bảng `tin_nhan_tu_van`: hội thoại, người gửi, tên/vai trò chụp tại thời điểm gửi, nội dung, thời gian và token duy nhất chống gửi trùng. Xóa tài khoản không xóa lịch sử tin; người gửi được SET NULL, tên vẫn được giữ. Không có thao tác xóa tin trên giao diện.

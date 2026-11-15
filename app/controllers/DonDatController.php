@@ -159,6 +159,9 @@ class DonDatController
             'ghi_chu' => '',
         ];
         $isFirstPassenger = true;
+        $promoCode = '';
+        $paymentMethod = 'thanh_toan_sau';
+        $agreeTerms = false;
         $participants = [['ho_ten' => $values['ho_ten'], 'loai_khach' => 'nguoi_lon', 'gioi_tinh' => 'nam', 'ngay_sinh' => '', 'cccd' => '', 'ghi_chu' => '']];
         // Lịch khởi hành do trang chi tiết tour truyền sang, biểu mẫu không cho chọn lại.
         $selectedId = $this->queryInteger('schedule');
@@ -174,6 +177,9 @@ class DonDatController
                 $message = 'Phiên gửi biểu mẫu không hợp lệ. Vui lòng tải lại trang và thử lại.';
             } else {
                 $isFirstPassenger = !empty($_POST['is_first_passenger']);
+                $promoCode = strtoupper(trim((string) $this->input('ma_giam_gia')));
+                $paymentMethod = (string) ($this->input('phuong_thuc_thanh_toan') ?: 'thanh_toan_sau');
+                $agreeTerms = !empty($_POST['dong_y_dieu_khoan']);
                 $values = [
                     'ho_ten' => trim($this->input('ho_ten')),
                     'email' => strtolower(trim($this->input('email'))),
@@ -198,6 +204,13 @@ class DonDatController
                 }
                 if (mb_strlen($values['ghi_chu'], 'UTF-8') > 500) {
                     $errors['ghi_chu'] = 'Ghi chú tối đa 500 ký tự.';
+                }
+
+                if (!in_array($paymentMethod, ['thanh_toan_sau', 'chuyen_khoan', 'tai_van_phong'], true)) {
+                    $errors['phuong_thuc_thanh_toan'] = 'Vui lòng chọn phương thức thanh toán hợp lệ.';
+                }
+                if (!$agreeTerms) {
+                    $errors['dong_y_dieu_khoan'] = 'Vui lòng đọc và đồng ý với điều khoản dịch vụ & chính sách hủy tour để tiếp tục.';
                 }
 
                 $schedule = $this->findSchedule($schedules, $selectedId);
@@ -259,10 +272,14 @@ class DonDatController
 
                 if (!$errors) {
                     try {
+                        $contactPayload = array_merge($values, [
+                            'ma_giam_gia' => $promoCode,
+                            'phuong_thuc_thanh_toan' => $paymentMethod,
+                        ]);
                         $order = $this->model->createOrder(
                             (int) $account['id_tai_khoan'],
                             (int) $schedule['id'],
-                            $values,
+                            $contactPayload,
                             $participants
                         );
                         header('Location: index.php?page=orders&id=' . rawurlencode($order['ma_don']) . '&created=1', true, 303);
@@ -305,7 +322,9 @@ class DonDatController
                 $adultCount++;
             }
         }
-        $totals = DonDatModel::calculateTotals($adultCount, $childCount, $adultPrice, $childPrice);
+        $totals = DonDatModel::calculateTotals($adultCount, $childCount, $adultPrice, $childPrice, $promoCode);
+        $selectedPaymentMethod = $paymentMethod;
+        $selectedAgreeTerms = $agreeTerms;
         require __DIR__ . '/../views/don_dat/dat_tour.php';
     }
 

@@ -268,12 +268,15 @@ CREATE TABLE IF NOT EXISTS `don_dat_tour` (
     `tong_goc` DECIMAL(14,0) NOT NULL COMMENT 'Tổng trước ưu đãi nhóm',
     `muc_giam` TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Phần trăm ưu đãi nhóm đã áp dụng',
     `tien_giam` DECIMAL(14,0) NOT NULL DEFAULT 0,
+    `ma_giam_gia` VARCHAR(50) DEFAULT NULL,
+    `tien_giam_voucher` DECIMAL(14,0) NOT NULL DEFAULT 0,
     `tong_thanh_toan` DECIMAL(14,0) NOT NULL,
     `ho_ten` VARCHAR(120) NOT NULL,
     `email` VARCHAR(254) NOT NULL,
     `so_dien_thoai` VARCHAR(20) NOT NULL,
     `dia_chi` VARCHAR(255) DEFAULT NULL,
     `ghi_chu` VARCHAR(500) DEFAULT NULL,
+    `phuong_thuc_thanh_toan` VARCHAR(30) NOT NULL DEFAULT 'thanh_toan_sau',
     `trang_thai` ENUM('cho_xac_nhan', 'da_xac_nhan', 'hoan_thanh', 'da_huy') NOT NULL DEFAULT 'cho_xac_nhan',
     `tao_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `cap_nhat_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -1263,3 +1266,33 @@ DELIMITER ;
 CALL sp_upgrade_chi_tiet_don_dat();
 DROP PROCEDURE IF EXISTS sp_upgrade_chi_tiet_don_dat;
 -- END CAP_NHAT_2026_11_13_HANH_KHACH_CCCD_GIOI_TINH
+
+-- BEGIN CAP_NHAT_2026_11_15_THANH_TOAN_VOUCHER
+-- Bổ sung ma_giam_gia, tien_giam_voucher và phuong_thuc_thanh_toan cho don_dat_tour
+DROP PROCEDURE IF EXISTS sp_upgrade_don_dat_tour_voucher;
+DELIMITER $$
+CREATE PROCEDURE sp_upgrade_don_dat_tour_voucher()
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'don_dat_tour' AND COLUMN_NAME = 'ma_giam_gia'
+    ) THEN
+        ALTER TABLE `don_dat_tour` ADD COLUMN `ma_giam_gia` VARCHAR(50) DEFAULT NULL AFTER `tien_giam`;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'don_dat_tour' AND COLUMN_NAME = 'tien_giam_voucher'
+    ) THEN
+        ALTER TABLE `don_dat_tour` ADD COLUMN `tien_giam_voucher` DECIMAL(14,0) NOT NULL DEFAULT 0 AFTER `ma_giam_gia`;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'don_dat_tour' AND COLUMN_NAME = 'phuong_thuc_thanh_toan'
+    ) THEN
+        ALTER TABLE `don_dat_tour` ADD COLUMN `phuong_thuc_thanh_toan` VARCHAR(30) NOT NULL DEFAULT 'thanh_toan_sau' AFTER `ghi_chu`;
+    END IF;
+END $$
+DELIMITER ;
+CALL sp_upgrade_don_dat_tour_voucher();
+DROP PROCEDURE IF EXISTS sp_upgrade_don_dat_tour_voucher;
+-- END CAP_NHAT_2026_11_15_THANH_TOAN_VOUCHER

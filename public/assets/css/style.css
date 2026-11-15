@@ -6788,6 +6788,361 @@ select {
     text-decoration: underline;
 }
 
+/* ===== PHẦN 3: PHƯƠNG THỨC THANH TOÁN, ĐIỀU KHOẢN & VOUCHER ===== */
+.booking-payment-section {
+    margin-top: 18px;
+}
+
+.booking-payment-legend {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 12px;
+}
+
+.booking-payment-legend b {
+    color: #cf222e;
+}
+
+.booking-payment-methods {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.booking-payment-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1.5px solid #e1e4e8;
+    border-radius: 10px;
+    background: var(--panel-bg);
+    cursor: pointer;
+    transition: all .2s ease;
+    user-select: none;
+}
+
+.booking-payment-option:hover {
+    border-color: #f7a47b;
+    background: #fffdfc;
+    box-shadow: 0 3px 10px rgba(204, 91, 45, 0.06);
+}
+
+.booking-payment-option.is-selected {
+    border-color: var(--orange);
+    background: #fff9f6;
+    box-shadow: 0 4px 14px rgba(204, 91, 45, 0.12);
+}
+
+.booking-payment-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 3px;
+    accent-color: var(--orange);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.booking-payment-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.booking-payment-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.booking-payment-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--orange);
+    flex-shrink: 0;
+}
+
+.booking-payment-header strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.booking-payment-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #ffffff;
+    background: #cc5b2d;
+    border-radius: 4px;
+    margin-left: 6px;
+    letter-spacing: .3px;
+}
+
+.booking-payment-content p {
+    font-size: 12px;
+    color: #57606a;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Khối điều khoản & Chính sách hủy tour */
+.booking-terms-box {
+    margin-top: 24px;
+    padding: 18px 20px;
+    border: 1px solid #e1e4e8;
+    border-radius: 10px;
+    background: #fbfcfd;
+}
+
+.booking-terms-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.booking-terms-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: var(--orange);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.booking-terms-label b {
+    color: #cf222e;
+}
+
+.booking-terms-detail {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-left: 3px solid var(--orange);
+    background: #ffffff;
+    border-radius: 0 6px 6px 0;
+    font-size: 12px;
+    color: #424a53;
+}
+
+.booking-terms-detail strong {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--ink);
+}
+
+.booking-terms-detail ul {
+    margin: 0;
+    padding-left: 18px;
+    line-height: 1.7;
+}
+
+.booking-terms-detail li {
+    margin-bottom: 3px;
+}
+
+/* Sidebar Box Tạm tính mở rộng */
+.booking-summary-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .8px;
+    color: var(--orange);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.booking-summary-tour-name {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.45;
+    color: var(--ink);
+    margin: 0 0 10px;
+}
+
+.booking-summary-tour-info {
+    margin-bottom: 14px;
+}
+
+.booking-summary-seats-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    margin-top: 6px;
+    font-size: 12px;
+    background: #eef8f1;
+    border: 1px solid #bde7c9;
+    border-radius: 6px;
+    color: #1a7f37;
+}
+
+.booking-summary-seats-badge strong {
+    font-weight: 700;
+    color: #116329;
+}
+
+.booking-summary-divider {
+    height: 1px;
+    background: var(--line);
+    margin: 14px 0;
+}
+
+.booking-summary-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.booking-summary-discount strong {
+    color: #cf222e !important;
+}
+
+.booking-summary-voucher strong {
+    color: #1a7f37 !important;
+}
+
+/* Widget Mã giảm giá trong Box Tạm tính */
+.booking-promo-widget {
+    margin-top: 18px;
+    padding: 14px 16px;
+    background: #f8fafc;
+    border: 1px dashed #ced5dc;
+    border-radius: 9px;
+}
+
+.booking-promo-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+}
+
+.booking-promo-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.booking-promo-input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 11px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    background: #ffffff;
+    color: var(--ink);
+    outline: none;
+    transition: border-color .18s;
+}
+
+.booking-promo-input:focus {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 2px rgba(204, 91, 45, 0.15);
+}
+
+.booking-promo-btn {
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #24292f;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .18s;
+    white-space: nowrap;
+}
+
+.booking-promo-btn:hover {
+    background: #090a0c;
+}
+
+.booking-promo-message {
+    font-size: 11px;
+    line-height: 1.5;
+    margin: 8px 0 0;
+}
+
+.booking-promo-message.is-success {
+    color: #1a7f37;
+    font-weight: 600;
+}
+
+.booking-promo-message.is-error {
+    color: #cf222e;
+    font-weight: 600;
+}
+
+.booking-promo-quick {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 11px;
+    color: #57606a;
+}
+
+.booking-promo-tag {
+    display: inline-block;
+    padding: 2px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--orange-dark);
+    background: #fdf1ea;
+    border: 1px solid #f6cfbe;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all .15s;
+}
+
+.booking-promo-tag:hover {
+    background: #f8dfd3;
+    border-color: var(--orange);
+}
+
+/* Thẻ hiển thị Tổng thanh toán nổi bật */
+.booking-summary-total-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 18px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, #fff7f2 0%, #ffeedf 100%);
+    border: 1.5px solid #f5cfbe;
+    border-radius: 10px;
+}
+
+.booking-summary-total-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #3b2820;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.booking-summary-total-val {
+    font-size: 24px;
+    font-weight: 800;
+    color: #b84417;
+    letter-spacing: -.6px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
 .booking-empty {
     padding: 60px 30px;
     text-align: center;

@@ -1547,8 +1547,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return counts;
     }
 
-    // Phần 3: Tính lại tổng tiền và áp dụng chiết khấu nhóm lên cột Tạm tính bên phải
-    function renderSummary(counts) {
+    // Danh sách mã ưu đãi hợp lệ phía client (đồng bộ với DonDatModel::PROMO_CODES)
+    const CLIENT_PROMO_CODES = {
+        'ONTRIP10': { type: 'percent', value: 10, label: 'Giảm 10% tổng đơn' },
+        'ONTRIP5':  { type: 'percent', value: 5,  label: 'Giảm 5% tổng đơn' },
+        'HE2026':   { type: 'fixed',   value: 200000, label: 'Giảm 200.000 ₫' },
+        'VIPTOUR':  { type: 'fixed',   value: 500000, label: 'Giảm 500.000 ₫' },
+        'KHAMPHA':  { type: 'percent', value: 8,  label: 'Giảm 8% tri ân khách hàng' }
+    };
+
+    const hiddenPromoInput = form.querySelector('#booking-form-promo-input');
+    const promoInputField = document.querySelector('#promo-input-field');
+    const promoApplyBtn = document.querySelector('[data-apply-promo]');
+    const promoMessageEl = document.querySelector('[data-promo-message]');
+    let currentPromoCode = ((hiddenPromoInput ? hiddenPromoInput.value : '') || (promoInputField ? promoInputField.value : '')).trim().toUpperCase();
+
+    // Phần 3: Hàm calculateTotal() tính lại giá tiền realtime và cập nhật Box Tạm tính
+    function calculateTotal(counts) {
         if (!summary) return;
         const adultPrice = Number(form.dataset.adultPrice || 0);
         const childPrice = Number(form.dataset.childPrice || 0);
@@ -1559,25 +1574,40 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const adults = currentCounts.nguoi_lon;
         const children = currentCounts.tre_em;
+        const guests = adults + children;
 
         const adultTotal = adults * adultPrice;
         const childTotal = children * childPrice;
         const subtotal = adultTotal + childTotal;
-        const guests = adults + children;
 
-        // Ưu đãi nhóm theo quy tắc OnTrip:
-        // 1-4 khách: 0%
-        // 5-9 khách: 5%
-        // Từ 10 khách: 8%
-        const rate = guests >= 10 ? 8 : (guests >= 5 ? 5 : 0);
-        const discount = Math.round(subtotal * rate / 100);
-        const totalPayment = subtotal - discount;
+        // Ưu đãi nhóm: 5–9 khách giảm 5%, từ 10 khách giảm 10%
+        const groupRate = guests >= 10 ? 10 : (guests >= 5 ? 5 : 0);
+        const groupDiscount = Math.round(subtotal * groupRate / 100);
+
+        // Áp dụng mã giảm giá voucher
+        let promoDiscount = 0;
+        const promoInfo = CLIENT_PROMO_CODES[currentPromoCode] || null;
+        if (promoInfo) {
+            if (promoInfo.type === 'percent') {
+                promoDiscount = Math.round(subtotal * promoInfo.value / 100);
+            } else {
+                promoDiscount = Math.min(Math.max(0, subtotal - groupDiscount), promoInfo.value);
+            }
+        }
+
+        const totalDiscount = groupDiscount + promoDiscount;
+        const totalPayment = Math.max(0, subtotal - totalDiscount);
 
         const setText = (selector, value) => {
             const el = summary.querySelector(selector);
             if (el) el.textContent = value;
         };
 
+        // Cập nhật số chỗ còn nhận trên sidebar
+        const remainingSeats = Math.max(0, seatsLeft - guests);
+        setText('[data-summary-seats-left]', remainingSeats);
+
+        // Cập nhật người lớn & trẻ em
         setText('[data-summary-adult-count]', adults);
         setText('[data-summary-adult-total]', money(adultTotal));
         setText('[data-summary-child-count]', children);
@@ -1586,19 +1616,98 @@ document.addEventListener('DOMContentLoaded', () => {
         const childLine = summary.querySelector('[data-summary-child-line]');
         if (childLine) childLine.hidden = (children === 0);
 
+        // Cập nhật tổng trước ưu đãi
         setText('[data-summary-subtotal]', money(subtotal));
 
+        // Cập nhật dòng giảm giá nhóm
         const discountLine = summary.querySelector('[data-summary-discount-line]');
-        if (discountLine) discountLine.hidden = (rate === 0);
-        setText('[data-summary-discount-rate]', `${rate}%`);
-        setText('[data-summary-discount-amount]', `−${money(discount)}`);
+        if (discountLine) discountLine.hidden = (groupRate === 0);
+        setText('[data-summary-discount-rate]', `${groupRate}%`);
+        setText('[data-summary-discount-amount]', `−${money(groupDiscount)}`);
+
+        // Cập nhật dòng mã giảm giá voucher
+        const promoLine = summary.querySelector('[data-summary-promo-line]');
+        if (promoLine) {
+            promoLine.hidden = (promoDiscount <= 0);
+            setText('[data-summary-promo-code]', currentPromoCode);
+            setText('[data-summary-promo-amount]', `−${money(promoDiscount)}`);
+        }
+
+        // Cập nhật Tổng thanh toán nổi bật
         setText('[data-summary-total]', money(totalPayment));
 
-        // Bắn Custom Event để các listener bên ngoài (nếu có) nhận dữ liệu
+        // Đồng bộ mã giảm giá sang input ẩn trong form
+        if (hiddenPromoInput) {
+            hiddenPromoInput.value = promoInfo ? currentPromoCode : '';
+        }
+
+        // Bắn Custom Event thông báo cho các listener bên ngoài
         form.dispatchEvent(new CustomEvent('booking:summary-updated', {
             bubbles: true,
-            detail: { adults, children, guests, subtotal, rate, discount, totalPayment }
+            detail: { adults, children, guests, subtotal, groupRate, groupDiscount, currentPromoCode, promoDiscount, totalPayment }
         }));
+    }
+
+    // Áp dụng mã giảm giá
+    function applyPromoCode(codeToApply, showFeedback = true) {
+        const cleanCode = (codeToApply || '').trim().toUpperCase();
+        if (!cleanCode) {
+            currentPromoCode = '';
+            if (promoInputField) promoInputField.value = '';
+            if (promoMessageEl) {
+                promoMessageEl.hidden = true;
+                promoMessageEl.textContent = '';
+                promoMessageEl.className = 'booking-promo-message';
+            }
+            calculateTotal();
+            return;
+        }
+
+        if (promoInputField) promoInputField.value = cleanCode;
+
+        if (CLIENT_PROMO_CODES[cleanCode]) {
+            currentPromoCode = cleanCode;
+            if (promoMessageEl && showFeedback) {
+                promoMessageEl.hidden = false;
+                promoMessageEl.className = 'booking-promo-message is-success';
+                promoMessageEl.textContent = `✓ Đã áp dụng mã ${cleanCode}: ${CLIENT_PROMO_CODES[cleanCode].label}`;
+            }
+        } else {
+            currentPromoCode = '';
+            if (promoMessageEl && showFeedback) {
+                promoMessageEl.hidden = false;
+                promoMessageEl.className = 'booking-promo-message is-error';
+                promoMessageEl.textContent = '✕ Mã ưu đãi không tồn tại hoặc đã hết hạn sử dụng.';
+            }
+        }
+        calculateTotal();
+    }
+
+    if (promoApplyBtn && promoInputField) {
+        promoApplyBtn.addEventListener('click', () => {
+            applyPromoCode(promoInputField.value);
+        });
+
+        promoInputField.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                applyPromoCode(promoInputField.value);
+            }
+        });
+    }
+
+    // Các thẻ gợi ý mã ưu đãi
+    document.querySelectorAll('[data-tag-promo]').forEach(tagBtn => {
+        tagBtn.addEventListener('click', () => {
+            const promoTag = tagBtn.dataset.tagPromo || '';
+            if (promoInputField) promoInputField.value = promoTag;
+            applyPromoCode(promoTag);
+        });
+    });
+
+    // Nếu đã có sẵn mã giảm giá từ phiên trước, tự động kiểm tra và áp dụng
+    if (currentPromoCode) {
+        applyPromoCode(currentPromoCode, false);
     }
 
     // Bắt sự kiện thêm hành khách (+ Thêm người lớn / + Thêm trẻ em)
@@ -1616,7 +1725,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             list.appendChild(template.content.cloneNode(true));
             const newCounts = renumber();
-            renderSummary(newCounts);
+            calculateTotal(newCounts);
 
             const added = rows().pop();
             const input = added && added.querySelector('[data-field="ho_ten"]');
@@ -1640,7 +1749,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         row.remove();
         const newCounts = renumber();
-        renderSummary(newCounts);
+        calculateTotal(newCounts);
     });
 
     // Bắt sự kiện thay đổi ngày sinh để validate độ tuổi tức thì
@@ -1718,8 +1827,157 @@ document.addEventListener('DOMContentLoaded', () => {
         phoneInput.addEventListener('blur', validatePhone);
     }
 
+    // Xử lý chuyển đổi giao diện khi chọn phương thức thanh toán
+    const paymentRadios = form.querySelectorAll('input[name="phuong_thuc_thanh_toan"]');
+    paymentRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            form.querySelectorAll('.booking-payment-option').forEach(opt => {
+                opt.classList.toggle('is-selected', opt.contains(radio) && radio.checked);
+            });
+        });
+    });
+
+    // Validate toàn bộ form trước khi submit về máy chủ PHP
+    form.addEventListener('submit', event => {
+        let firstInvalidField = null;
+        let errorMessage = '';
+
+        // 1. Kiểm tra danh sách hành khách
+        const allRows = rows();
+        let adultsCount = 0;
+        let childrenCount = 0;
+
+        for (let i = 0; i < allRows.length; i++) {
+            const row = allRows[i];
+            const type = typeOf(row);
+            const guestNum = i + 1;
+            const guestLabel = `${type === 'tre_em' ? 'Trẻ em' : 'Người lớn'} ${guestNum}`;
+
+            const nameInput = row.querySelector('[data-field="ho_ten"]');
+            const dobInput = row.querySelector('[data-field="ngay_sinh"]');
+            const cccdInput = row.querySelector('[data-field="cccd"]');
+
+            // Kiểm tra họ tên
+            const nameVal = nameInput ? nameInput.value.trim() : '';
+            if (nameVal.length < 2 || nameVal.length > 120) {
+                firstInvalidField = firstInvalidField || nameInput;
+                errorMessage = errorMessage || `Họ tên ${guestLabel} cần từ 2 đến 120 ký tự.`;
+                break;
+            }
+
+            // Kiểm tra ngày sinh
+            const dobVal = dobInput ? dobInput.value : '';
+            if (!dobVal) {
+                firstInvalidField = firstInvalidField || dobInput;
+                errorMessage = errorMessage || `Vui lòng nhập ngày sinh cho ${guestLabel}.`;
+                break;
+            }
+            const age = calculateAge(dobVal, departureDate);
+            if (age === null || age < 0) {
+                firstInvalidField = firstInvalidField || dobInput;
+                errorMessage = errorMessage || `Ngày sinh của ${guestLabel} không hợp lệ hoặc lớn hơn ngày khởi hành.`;
+                break;
+            }
+            if (type === 'nguoi_lon' && age < 12) {
+                firstInvalidField = firstInvalidField || dobInput;
+                errorMessage = errorMessage || `${guestLabel} phải từ 12 tuổi trở lên tính đến ngày khởi hành.`;
+                break;
+            }
+            if (type === 'tre_em' && age >= 12) {
+                firstInvalidField = firstInvalidField || dobInput;
+                errorMessage = errorMessage || `${guestLabel} phải dưới 12 tuổi tính đến ngày khởi hành.`;
+                break;
+            }
+
+            // Kiểm tra CCCD đối với người lớn
+            if (type === 'nguoi_lon') {
+                adultsCount++;
+                const cccdVal = cccdInput ? cccdInput.value.trim() : '';
+                if (cccdVal.length < 6 || cccdVal.length > 30) {
+                    firstInvalidField = firstInvalidField || cccdInput;
+                    errorMessage = errorMessage || `Bắt buộc nhập CCCD / Hộ chiếu hợp lệ (6-30 ký tự) cho ${guestLabel}.`;
+                    break;
+                }
+            } else {
+                childrenCount++;
+            }
+        }
+
+        // Kiểm tra số lượng người lớn tối thiểu
+        if (!firstInvalidField && adultsCount < 1) {
+            errorMessage = 'Đơn đặt cần ít nhất một hành khách là người lớn.';
+            firstInvalidField = form.querySelector('[data-add-participant="nguoi_lon"]') || form;
+        }
+
+        // Kiểm tra tổng số chỗ
+        if (!firstInvalidField && (adultsCount + childrenCount > seatsLeft)) {
+            errorMessage = `Số lượng khách (${adultsCount + childrenCount}) vượt quá số chỗ còn lại của chuyến (${seatsLeft} chỗ).`;
+            firstInvalidField = form;
+        }
+
+        // 2. Kiểm tra thông tin người liên hệ
+        if (!firstInvalidField) {
+            const contactName = contactNameInput ? contactNameInput.value.trim() : '';
+            if (contactName.length < 2 || contactName.length > 120) {
+                firstInvalidField = contactNameInput;
+                errorMessage = 'Họ tên người liên hệ cần từ 2 đến 120 ký tự.';
+            }
+        }
+
+        if (!firstInvalidField) {
+            const emailInput = form.querySelector('input[name="email"]');
+            const emailVal = emailInput ? emailInput.value.trim() : '';
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(emailVal)) {
+                firstInvalidField = emailInput;
+                errorMessage = 'Vui lòng nhập địa chỉ email người liên hệ đúng định dạng.';
+            }
+        }
+
+        if (!firstInvalidField && phoneInput) {
+            const phoneVal = phoneInput.value.trim();
+            const vnPhoneRegex = /^0[0-9]{9}$/;
+            if (!vnPhoneRegex.test(phoneVal)) {
+                firstInvalidField = phoneInput;
+                errorMessage = 'Số điện thoại người liên hệ phải gồm đúng 10 chữ số và bắt đầu bằng số 0.';
+            }
+        }
+
+        // 3. Kiểm tra phương thức thanh toán
+        if (!firstInvalidField) {
+            const selectedMethod = form.querySelector('input[name="phuong_thuc_thanh_toan"]:checked');
+            if (!selectedMethod) {
+                firstInvalidField = form.querySelector('input[name="phuong_thuc_thanh_toan"]');
+                errorMessage = 'Vui lòng chọn một phương thức thanh toán.';
+            }
+        }
+
+        // 4. Kiểm tra checkbox đồng ý điều khoản
+        if (!firstInvalidField) {
+            const termsCheckbox = form.querySelector('[data-agree-terms]');
+            if (!termsCheckbox || !termsCheckbox.checked) {
+                firstInvalidField = termsCheckbox;
+                errorMessage = 'Bạn cần tích chọn đồng ý với điều khoản dịch vụ & chính sách hủy tour của OnTrip.';
+            }
+        }
+
+        // Nếu có trường không hợp lệ, chặn submit, cuộn đến phần tử và cảnh báo
+        if (firstInvalidField) {
+            event.preventDefault();
+            if (firstInvalidField.scrollIntoView) {
+                firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            if (firstInvalidField.focus) {
+                firstInvalidField.focus();
+            }
+            if (errorMessage) {
+                window.alert(errorMessage);
+            }
+        }
+    });
+
     renumber();
-    renderSummary();
+    calculateTotal();
 });
 
 // Native details giu chuong thong bao hoat dong khi khong co JavaScript.

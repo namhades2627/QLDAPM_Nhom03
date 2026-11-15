@@ -171,7 +171,7 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
                         </div>
                     </div>
                     <p class="booking-error" data-seats-warning hidden>Đã đạt số chỗ trống tối đa của lịch khởi hành này.</p>
-                    <p class="booking-hint">Ưu đãi nhóm tính trên tổng số khách của cùng một đơn: 5–9 khách giảm 5%, từ 10 khách giảm 8%.</p>
+                    <p class="booking-hint">Ưu đãi nhóm tính trên tổng số khách của cùng một đơn: 5–9 khách giảm 5%, từ 10 khách giảm 10%.</p>
                 </section>
 
                 <section class="booking-card" aria-labelledby="booking-contact-title">
@@ -214,10 +214,90 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
                     </label>
                 </section>
 
-                <div class="booking-submit-row">
-                    <p class="booking-consent">Sau khi gửi, đơn ở trạng thái <strong>chờ xác nhận</strong>. Thanh toán trong bản demo chỉ là mô phỏng, không phát sinh giao dịch thật.</p>
-                    <button class="button button-primary booking-submit" type="submit">Gửi yêu cầu đặt tour</button>
-                </div>
+                <section class="booking-card" aria-labelledby="booking-payment-title">
+                    <div class="booking-card-heading">
+                        <span class="booking-step" aria-hidden="true">3</span>
+                        <div>
+                            <h2 id="booking-payment-title">Phương thức thanh toán &amp; Xác nhận</h2>
+                            <p>Chọn phương thức thanh toán phù hợp và xác nhận điều khoản dịch vụ trước khi gửi đơn.</p>
+                        </div>
+                    </div>
+
+                    <div class="booking-payment-section">
+                        <span class="booking-payment-legend">Phương thức thanh toán <b>*</b></span>
+                        <?php if (isset($errors['phuong_thuc_thanh_toan'])): ?>
+                            <p class="booking-error"><?= $escape($errors['phuong_thuc_thanh_toan']) ?></p>
+                        <?php endif; ?>
+
+                        <div class="booking-payment-methods">
+                            <label class="booking-payment-option <?= ($selectedPaymentMethod ?? 'thanh_toan_sau') === 'thanh_toan_sau' ? 'is-selected' : '' ?>">
+                                <input type="radio" name="phuong_thuc_thanh_toan" value="thanh_toan_sau" <?= ($selectedPaymentMethod ?? 'thanh_toan_sau') === 'thanh_toan_sau' ? 'checked' : '' ?> required>
+                                <div class="booking-payment-content">
+                                    <div class="booking-payment-header">
+                                        <span class="booking-payment-icon" aria-hidden="true">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                        </span>
+                                        <strong>Thanh toán khi nhận xác nhận</strong>
+                                        <span class="booking-payment-badge">Khuyên dùng</span>
+                                    </div>
+                                    <p>Nhân viên OnTrip liên hệ trực tiếp qua điện thoại để kiểm tra lịch trình, chốt thông tin và hướng dẫn quý khách thanh toán linh hoạt bằng tiền mặt hoặc chuyển khoản.</p>
+                                </div>
+                            </label>
+
+                            <label class="booking-payment-option <?= ($selectedPaymentMethod ?? '') === 'chuyen_khoan' ? 'is-selected' : '' ?>">
+                                <input type="radio" name="phuong_thuc_thanh_toan" value="chuyen_khoan" <?= ($selectedPaymentMethod ?? '') === 'chuyen_khoan' ? 'checked' : '' ?>>
+                                <div class="booking-payment-content">
+                                    <div class="booking-payment-header">
+                                        <span class="booking-payment-icon" aria-hidden="true">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                                        </span>
+                                        <strong>Chuyển khoản ngân hàng (VietQR)</strong>
+                                    </div>
+                                    <p>Quét mã VietQR hoặc chuyển khoản vào tài khoản ngân hàng chính thức của OnTrip kèm nội dung mã đơn hàng để được xác nhận tự động.</p>
+                                </div>
+                            </label>
+
+                            <label class="booking-payment-option <?= ($selectedPaymentMethod ?? '') === 'tai_van_phong' ? 'is-selected' : '' ?>">
+                                <input type="radio" name="phuong_thuc_thanh_toan" value="tai_van_phong" <?= ($selectedPaymentMethod ?? '') === 'tai_van_phong' ? 'checked' : '' ?>>
+                                <div class="booking-payment-content">
+                                    <div class="booking-payment-header">
+                                        <span class="booking-payment-icon" aria-hidden="true">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                                        </span>
+                                        <strong>Thanh toán tại văn phòng</strong>
+                                    </div>
+                                    <p>Thanh toán trực tiếp bằng tiền mặt hoặc quẹt thẻ POS tại văn phòng đại diện OnTrip (Hà Nội, Đà Nẵng hoặc TP. Hồ Chí Minh).</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="booking-terms-box">
+                        <label class="booking-checkbox-label booking-terms-label">
+                            <input type="checkbox" name="dong_y_dieu_khoan" value="1" data-agree-terms <?= !empty($selectedAgreeTerms) ? 'checked' : '' ?> required>
+                            <span>Tôi đồng ý với <strong>điều khoản dịch vụ &amp; chính sách hủy tour</strong> của OnTrip <b>*</b></span>
+                        </label>
+                        <?php if (isset($errors['dong_y_dieu_khoan'])): ?>
+                            <p class="booking-error"><?= $escape($errors['dong_y_dieu_khoan']) ?></p>
+                        <?php endif; ?>
+
+                        <div class="booking-terms-detail">
+                            <strong>Chính sách hoàn hủy tour chuẩn OnTrip:</strong>
+                            <ul>
+                                <li>Hủy trước ngày khởi hành <strong>từ 7 ngày trở lên</strong>: Hoàn lại 100% chi phí đã thanh toán.</li>
+                                <li>Hủy trước ngày khởi hành <strong>từ 3 đến dưới 7 ngày</strong>: Thu phí 30% giá trị tour.</li>
+                                <li>Hủy trong vòng <strong>dưới 3 ngày</strong> trước khởi hành: Thu phí 100% giá trị tour.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="ma_giam_gia" id="booking-form-promo-input" value="<?= $escape($promoCode ?? '') ?>">
+
+                    <div class="booking-submit-row">
+                        <p class="booking-consent">Sau khi gửi, đơn sẽ được lưu ở trạng thái <strong>chờ xác nhận</strong>. Đội ngũ CSKH OnTrip sẽ liên hệ xác nhận trong vòng 30 phút.</p>
+                        <button class="button button-primary booking-submit" type="submit" id="booking-submit-btn">Gửi yêu cầu đặt tour</button>
+                    </div>
+                </section>
 
                 <template data-participant-template="nguoi_lon">
                     <div class="booking-guest" data-participant data-type="nguoi_lon">
@@ -299,19 +379,66 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
 
             <aside class="booking-sidebar" aria-label="Tóm tắt đơn đặt">
                 <div class="booking-summary" data-booking-summary>
-                    <span class="detail-booking-label">TẠM TÍNH ĐƠN ĐẶT</span>
-                    <h2><?= $escape($tourName) ?></h2>
-                    <p class="booking-summary-meta" data-summary-schedule>
-                        <?php if ($selectedSchedule): ?>
-                        Khởi hành <?= date('d/m/Y', strtotime($selectedSchedule['date'])) ?> · <?= $escape($selectedSchedule['origin']) ?>
-                        <?php endif; ?>
-                    </p>
-                    <div class="booking-summary-row"><span>Người lớn × <b data-summary-adult-count><?= (int) $totals['so_nguoi_lon'] ?></b></span><strong data-summary-adult-total><?= $money($totals['so_nguoi_lon'] * $adultPrice) ?></strong></div>
-                    <div class="booking-summary-row" data-summary-child-line <?= (int) $totals['so_tre_em'] === 0 ? 'hidden' : '' ?>><span>Trẻ em × <b data-summary-child-count><?= (int) $totals['so_tre_em'] ?></b></span><strong data-summary-child-total><?= $money($totals['so_tre_em'] * $childPrice) ?></strong></div>
-                    <div class="booking-summary-row booking-summary-subtotal"><span>Tổng trước ưu đãi</span><strong data-summary-subtotal><?= $money($totals['tong_goc']) ?></strong></div>
-                    <div class="booking-summary-row" data-summary-discount-line <?= (int) $totals['muc_giam'] === 0 ? 'hidden' : '' ?>><span>Ưu đãi nhóm <b data-summary-discount-rate><?= (int) $totals['muc_giam'] ?>%</b></span><strong data-summary-discount-amount>−<?= $money($totals['tien_giam']) ?></strong></div>
-                    <div class="booking-summary-total"><span>Tổng thanh toán</span><strong data-summary-total><?= $money($totals['tong_thanh_toan']) ?></strong></div>
-                    <p class="booking-summary-note">Tổng tiền được máy chủ tính lại từ đơn giá của lịch khởi hành khi lưu đơn.</p>
+                    <div class="booking-summary-badge">TẠM TÍNH ĐƠN ĐẶT</div>
+                    <h2 class="booking-summary-tour-name"><?= $escape($tourName) ?></h2>
+                    <div class="booking-summary-tour-info">
+                        <p class="booking-summary-meta" data-summary-schedule>
+                            <?php if ($selectedSchedule): ?>
+                            <strong>Khởi hành:</strong> <?= date('d/m/Y', strtotime($selectedSchedule['date'])) ?> &bull; <strong>Từ:</strong> <?= $escape($selectedSchedule['origin']) ?>
+                            <?php endif; ?>
+                        </p>
+                        <div class="booking-summary-seats-badge">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            Số chỗ còn nhận: <strong data-summary-seats-left><?= (int) ($selectedSchedule['seats_left'] ?? 0) ?></strong> chỗ
+                        </div>
+                    </div>
+
+                    <div class="booking-summary-divider"></div>
+
+                    <div class="booking-summary-breakdown">
+                        <div class="booking-summary-row">
+                            <span>Người lớn × <b data-summary-adult-count><?= (int) $totals['so_nguoi_lon'] ?></b></span>
+                            <strong data-summary-adult-total><?= $money($totals['so_nguoi_lon'] * $adultPrice) ?></strong>
+                        </div>
+                        <div class="booking-summary-row" data-summary-child-line <?= (int) $totals['so_tre_em'] === 0 ? 'hidden' : '' ?>>
+                            <span>Trẻ em × <b data-summary-child-count><?= (int) $totals['so_tre_em'] ?></b></span>
+                            <strong data-summary-child-total><?= $money($totals['so_tre_em'] * $childPrice) ?></strong>
+                        </div>
+                        <div class="booking-summary-row booking-summary-subtotal">
+                            <span>Tổng trước ưu đãi</span>
+                            <strong data-summary-subtotal><?= $money($totals['tong_goc']) ?></strong>
+                        </div>
+                        <div class="booking-summary-row booking-summary-discount" data-summary-discount-line <?= (int) $totals['muc_giam'] === 0 ? 'hidden' : '' ?>>
+                            <span>Giảm giá nhóm (<b data-summary-discount-rate><?= (int) $totals['muc_giam'] ?>%</b>)</span>
+                            <strong data-summary-discount-amount>−<?= $money($totals['tien_giam']) ?></strong>
+                        </div>
+                        <div class="booking-summary-row booking-summary-voucher" data-summary-promo-line <?= empty($totals['tien_giam_voucher']) ? 'hidden' : '' ?>>
+                            <span>Mã giảm giá (<b data-summary-promo-code><?= $escape($totals['ma_giam_gia'] ?? '') ?></b>)</span>
+                            <strong data-summary-promo-amount>−<?= $money($totals['tien_giam_voucher'] ?? 0) ?></strong>
+                        </div>
+                    </div>
+
+                    <div class="booking-promo-widget">
+                        <label for="promo-input-field" class="booking-promo-label">Mã giảm giá / Ưu đãi</label>
+                        <div class="booking-promo-input-group">
+                            <input type="text" id="promo-input-field" class="booking-promo-input" placeholder="Ví dụ: ONTRIP10" value="<?= $escape($promoCode ?? '') ?>" autocomplete="off" spellcheck="false">
+                            <button type="button" class="booking-promo-btn" data-apply-promo>Áp dụng</button>
+                        </div>
+                        <p class="booking-promo-message" data-promo-message hidden></p>
+                        <div class="booking-promo-quick">
+                            <span>Gợi ý mã:</span>
+                            <button type="button" class="booking-promo-tag" data-tag-promo="ONTRIP10">ONTRIP10 (-10%)</button>
+                            <button type="button" class="booking-promo-tag" data-tag-promo="HE2026">HE2026 (-200k)</button>
+                            <button type="button" class="booking-promo-tag" data-tag-promo="VIPTOUR">VIPTOUR (-500k)</button>
+                        </div>
+                    </div>
+
+                    <div class="booking-summary-total-card">
+                        <span class="booking-summary-total-label">Tổng thanh toán</span>
+                        <strong class="booking-summary-total-val" data-summary-total><?= $money($totals['tong_thanh_toan']) ?></strong>
+                    </div>
+
+                    <p class="booking-summary-note">Giá đã bao gồm toàn bộ thuế, phí và chiết khấu. Nhân viên OnTrip sẽ xác nhận chính xác trước khi thanh toán.</p>
                     <a class="booking-back-link" href="<?= $escape($tourDetailUrl) ?>">← Xem chi tiết tour</a>
                 </div>
             </aside>

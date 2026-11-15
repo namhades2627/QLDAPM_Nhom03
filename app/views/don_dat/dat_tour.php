@@ -11,6 +11,7 @@
  * @var array<string, string> $errors
  * @var string $message
  * @var array<string, int> $totals
+ * @var bool $isFirstPassenger
  * @var bool $authRequired
  * @var bool $notFound
  * @var string $csrfToken
@@ -174,14 +175,43 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
                 </section>
 
                 <section class="booking-card" aria-labelledby="booking-contact-title">
-                    <div class="booking-card-heading"><span class="booking-step" aria-hidden="true">2</span><div><h2 id="booking-contact-title">Thông tin liên hệ</h2><p>OnTrip dùng thông tin này để xác nhận đơn đặt tour.</p></div></div>
-                    <div class="booking-fields">
-                        <label class="booking-field"><span>Họ và tên <b>*</b></span><input type="text" name="ho_ten" value="<?= $escape($values['ho_ten']) ?>" maxlength="120" minlength="2" autocomplete="name" aria-invalid="<?= isset($errors['ho_ten']) ? 'true' : 'false' ?>" required><?php if (isset($errors['ho_ten'])): ?><em class="booking-error"><?= $escape($errors['ho_ten']) ?></em><?php endif; ?></label>
-                        <label class="booking-field"><span>Email <b>*</b></span><input type="email" name="email" value="<?= $escape($values['email']) ?>" maxlength="254" autocomplete="email" aria-invalid="<?= isset($errors['email']) ? 'true' : 'false' ?>" required><?php if (isset($errors['email'])): ?><em class="booking-error"><?= $escape($errors['email']) ?></em><?php endif; ?></label>
-                        <label class="booking-field"><span>Số điện thoại <b>*</b></span><input type="tel" name="so_dien_thoai" value="<?= $escape($values['so_dien_thoai']) ?>" maxlength="20" autocomplete="tel" aria-invalid="<?= isset($errors['so_dien_thoai']) ? 'true' : 'false' ?>" required><?php if (isset($errors['so_dien_thoai'])): ?><em class="booking-error"><?= $escape($errors['so_dien_thoai']) ?></em><?php endif; ?></label>
-                        <label class="booking-field"><span>Địa chỉ</span><input type="text" name="dia_chi" value="<?= $escape($values['dia_chi']) ?>" maxlength="255" autocomplete="street-address"><?php if (isset($errors['dia_chi'])): ?><em class="booking-error"><?= $escape($errors['dia_chi']) ?></em><?php endif; ?></label>
+                    <div class="booking-card-heading"><span class="booking-step" aria-hidden="true">2</span><div><h2 id="booking-contact-title">Thông tin người liên hệ</h2><p>OnTrip dùng thông tin người đại diện này để gửi vé và xác nhận đơn đặt tour.</p></div></div>
+                    
+                    <div class="booking-sync-option">
+                        <label class="booking-checkbox-label">
+                            <input type="checkbox" id="sync-first-passenger" name="is_first_passenger" value="1" data-sync-passenger <?= !empty($isFirstPassenger) ? 'checked' : '' ?>>
+                            <span>Tôi là hành khách tham gia đầu tiên</span>
+                        </label>
+                        <p class="booking-sync-hint">Tự động đồng bộ họ và tên giữa Người liên hệ và Người lớn 1.</p>
                     </div>
-                    <label class="booking-field booking-field-wide"><span>Ghi chú cho OnTrip</span><textarea name="ghi_chu" rows="3" maxlength="500" placeholder="Yêu cầu riêng về phòng, ăn uống, đưa đón..."><?= $escape($values['ghi_chu']) ?></textarea><?php if (isset($errors['ghi_chu'])): ?><em class="booking-error"><?= $escape($errors['ghi_chu']) ?></em><?php endif; ?></label>
+
+                    <div class="booking-fields">
+                        <label class="booking-field">
+                            <span>Họ và tên người liên hệ <b>*</b></span>
+                            <input type="text" name="ho_ten" value="<?= $escape($values['ho_ten']) ?>" maxlength="120" minlength="2" autocomplete="name" placeholder="Ví dụ: Nguyễn Văn A" aria-invalid="<?= isset($errors['ho_ten']) ? 'true' : 'false' ?>" required>
+                            <?php if (isset($errors['ho_ten'])): ?><em class="booking-error"><?= $escape($errors['ho_ten']) ?></em><?php endif; ?>
+                        </label>
+                        <label class="booking-field">
+                            <span>Email nhận xác nhận <b>*</b></span>
+                            <input type="email" name="email" value="<?= $escape($values['email']) ?>" maxlength="254" autocomplete="email" placeholder="email@vidu.com" aria-invalid="<?= isset($errors['email']) ? 'true' : 'false' ?>" required>
+                            <?php if (isset($errors['email'])): ?><em class="booking-error"><?= $escape($errors['email']) ?></em><?php endif; ?>
+                        </label>
+                        <label class="booking-field">
+                            <span>Số điện thoại <b>*</b> (10 số VN)</span>
+                            <input type="tel" name="so_dien_thoai" value="<?= $escape($values['so_dien_thoai']) ?>" maxlength="10" pattern="0[0-9]{9}" autocomplete="tel" placeholder="Ví dụ: 0912345678" aria-invalid="<?= isset($errors['so_dien_thoai']) ? 'true' : 'false' ?>" required>
+                            <?php if (isset($errors['so_dien_thoai'])): ?><em class="booking-error"><?= $escape($errors['so_dien_thoai']) ?></em><?php endif; ?>
+                        </label>
+                        <label class="booking-field">
+                            <span>Địa chỉ <small style="color:var(--muted);font-weight:normal">(không bắt buộc)</small></span>
+                            <input type="text" name="dia_chi" value="<?= $escape($values['dia_chi']) ?>" maxlength="255" autocomplete="street-address" placeholder="Số nhà, tên đường, phường/xã, quận/huyện...">
+                            <?php if (isset($errors['dia_chi'])): ?><em class="booking-error"><?= $escape($errors['dia_chi']) ?></em><?php endif; ?>
+                        </label>
+                    </div>
+                    <label class="booking-field booking-field-wide">
+                        <span>Ghi chú chung cho đoàn</span>
+                        <textarea name="ghi_chu" rows="3" maxlength="500" placeholder="Yêu cầu phòng gần nhau, đón tại điểm hẹn, chế độ ăn uống riêng cho đoàn..."><?= $escape($values['ghi_chu']) ?></textarea>
+                        <?php if (isset($errors['ghi_chu'])): ?><em class="booking-error"><?= $escape($errors['ghi_chu']) ?></em><?php endif; ?>
+                    </label>
                 </section>
 
                 <div class="booking-submit-row">

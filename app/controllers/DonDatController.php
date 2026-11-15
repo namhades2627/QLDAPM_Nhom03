@@ -138,14 +138,28 @@ class DonDatController
         $csrfToken = $_SESSION['csrf_token'];
         $errors = [];
         $message = '';
+        $userPhone = '';
+        if (is_array($account)) {
+            $userPhone = (string) ($account['so_dien_thoai'] ?? '');
+            if ($userPhone === '' && !empty($account['id_tai_khoan'])) {
+                try {
+                    require_once __DIR__ . '/../models/tai_khoan.php';
+                    $accRow = (new TaiKhoanModel(getDatabaseConnection()))->findById((int) $account['id_tai_khoan']);
+                    if ($accRow && !empty($accRow['so_dien_thoai'])) {
+                        $userPhone = (string) $accRow['so_dien_thoai'];
+                    }
+                } catch (Throwable) {}
+            }
+        }
         $values = [
-            'ho_ten' => is_array($account) ? (string) $account['ho_ten'] : '',
-            'email' => is_array($account) ? (string) $account['email'] : '',
-            'so_dien_thoai' => '',
+            'ho_ten' => is_array($account) ? (string) ($account['ho_ten'] ?? '') : '',
+            'email' => is_array($account) ? (string) ($account['email'] ?? '') : '',
+            'so_dien_thoai' => $userPhone,
             'dia_chi' => '',
             'ghi_chu' => '',
         ];
-        $participants = [['ho_ten' => '', 'loai_khach' => 'nguoi_lon', 'gioi_tinh' => 'nam', 'ngay_sinh' => '', 'cccd' => '', 'ghi_chu' => '']];
+        $isFirstPassenger = true;
+        $participants = [['ho_ten' => $values['ho_ten'], 'loai_khach' => 'nguoi_lon', 'gioi_tinh' => 'nam', 'ngay_sinh' => '', 'cccd' => '', 'ghi_chu' => '']];
         // Lịch khởi hành do trang chi tiết tour truyền sang, biểu mẫu không cho chọn lại.
         $selectedId = $this->queryInteger('schedule');
 
@@ -159,6 +173,7 @@ class DonDatController
                 http_response_code(403);
                 $message = 'Phiên gửi biểu mẫu không hợp lệ. Vui lòng tải lại trang và thử lại.';
             } else {
+                $isFirstPassenger = !empty($_POST['is_first_passenger']);
                 $values = [
                     'ho_ten' => trim($this->input('ho_ten')),
                     'email' => strtolower(trim($this->input('email'))),
@@ -175,8 +190,8 @@ class DonDatController
                 if (strlen($values['email']) > 254 || !filter_var($values['email'], FILTER_VALIDATE_EMAIL)) {
                     $errors['email'] = 'Vui lòng nhập email đúng định dạng.';
                 }
-                if (!preg_match('/^\+?[0-9]{9,15}$/', $values['so_dien_thoai'])) {
-                    $errors['so_dien_thoai'] = 'Số điện thoại cần có từ 9 đến 15 chữ số.';
+                if (!preg_match('/^0[0-9]{9}$/', $values['so_dien_thoai'])) {
+                    $errors['so_dien_thoai'] = 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0 (định dạng Việt Nam).';
                 }
                 if (mb_strlen($values['dia_chi'], 'UTF-8') > 255) {
                     $errors['dia_chi'] = 'Địa chỉ tối đa 255 ký tự.';

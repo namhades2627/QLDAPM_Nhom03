@@ -1483,455 +1483,455 @@ document.addEventListener('DOMContentLoaded', () => {
     // Đánh số lại thứ tự, cập nhật name dạng passengers[index][field] và kiểm soát nút Xóa, nút Thêm
     function renumber() {
         const counts = { nguoi_lon: 0, tre_em: 0 };
-            const allRows = rows();
+        const allRows = rows();
 
-            allRows.forEach((row, index) => {
-                const type = typeOf(row);
-                counts[type] += 1;
+        allRows.forEach((row, index) => {
+            const type = typeOf(row);
+            counts[type] += 1;
 
-                // Nhãn hiển thị: Người lớn 1, Người lớn 2, Trẻ em 1...
-                const label = row.querySelector('[data-participant-label]');
-                if (label) {
-                    const labelText = `${type === 'tre_em' ? 'Trẻ em' : 'Người lớn'} ${counts[type]}`;
-                    label.textContent = labelText;
+            // Nhãn hiển thị: Người lớn 1, Người lớn 2, Trẻ em 1...
+            const label = row.querySelector('[data-participant-label]');
+            if (label) {
+                const labelText = `${type === 'tre_em' ? 'Trẻ em' : 'Người lớn'} ${counts[type]}`;
+                label.textContent = labelText;
+            }
+
+            // Đồng bộ tên input theo đúng mảng passengers[index][field] trong PHP
+            row.querySelectorAll('input, select').forEach(fieldEl => {
+                const fieldName = fieldEl.dataset.field;
+                if (fieldName) {
+                    fieldEl.name = `passengers[${index}][${fieldName}]`;
                 }
-
-                // Đồng bộ tên input theo đúng mảng passengers[index][field] trong PHP
-                row.querySelectorAll('input, select').forEach(fieldEl => {
-                    const fieldName = fieldEl.dataset.field;
-                    if (fieldName) {
-                        fieldEl.name = `passengers[${index}][${fieldName}]`;
-                    }
-                });
-
-                // Nút xóa: vô hiệu hóa ở Người lớn 1 vì bắt buộc có ít nhất 1 người lớn
-                const removeBtn = row.querySelector('[data-remove-participant]');
-                if (removeBtn) {
-                    const isAdult1 = (type === 'nguoi_lon' && counts.nguoi_lon === 1);
-                    removeBtn.disabled = isAdult1;
-                    if (isAdult1) {
-                        removeBtn.setAttribute('title', 'Người lớn 1 là bắt buộc, không thể xóa');
-                    } else {
-                        removeBtn.removeAttribute('title');
-                    }
-                }
-
-                // Kiểm tra độ tuổi theo ngày sinh đã nhập
-                validatePassengerAge(row);
             });
 
-            // Kiểm soát giới hạn chỗ còn lại của lịch khởi hành
-            const totalGuests = counts.nguoi_lon + counts.tre_em;
-            const remaining = Math.max(0, seatsLeft - totalGuests);
-            const limitReached = totalGuests >= seatsLeft || totalGuests >= 99;
-
-            form.querySelectorAll('[data-add-participant]').forEach(button => {
-                button.disabled = limitReached;
-                if (limitReached) {
-                    button.setAttribute('title', `Đã đạt giới hạn tối đa ${seatsLeft} chỗ của chuyến`);
+            // Nút xóa: vô hiệu hóa ở Người lớn 1 vì bắt buộc có ít nhất 1 người lớn
+            const removeBtn = row.querySelector('[data-remove-participant]');
+            if (removeBtn) {
+                const isAdult1 = (type === 'nguoi_lon' && counts.nguoi_lon === 1);
+                removeBtn.disabled = isAdult1;
+                if (isAdult1) {
+                    removeBtn.setAttribute('title', 'Người lớn 1 là bắt buộc, không thể xóa');
                 } else {
-                    button.removeAttribute('title');
+                    removeBtn.removeAttribute('title');
                 }
-            });
-
-            const seatsRemainingEl = form.querySelector('[data-seats-remaining]');
-            if (seatsRemainingEl) {
-                seatsRemainingEl.textContent = remaining;
             }
 
-            const seatsWarningEl = form.querySelector('[data-seats-warning]');
-            if (seatsWarningEl) {
-                seatsWarningEl.hidden = !limitReached;
-            }
+            // Kiểm tra độ tuổi theo ngày sinh đã nhập
+            validatePassengerAge(row);
+        });
 
-            return counts;
+        // Kiểm soát giới hạn chỗ còn lại của lịch khởi hành
+        const totalGuests = counts.nguoi_lon + counts.tre_em;
+        const remaining = Math.max(0, seatsLeft - totalGuests);
+        const limitReached = totalGuests >= seatsLeft || totalGuests >= 99;
+
+        form.querySelectorAll('[data-add-participant]').forEach(button => {
+            button.disabled = limitReached;
+            if (limitReached) {
+                button.setAttribute('title', `Đã đạt giới hạn tối đa ${seatsLeft} chỗ của chuyến`);
+            } else {
+                button.removeAttribute('title');
+            }
+        });
+
+        const seatsRemainingEl = form.querySelector('[data-seats-remaining]');
+        if (seatsRemainingEl) {
+            seatsRemainingEl.textContent = remaining;
         }
 
-                // Phần 3: Tính lại tổng tiền và áp dụng chiết khấu nhóm lên cột Tạm tính bên phải
-                function renderSummary(counts) {
-                    if (!summary) return;
-                    const adultPrice = Number(form.dataset.adultPrice || 0);
-                    const childPrice = Number(form.dataset.childPrice || 0);
+        const seatsWarningEl = form.querySelector('[data-seats-warning]');
+        if (seatsWarningEl) {
+            seatsWarningEl.hidden = !limitReached;
+        }
 
-                    const currentCounts = counts || {
-                        nguoi_lon: rows().filter(r => typeOf(r) !== 'tre_em').length,
-                        tre_em: rows().filter(r => typeOf(r) === 'tre_em').length
-                    };
-                    const adults = currentCounts.nguoi_lon;
-                    const children = currentCounts.tre_em;
+        return counts;
+    }
 
-                    const adultTotal = adults * adultPrice;
-                    const childTotal = children * childPrice;
-                    const subtotal = adultTotal + childTotal;
-                    const guests = adults + children;
+    // Phần 3: Tính lại tổng tiền và áp dụng chiết khấu nhóm lên cột Tạm tính bên phải
+    function renderSummary(counts) {
+        if (!summary) return;
+        const adultPrice = Number(form.dataset.adultPrice || 0);
+        const childPrice = Number(form.dataset.childPrice || 0);
 
-                    // Ưu đãi nhóm theo quy tắc OnTrip:
-                    // 1-4 khách: 0%
-                    // 5-9 khách: 5%
-                    // Từ 10 khách: 8%
-                    const rate = guests >= 10 ? 8 : (guests >= 5 ? 5 : 0);
-                    const discount = Math.round(subtotal * rate / 100);
-                    const totalPayment = subtotal - discount;
+        const currentCounts = counts || {
+            nguoi_lon: rows().filter(r => typeOf(r) !== 'tre_em').length,
+            tre_em: rows().filter(r => typeOf(r) === 'tre_em').length
+        };
+        const adults = currentCounts.nguoi_lon;
+        const children = currentCounts.tre_em;
 
-                    const setText = (selector, value) => {
-                        const el = summary.querySelector(selector);
-                        if (el) el.textContent = value;
-                    };
+        const adultTotal = adults * adultPrice;
+        const childTotal = children * childPrice;
+        const subtotal = adultTotal + childTotal;
+        const guests = adults + children;
 
-                    setText('[data-summary-adult-count]', adults);
-                    setText('[data-summary-adult-total]', money(adultTotal));
-                    setText('[data-summary-child-count]', children);
-                    setText('[data-summary-child-total]', money(childTotal));
+        // Ưu đãi nhóm theo quy tắc OnTrip:
+        // 1-4 khách: 0%
+        // 5-9 khách: 5%
+        // Từ 10 khách: 8%
+        const rate = guests >= 10 ? 8 : (guests >= 5 ? 5 : 0);
+        const discount = Math.round(subtotal * rate / 100);
+        const totalPayment = subtotal - discount;
 
-                    const childLine = summary.querySelector('[data-summary-child-line]');
-                    if (childLine) childLine.hidden = (children === 0);
+        const setText = (selector, value) => {
+            const el = summary.querySelector(selector);
+            if (el) el.textContent = value;
+        };
 
-                    setText('[data-summary-subtotal]', money(subtotal));
+        setText('[data-summary-adult-count]', adults);
+        setText('[data-summary-adult-total]', money(adultTotal));
+        setText('[data-summary-child-count]', children);
+        setText('[data-summary-child-total]', money(childTotal));
 
-                    const discountLine = summary.querySelector('[data-summary-discount-line]');
-                    if (discountLine) discountLine.hidden = (rate === 0);
-                    setText('[data-summary-discount-rate]', `${rate}%`);
-                    setText('[data-summary-discount-amount]', `−${money(discount)}`);
-                    setText('[data-summary-total]', money(totalPayment));
+        const childLine = summary.querySelector('[data-summary-child-line]');
+        if (childLine) childLine.hidden = (children === 0);
 
-                    // Bắn Custom Event để các listener bên ngoài (nếu có) nhận dữ liệu
-                    form.dispatchEvent(new CustomEvent('booking:summary-updated', {
-                        bubbles: true,
-                        detail: { adults, children, guests, subtotal, rate, discount, totalPayment }
-                    }));
+        setText('[data-summary-subtotal]', money(subtotal));
+
+        const discountLine = summary.querySelector('[data-summary-discount-line]');
+        if (discountLine) discountLine.hidden = (rate === 0);
+        setText('[data-summary-discount-rate]', `${rate}%`);
+        setText('[data-summary-discount-amount]', `−${money(discount)}`);
+        setText('[data-summary-total]', money(totalPayment));
+
+        // Bắn Custom Event để các listener bên ngoài (nếu có) nhận dữ liệu
+        form.dispatchEvent(new CustomEvent('booking:summary-updated', {
+            bubbles: true,
+            detail: { adults, children, guests, subtotal, rate, discount, totalPayment }
+        }));
+    }
+
+    // Bắt sự kiện thêm hành khách (+ Thêm người lớn / + Thêm trẻ em)
+    form.querySelectorAll('[data-add-participant]').forEach(button => {
+        button.addEventListener('click', () => {
+            const currentTotal = rows().length;
+            if (currentTotal >= seatsLeft || currentTotal >= 99) {
+                window.alert(`Lịch khởi hành này chỉ còn ${seatsLeft} chỗ trống.`);
+                return;
+            }
+
+            const type = button.dataset.addParticipant === 'tre_em' ? 'tre_em' : 'nguoi_lon';
+            const template = form.querySelector(`[data-participant-template="${type}"]`);
+            if (!template) return;
+
+            list.appendChild(template.content.cloneNode(true));
+            const newCounts = renumber();
+            renderSummary(newCounts);
+
+            const added = rows().pop();
+            const input = added && added.querySelector('[data-field="ho_ten"]');
+            if (input) input.focus();
+        });
+    });
+
+    // Bắt sự kiện xóa hành khách (vô hiệu hóa ở Người lớn 1)
+    list.addEventListener('click', event => {
+        const button = event.target.closest('[data-remove-participant]');
+        if (!button || button.disabled) return;
+        const row = button.closest('[data-participant]');
+        if (!row) return;
+
+        // Chặn xóa nếu là Người lớn 1
+        const allRows = rows();
+        const adultRows = allRows.filter(item => typeOf(item) !== 'tre_em');
+        if (typeOf(row) === 'nguoi_lon' && (row === adultRows[0] || adultRows.length <= 1)) {
+            return;
+        }
+
+        row.remove();
+        const newCounts = renumber();
+        renderSummary(newCounts);
+    });
+
+    // Bắt sự kiện thay đổi ngày sinh để validate độ tuổi tức thì
+    list.addEventListener('change', event => {
+        if (event.target.matches('[data-field="ngay_sinh"]')) {
+            const row = event.target.closest('[data-participant]');
+            if (row) validatePassengerAge(row);
+        }
+    });
+
+    // Phần 2: Đồng bộ 2 chiều giữa "Họ và tên người liên hệ" và "Người lớn 1" khi tick checkbox
+    const syncCheckbox = form.querySelector('[data-sync-passenger]');
+    const contactNameInput = form.querySelector('input[name="ho_ten"]');
+
+    function getFirstAdultNameInput() {
+        const firstAdultRow = form.querySelector('[data-participant][data-type="nguoi_lon"]');
+        return firstAdultRow ? firstAdultRow.querySelector('[data-field="ho_ten"]') : null;
+    }
+
+    function syncContactToFirstAdult() {
+        if (!syncCheckbox || !syncCheckbox.checked || !contactNameInput) return;
+        const adult1Input = getFirstAdultNameInput();
+        if (adult1Input && adult1Input.value !== contactNameInput.value) {
+            adult1Input.value = contactNameInput.value;
+        }
+    }
+
+    function syncFirstAdultToContact(e) {
+        if (!syncCheckbox || !syncCheckbox.checked || !contactNameInput) return;
+        const adult1Input = getFirstAdultNameInput();
+        if (adult1Input && e.target === adult1Input && contactNameInput.value !== adult1Input.value) {
+            contactNameInput.value = adult1Input.value;
+        }
+    }
+
+    if (syncCheckbox && contactNameInput) {
+        syncCheckbox.addEventListener('change', () => {
+            if (syncCheckbox.checked) {
+                const adult1Input = getFirstAdultNameInput();
+                if (contactNameInput.value.trim() !== '') {
+                    if (adult1Input) adult1Input.value = contactNameInput.value;
+                } else if (adult1Input && adult1Input.value.trim() !== '') {
+                    contactNameInput.value = adult1Input.value;
                 }
-
-                // Bắt sự kiện thêm hành khách (+ Thêm người lớn / + Thêm trẻ em)
-                form.querySelectorAll('[data-add-participant]').forEach(button => {
-                    button.addEventListener('click', () => {
-                        const currentTotal = rows().length;
-                        if (currentTotal >= seatsLeft || currentTotal >= 99) {
-                            window.alert(`Lịch khởi hành này chỉ còn ${seatsLeft} chỗ trống.`);
-                            return;
-                        }
-
-                        const type = button.dataset.addParticipant === 'tre_em' ? 'tre_em' : 'nguoi_lon';
-                        const template = form.querySelector(`[data-participant-template="${type}"]`);
-                        if (!template) return;
-
-                        list.appendChild(template.content.cloneNode(true));
-                        const newCounts = renumber();
-                        renderSummary(newCounts);
-
-                        const added = rows().pop();
-                        const input = added && added.querySelector('[data-field="ho_ten"]');
-                        if (input) input.focus();
-                    });
-                });
-
-                // Bắt sự kiện xóa hành khách (vô hiệu hóa ở Người lớn 1)
-                list.addEventListener('click', event => {
-                    const button = event.target.closest('[data-remove-participant]');
-                    if (!button || button.disabled) return;
-                    const row = button.closest('[data-participant]');
-                    if (!row) return;
-
-                    // Chặn xóa nếu là Người lớn 1
-                    const allRows = rows();
-                    const adultRows = allRows.filter(item => typeOf(item) !== 'tre_em');
-                    if (typeOf(row) === 'nguoi_lon' && (row === adultRows[0] || adultRows.length <= 1)) {
-                        return;
-                    }
-
-                    row.remove();
-                    const newCounts = renumber();
-                    renderSummary(newCounts);
-                });
-
-                // Bắt sự kiện thay đổi ngày sinh để validate độ tuổi tức thì
-                list.addEventListener('change', event => {
-                    if (event.target.matches('[data-field="ngay_sinh"]')) {
-                        const row = event.target.closest('[data-participant]');
-                        if (row) validatePassengerAge(row);
-                    }
-                });
-
-                // Phần 2: Đồng bộ 2 chiều giữa "Họ và tên người liên hệ" và "Người lớn 1" khi tick checkbox
-                const syncCheckbox = form.querySelector('[data-sync-passenger]');
-                const contactNameInput = form.querySelector('input[name="ho_ten"]');
-
-                function getFirstAdultNameInput() {
-                    const firstAdultRow = form.querySelector('[data-participant][data-type="nguoi_lon"]');
-                    return firstAdultRow ? firstAdultRow.querySelector('[data-field="ho_ten"]') : null;
-                }
-
-                function syncContactToFirstAdult() {
-                    if (!syncCheckbox || !syncCheckbox.checked || !contactNameInput) return;
-                    const adult1Input = getFirstAdultNameInput();
-                    if (adult1Input && adult1Input.value !== contactNameInput.value) {
-                        adult1Input.value = contactNameInput.value;
-                    }
-                }
-
-                function syncFirstAdultToContact(e) {
-                    if (!syncCheckbox || !syncCheckbox.checked || !contactNameInput) return;
-                    const adult1Input = getFirstAdultNameInput();
-                    if (adult1Input && e.target === adult1Input && contactNameInput.value !== adult1Input.value) {
-                        contactNameInput.value = adult1Input.value;
-                    }
-                }
-
-                if (syncCheckbox && contactNameInput) {
-                    syncCheckbox.addEventListener('change', () => {
-                        if (syncCheckbox.checked) {
-                            const adult1Input = getFirstAdultNameInput();
-                            if (contactNameInput.value.trim() !== '') {
-                                if (adult1Input) adult1Input.value = contactNameInput.value;
-                            } else if (adult1Input && adult1Input.value.trim() !== '') {
-                                contactNameInput.value = adult1Input.value;
-                            }
-                        }
-                    });
-
-                    // Khi người dùng gõ vào ô Họ và tên ở Phần 2 -> tự động đồng bộ sang Người lớn 1 ở Phần 1
-                    contactNameInput.addEventListener('input', syncContactToFirstAdult);
-
-                    // Khi người dùng gõ vào ô Họ và tên của Người lớn 1 ở Phần 1 -> tự động đồng bộ ngược lại Phần 2
-                    list.addEventListener('input', syncFirstAdultToContact);
-
-                    // Khởi tạo ban đầu nếu checkbox đã được tích sẵn
-                    if (syncCheckbox.checked) {
-                        syncContactToFirstAdult();
-                    }
-                }
-
-                // Validate số điện thoại định dạng 10 số VN (bắt đầu bằng số 0)
-                const phoneInput = form.querySelector('input[name="so_dien_thoai"]');
-                if (phoneInput) {
-                    const validatePhone = () => {
-                        const val = phoneInput.value.trim();
-                        const vnPhoneRegex = /^0[0-9]{9}$/;
-                        if (val === '') {
-                            phoneInput.setCustomValidity('Vui lòng nhập số điện thoại.');
-                        } else if (!vnPhoneRegex.test(val)) {
-                            phoneInput.setCustomValidity('Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0 (ví dụ: 0912345678).');
-                        } else {
-                            phoneInput.setCustomValidity('');
-                        }
-                    };
-                    phoneInput.addEventListener('input', validatePhone);
-                    phoneInput.addEventListener('blur', validatePhone);
-                }
-
-                renumber();
-                renderSummary();
-            });
-
-        // Native details giu chuong thong bao hoat dong khi khong co JavaScript.
-        document.addEventListener('DOMContentLoaded', () => {
-            const notifications = document.querySelector('.customer-notifications');
-            if (!notifications) return;
-            document.addEventListener('click', event => {
-                if (!notifications.contains(event.target)) notifications.open = false;
-            });
-            document.addEventListener('keydown', event => {
-                if (event.key === 'Escape' && notifications.open) {
-                    notifications.open = false;
-                    notifications.querySelector('summary').focus();
-                }
-            });
+            }
         });
 
+        // Khi người dùng gõ vào ô Họ và tên ở Phần 2 -> tự động đồng bộ sang Người lớn 1 ở Phần 1
+        contactNameInput.addEventListener('input', syncContactToFirstAdult);
 
-        // Trang Lien he: tuong tac muot ma cho cac the chu de tu van
-        document.addEventListener('DOMContentLoaded', () => {
-            const contactForm = document.querySelector('.contact-form');
-            if (!contactForm) return;
+        // Khi người dùng gõ vào ô Họ và tên của Người lớn 1 ở Phần 1 -> tự động đồng bộ ngược lại Phần 2
+        list.addEventListener('input', syncFirstAdultToContact);
 
-            const topicPills = contactForm.querySelectorAll('.topic-pill');
-            topicPills.forEach(pill => {
-                const radio = pill.querySelector('input[type="radio"]');
-                if (!radio) return;
-                radio.addEventListener('change', () => {
-                    topicPills.forEach(p => p.classList.remove('is-active'));
-                    if (radio.checked) pill.classList.add('is-active');
-                });
-            });
+        // Khởi tạo ban đầu nếu checkbox đã được tích sẵn
+        if (syncCheckbox.checked) {
+            syncContactToFirstAdult();
+        }
+    }
+
+    // Validate số điện thoại định dạng 10 số VN (bắt đầu bằng số 0)
+    const phoneInput = form.querySelector('input[name="so_dien_thoai"]');
+    if (phoneInput) {
+        const validatePhone = () => {
+            const val = phoneInput.value.trim();
+            const vnPhoneRegex = /^0[0-9]{9}$/;
+            if (val === '') {
+                phoneInput.setCustomValidity('Vui lòng nhập số điện thoại.');
+            } else if (!vnPhoneRegex.test(val)) {
+                phoneInput.setCustomValidity('Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0 (ví dụ: 0912345678).');
+            } else {
+                phoneInput.setCustomValidity('');
+            }
+        };
+        phoneInput.addEventListener('input', validatePhone);
+        phoneInput.addEventListener('blur', validatePhone);
+    }
+
+    renumber();
+    renderSummary();
+});
+
+// Native details giu chuong thong bao hoat dong khi khong co JavaScript.
+document.addEventListener('DOMContentLoaded', () => {
+    const notifications = document.querySelector('.customer-notifications');
+    if (!notifications) return;
+    document.addEventListener('click', event => {
+        if (!notifications.contains(event.target)) notifications.open = false;
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && notifications.open) {
+            notifications.open = false;
+            notifications.querySelector('summary').focus();
+        }
+    });
+});
+
+
+// Trang Lien he: tuong tac muot ma cho cac the chu de tu van
+document.addEventListener('DOMContentLoaded', () => {
+    const contactForm = document.querySelector('.contact-form');
+    if (!contactForm) return;
+
+    const topicPills = contactForm.querySelectorAll('.topic-pill');
+    topicPills.forEach(pill => {
+        const radio = pill.querySelector('input[type="radio"]');
+        if (!radio) return;
+        radio.addEventListener('change', () => {
+            topicPills.forEach(p => p.classList.remove('is-active'));
+            if (radio.checked) pill.classList.add('is-active');
         });
+    });
+});
 
 
-        // Trang Lien he: slider banner rieng biet (hoan toan doc lap voi trang chu, chuyen slide sau 7s)
-        document.addEventListener('DOMContentLoaded', () => {
-            const slider = document.querySelector('.contact-slider');
-            if (!slider) return;
+// Trang Lien he: slider banner rieng biet (hoan toan doc lap voi trang chu, chuyen slide sau 7s)
+document.addEventListener('DOMContentLoaded', () => {
+    const slider = document.querySelector('.contact-slider');
+    if (!slider) return;
 
-            const slides = [...slider.querySelectorAll('.contact-slider-slide')];
-            const dots = [...slider.querySelectorAll('.contact-slider-dot')];
-            const prevBtn = slider.querySelector('.contact-slider-prev');
-            const nextBtn = slider.querySelector('.contact-slider-next');
-            if (!slides.length) return;
+    const slides = [...slider.querySelectorAll('.contact-slider-slide')];
+    const dots = [...slider.querySelectorAll('.contact-slider-dot')];
+    const prevBtn = slider.querySelector('.contact-slider-prev');
+    const nextBtn = slider.querySelector('.contact-slider-next');
+    if (!slides.length) return;
 
-            const INTERVAL = 7000;
-            let current = 0;
-            let timer = null;
-            let isHovered = false;
+    const INTERVAL = 7000;
+    let current = 0;
+    let timer = null;
+    let isHovered = false;
 
-            function goTo(index) {
-                current = (index + slides.length) % slides.length;
-                slides.forEach((slide, i) => {
-                    const active = i === current;
-                    slide.classList.toggle('is-active', active);
-                    slide.setAttribute('aria-hidden', String(!active));
-                });
-                dots.forEach((dot, i) => {
-                    const active = i === current;
-                    dot.classList.toggle('is-active', active);
-                    dot.setAttribute('aria-current', String(active));
-                });
-            }
+    function goTo(index) {
+        current = (index + slides.length) % slides.length;
+        slides.forEach((slide, i) => {
+            const active = i === current;
+            slide.classList.toggle('is-active', active);
+            slide.setAttribute('aria-hidden', String(!active));
+        });
+        dots.forEach((dot, i) => {
+            const active = i === current;
+            dot.classList.toggle('is-active', active);
+            dot.setAttribute('aria-current', String(active));
+        });
+    }
 
-            function resetTimer() {
-                clearInterval(timer);
-                if (!isHovered && !document.hidden) {
-                    timer = setInterval(() => goTo(current + 1), INTERVAL);
-                }
-            }
+    function resetTimer() {
+        clearInterval(timer);
+        if (!isHovered && !document.hidden) {
+            timer = setInterval(() => goTo(current + 1), INTERVAL);
+        }
+    }
 
-            if (prevBtn) {
-                prevBtn.addEventListener('click', () => {
-                    goTo(current - 1);
-                    resetTimer();
-                });
-            }
-
-            if (nextBtn) {
-                nextBtn.addEventListener('click', () => {
-                    goTo(current + 1);
-                    resetTimer();
-                });
-            }
-
-            dots.forEach((dot, index) => {
-                dot.addEventListener('click', () => {
-                    goTo(index);
-                    resetTimer();
-                });
-            });
-
-            slider.addEventListener('mouseenter', () => {
-                isHovered = true;
-                resetTimer();
-            });
-
-            slider.addEventListener('mouseleave', () => {
-                isHovered = false;
-                resetTimer();
-            });
-
-            document.addEventListener('visibilitychange', resetTimer);
-
-            goTo(0);
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            goTo(current - 1);
             resetTimer();
         });
+    }
 
-        // Tính năng Đánh giá tour (Review & Rating System)
-        document.addEventListener('DOMContentLoaded', () => {
-            // 1. Phản hồi nhãn đánh giá sao tương tác
-            const starPicker = document.querySelector('.rating-stars-input');
-            const feedbackText = document.getElementById('rating-text-feedback');
-            const starLabels = {
-                '5': 'Tuyệt vời',
-                '4': 'Rất tốt',
-                '3': 'Bình thường',
-                '2': 'Tạm được',
-                '1': 'Chưa hài lòng'
-            };
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            goTo(current + 1);
+            resetTimer();
+        });
+    }
 
-            if (starPicker && feedbackText) {
-                const getCheckedValue = () => {
-                    const checked = starPicker.querySelector('input[name="so_sao"]:checked');
-                    return checked ? checked.value : '5';
-                };
+    dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+            goTo(index);
+            resetTimer();
+        });
+    });
 
-                starPicker.querySelectorAll('label').forEach(label => {
-                    label.addEventListener('mouseenter', () => {
-                        const inputId = label.getAttribute('for');
-                        const radio = document.getElementById(inputId);
-                        if (radio && starLabels[radio.value]) {
-                            feedbackText.textContent = starLabels[radio.value];
-                        }
-                    });
-                });
+    slider.addEventListener('mouseenter', () => {
+        isHovered = true;
+        resetTimer();
+    });
 
-                starPicker.addEventListener('mouseleave', () => {
-                    const val = getCheckedValue();
-                    feedbackText.textContent = starLabels[val] || 'Tuyệt vời';
-                });
+    slider.addEventListener('mouseleave', () => {
+        isHovered = false;
+        resetTimer();
+    });
 
-                starPicker.querySelectorAll('input[name="so_sao"]').forEach(radio => {
-                    radio.addEventListener('change', () => {
-                        feedbackText.textContent = starLabels[radio.value] || 'Tuyệt vời';
-                    });
-                });
-            }
+    document.addEventListener('visibilitychange', resetTimer);
 
-            // 2. Cuộn mượt đến form đánh giá khi click "Viết đánh giá" / "Sửa đánh giá"
-            document.querySelectorAll('.review-btn-scroll').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const targetId = btn.getAttribute('href');
-                    if (targetId && targetId.startsWith('#')) {
-                        const targetEl = document.querySelector(targetId);
-                        if (targetEl) {
-                            e.preventDefault();
-                            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            const textarea = targetEl.querySelector('textarea');
-                            if (textarea) setTimeout(() => textarea.focus(), 400);
-                        }
-                    }
-                });
-            });
+    goTo(0);
+    resetTimer();
+});
 
-            // 3. Xác nhận xóa đánh giá
-            const deleteBtn = document.getElementById('btn-delete-review');
-            const deleteForm = document.getElementById('delete-review-form');
-            if (deleteBtn && deleteForm) {
-                deleteBtn.addEventListener('click', () => {
-                    if (confirm('Bạn có chắc chắn muốn xóa đánh giá của mình không?')) {
-                        deleteForm.submit();
-                    }
-                });
-            }
+// Tính năng Đánh giá tour (Review & Rating System)
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Phản hồi nhãn đánh giá sao tương tác
+    const starPicker = document.querySelector('.rating-stars-input');
+    const feedbackText = document.getElementById('rating-text-feedback');
+    const starLabels = {
+        '5': 'Tuyệt vời',
+        '4': 'Rất tốt',
+        '3': 'Bình thường',
+        '2': 'Tạm được',
+        '1': 'Chưa hài lòng'
+    };
 
-            // 4. Lọc đánh giá theo số sao (client-side)
-            const filterPills = document.querySelectorAll('#review-filters .review-pill-btn');
-            const reviewItems = document.querySelectorAll('#review-items-wrapper .review-item');
-            const emptyNotice = document.getElementById('review-filter-empty');
+    if (starPicker && feedbackText) {
+        const getCheckedValue = () => {
+            const checked = starPicker.querySelector('input[name="so_sao"]:checked');
+            return checked ? checked.value : '5';
+        };
 
-            function applyStarFilter(filterVal) {
-                filterPills.forEach(p => p.classList.toggle('is-active', p.dataset.filter === filterVal));
-                let visibleCount = 0;
-                reviewItems.forEach(item => {
-                    const stars = item.dataset.stars;
-                    const match = (filterVal === 'all' || stars === filterVal);
-                    item.style.display = match ? '' : 'none';
-                    if (match) visibleCount++;
-                });
-
-                if (emptyNotice) {
-                    emptyNotice.style.display = (visibleCount === 0 && reviewItems.length > 0) ? 'block' : 'none';
+        starPicker.querySelectorAll('label').forEach(label => {
+            label.addEventListener('mouseenter', () => {
+                const inputId = label.getAttribute('for');
+                const radio = document.getElementById(inputId);
+                if (radio && starLabels[radio.value]) {
+                    feedbackText.textContent = starLabels[radio.value];
                 }
-            }
-
-            filterPills.forEach(pill => {
-                pill.addEventListener('click', () => {
-                    applyStarFilter(pill.dataset.filter || 'all');
-                });
-            });
-
-            // Cho phép click vào từng thanh tỷ lệ sao để lọc
-            document.querySelectorAll('.rating-bar-row[data-star-filter]').forEach(row => {
-                row.addEventListener('click', () => {
-                    const star = row.dataset.starFilter;
-                    applyStarFilter(star);
-                    const reviewListSection = document.querySelector('.reviews-list-container');
-                    if (reviewListSection) {
-                        reviewListSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                });
             });
         });
+
+        starPicker.addEventListener('mouseleave', () => {
+            const val = getCheckedValue();
+            feedbackText.textContent = starLabels[val] || 'Tuyệt vời';
+        });
+
+        starPicker.querySelectorAll('input[name="so_sao"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                feedbackText.textContent = starLabels[radio.value] || 'Tuyệt vời';
+            });
+        });
+    }
+
+    // 2. Cuộn mượt đến form đánh giá khi click "Viết đánh giá" / "Sửa đánh giá"
+    document.querySelectorAll('.review-btn-scroll').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const targetId = btn.getAttribute('href');
+            if (targetId && targetId.startsWith('#')) {
+                const targetEl = document.querySelector(targetId);
+                if (targetEl) {
+                    e.preventDefault();
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const textarea = targetEl.querySelector('textarea');
+                    if (textarea) setTimeout(() => textarea.focus(), 400);
+                }
+            }
+        });
+    });
+
+    // 3. Xác nhận xóa đánh giá
+    const deleteBtn = document.getElementById('btn-delete-review');
+    const deleteForm = document.getElementById('delete-review-form');
+    if (deleteBtn && deleteForm) {
+        deleteBtn.addEventListener('click', () => {
+            if (confirm('Bạn có chắc chắn muốn xóa đánh giá của mình không?')) {
+                deleteForm.submit();
+            }
+        });
+    }
+
+    // 4. Lọc đánh giá theo số sao (client-side)
+    const filterPills = document.querySelectorAll('#review-filters .review-pill-btn');
+    const reviewItems = document.querySelectorAll('#review-items-wrapper .review-item');
+    const emptyNotice = document.getElementById('review-filter-empty');
+
+    function applyStarFilter(filterVal) {
+        filterPills.forEach(p => p.classList.toggle('is-active', p.dataset.filter === filterVal));
+        let visibleCount = 0;
+        reviewItems.forEach(item => {
+            const stars = item.dataset.stars;
+            const match = (filterVal === 'all' || stars === filterVal);
+            item.style.display = match ? '' : 'none';
+            if (match) visibleCount++;
+        });
+
+        if (emptyNotice) {
+            emptyNotice.style.display = (visibleCount === 0 && reviewItems.length > 0) ? 'block' : 'none';
+        }
+    }
+
+    filterPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            applyStarFilter(pill.dataset.filter || 'all');
+        });
+    });
+
+    // Cho phép click vào từng thanh tỷ lệ sao để lọc
+    document.querySelectorAll('.rating-bar-row[data-star-filter]').forEach(row => {
+        row.addEventListener('click', () => {
+            const star = row.dataset.starFilter;
+            applyStarFilter(star);
+            const reviewListSection = document.querySelector('.reviews-list-container');
+            if (reviewListSection) {
+                reviewListSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+});

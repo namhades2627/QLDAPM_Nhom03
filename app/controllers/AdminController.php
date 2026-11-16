@@ -86,7 +86,7 @@ class AdminController
     public function index(string $section = 'dashboard'): void
     {
         header('Cache-Control: no-store');
-        $methods = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours', 'lich_khoi_hanh'], true) ? ['GET', 'POST'] : ['GET'];
+        $methods = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours', 'lich_khoi_hanh', 'yeu_cau_tu_van', 'danh_gia'], true) ? ['GET', 'POST'] : ['GET'];
         if (!in_array($_SERVER['REQUEST_METHOD'], $methods, true)) {
             http_response_code(405);
             header('Allow: ' . implode(', ', $methods));
@@ -110,7 +110,7 @@ class AdminController
         $roleName = $account['vai_tro'] === 'admin' ? 'Quản trị viên' : 'Nhân viên';
         $csrfToken = $_SESSION['csrf_token'];
         $avatarUrl = self::avatarUrl($account['hinh_anh'] ?? null);
-        $adminSection = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours', 'lich_khoi_hanh'], true) ? $section : 'dashboard';
+        $adminSection = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours', 'lich_khoi_hanh', 'yeu_cau_tu_van', 'danh_gia'], true) ? $section : 'dashboard';
         if ($adminSection === 'tours') {
             (new AdminTourController())->index($account, $roleName, $csrfToken);
             return;
@@ -125,6 +125,10 @@ class AdminController
         }
         if ($adminSection === 'orders') {
             $this->donDat($account, $roleName, $csrfToken);
+            return;
+        }
+        if ($adminSection === 'yeu_cau_tu_van') {
+            (new YeuCauTuVanController())->index($account, $roleName, $csrfToken);
             return;
         }
         if ($adminSection === 'danh_gia') {

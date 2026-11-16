@@ -9,7 +9,7 @@
  */
 $adminSection = $adminSection ?? 'dashboard';
 $avatarUrl = $avatarUrl ?? '';
-$adminTitle = ['dashboard' => 'Bảng điều khiển', 'orders' => 'Quản lý đơn đặt', 'accounts' => 'Quản lý tài khoản', 'customers' => 'Quản lý khách hàng', 'danh_muc' => 'Quản lý danh mục', 'tours' => 'Quản lý tour', 'schedules' => 'Lịch khởi hành', 'profile' => 'Hồ sơ cá nhân', 'password' => 'Đổi mật khẩu'][$adminSection] ?? 'Bảng điều khiển';
+$adminTitle = ['dashboard' => 'Bảng điều khiển', 'orders' => 'Quản lý đơn đặt', 'accounts' => 'Quản lý tài khoản', 'customers' => 'Quản lý khách hàng', 'danh_muc' => 'Quản lý danh mục', 'tours' => 'Quản lý tour', 'schedules' => 'Lịch khởi hành', 'yeu_cau_tu_van' => 'Yêu cầu tư vấn', 'danh_gia' => 'Quản lý bình luận', 'profile' => 'Hồ sơ cá nhân', 'password' => 'Đổi mật khẩu'][$adminSection] ?? 'Bảng điều khiển';
 $escape = static function ($value): string { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); };
 ?>
 <!doctype html>

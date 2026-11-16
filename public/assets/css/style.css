@@ -675,6 +675,42 @@ select {
     gap: 8px;
     z-index: 5;
 }
+.group-offer-intro h3 { font-size: 15px; line-height: 1.6; }
+.group-offer-intro p { font-size: 12px; color: #74665d; margin-top: 6px; }
+.group-offer-tier { border-left: 1px solid #e8cbb8; padding-left: 24px; }
+.group-offer-tier span { display: block; font-size: 12px; }
+.group-offer-tier strong { display: block; font-size: 22px; line-height: 1.5; color: var(--orange-dark); }
+.group-offer-note { grid-column: 1 / -1; font-size: 11px; color: #70675f; line-height: 1.7; }
+.tour-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; }
+.tour-card { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--panel-bg); transition: box-shadow .2s, border-color .2s; }
+.tour-card:hover { border-color: #ccd3da; box-shadow: 0 8px 24px #17212b0c; }
+.tour-image-wrap { height: 202px; position: relative; overflow: hidden; background: #eee9e2; }
+.tour-image-wrap > img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+.tour-card:hover .tour-image-wrap > img { transform: scale(1.025); }
+.image-caption { position: absolute; top: 62%; left: 50%; transform: translate(-50%, -50%); font-size: 10px; color: #81786d; white-space: nowrap; }
+.tour-duration { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: center; gap: 6px; background: #fffffff5; border-radius: 6px; padding: 6px 9px; font-size: 11px; color: var(--ink); font-weight: 500; }
+.tour-duration .icon { width: 13px; height: 13px; }
+.tour-body { padding: 21px 19px 18px; }
+.tour-place { font-size: 11px; font-weight: 600; letter-spacing: .25px; color: var(--orange-dark); margin-bottom: 9px; }
+.tour-body h3 { font-size: 16px; line-height: 1.6; min-height: 77px; margin-bottom: 14px; letter-spacing: -.3px; }
+.tour-meta { display: flex; gap: 7px; align-items: center; color: var(--muted); font-size: 12px; margin-top: 7px; }
+.tour-meta .icon { width: 14px; height: 14px; }
+.tour-bottom { border-top: 1px solid var(--line); margin-top: 17px; padding-top: 13px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tour-bottom > div > span { font-size: 11px; color: var(--muted); }
+.tour-bottom p { line-height: 1.6; color: var(--orange-dark); font-variant-numeric: tabular-nums; }
+.tour-bottom strong { font-size: 21px; letter-spacing: -.7px; font-weight: 650; }
+.tour-bottom p > span { font-size: 13px; }
+.tour-detail { height: 38px; width: 38px; border-radius: 8px; border: 1px solid #ebd8cd; display: grid; place-items: center; color: var(--orange-dark); background: var(--panel-bg); flex-shrink: 0; }
+.tour-detail:hover { background: var(--orange-light); }
+.tour-detail .icon { width: 17px; }
+.sample-note { font-size: 11px; color: var(--muted); margin-top: 18px; }
+.home-card-badge { position:absolute; top:12px; left:12px; max-width:calc(100% - 24px); padding:6px 9px; border-radius:6px; background:#fffffff5; color:#4c473f; font-size:11px; font-weight:500; line-height:1.6; }
+.badge-promo { background:#fff1e8; color:var(--orange-dark); }
+.promo-old-price { display:block; color:#727c88; font-size:12px; line-height:1.7; font-variant-numeric:tabular-nums; }
+.promo-discount-tag { display:inline-block; margin-left:4px; padding:1px 5px; font-size:11px; font-weight:700; color:#d9381e; background:#ffeae8; border-radius:4px; vertical-align:middle; line-height:1.3; }
+.promo-sale-price { font-variant-numeric:tabular-nums; }
+.seasonal-section { border-top:1px solid var(--line); }
+.promo-section { background:var(--surface); border-top:1px solid var(--line); }
 
 .hero-dot {
     position: relative;

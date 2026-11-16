@@ -43,10 +43,13 @@ class HomeController
         // Nhận diện tháng thực tế của hệ thống (ví dụ: tháng 11 - cuối thu, chớm đông miền Bắc; hoặc tháng 10 - mùa thu lúa chín)
         $currentMonth = (int) date('n');
         $seasonInfo = $this->detectSeason($currentMonth);
-        $seasonalTours = $this->filterSeasonalTours($allPublishedTours, $seasonInfo);
+        $featuredIds = array_column($featuredTours, 'id');
+        $seasonalTours = $this->filterSeasonalTours($allPublishedTours, $seasonInfo, $featuredIds);
 
         // 2. TOUR KHUYẾN MÃI HÔM NAY (Hot Deals / Best Discounts)
-        $promoTours = $this->buildPromoTours($allPublishedTours);
+        // Loại trừ các tour đã xuất hiện ở tour nổi bật và tour theo mùa để tránh trùng lặp trên trang chủ
+        $excludePromoIds = array_merge($featuredIds, array_column($seasonalTours, 'id'));
+        $promoTours = $this->buildPromoTours($allPublishedTours, $excludePromoIds);
 
         // Bộ ảnh khám phá riêng; tên, ID và số tour vẫn lấy từ database.
         $destinationImages = [
@@ -104,6 +107,7 @@ class HomeController
         // Mùa đông & săn mây tuyết rơi (Tháng 12 - 2)
         if (in_array($month, [12, 1, 2], true)) {
             return [
+                'key'         => 'dong',
                 'title'       => 'Tour Mùa Đông Săn Mây & Nghỉ Dưỡng Ấm Áp',
                 'eyebrow'     => 'CHẠM MÂY BỒNG BỀNH · TRẢI NGHIỆM ĐẶC BIỆT',
                 'subtitle'    => "Tháng $month với cái lạnh ngọt ngào tại Fansipan, sương sớm Sa Pa hoặc tránh rét tại các thiên đường biển miền Nam.",
@@ -116,6 +120,7 @@ class HomeController
         // Mùa hè biển đảo (Tháng 5 - 8)
         if (in_array($month, [5, 6, 7, 8], true)) {
             return [
+                'key'         => 'ha',
                 'title'       => 'Tour Mùa Hè Rực Rỡ & Thiên Đường Biển Đảo',
                 'eyebrow'     => 'BIỂN XANH CÁT TRẮNG · NẮNG VÀNG',
                 'subtitle'    => "Tháng $month sóng êm biển lặng, thời điểm vàng để chèo kayak, lặn ngắm san hô và nạp lại năng lượng bên bờ biển.",
@@ -127,6 +132,7 @@ class HomeController
 
         // Mùa xuân (Tháng 3 - 4)
         return [
+            'key'         => 'xuan',
             'title'       => 'Tour Du Xuân Trẩy Hội & Muôn Hoa Đua Sắc',
             'eyebrow'     => 'XUÂN TƯƠI MÁT · KHỞI ĐẦU BÌNH AN',
             'subtitle'    => "Tiết xuân tháng $month mát dịu, muôn hoa khoe sắc, lý tưởng cho những chuyến hành hương chiêm bái và du xuân gia đình.",
@@ -137,12 +143,13 @@ class HomeController
     }
 
     /**
-     * Lọc và sắp xếp 4 tour hợp mùa nhất
+     * Lọc và sắp xếp 4 tour hợp mùa nhất, ưu tiên loại trừ các tour đã hiển thị ở phần trước
      */
-    private function filterSeasonalTours(array $allTours, array $seasonInfo): array
+    private function filterSeasonalTours(array $allTours, array $seasonInfo, array $excludeIds = []): array
     {
         $seasonCode = $seasonInfo['key'] ?? 'thu';
         $filtered = [];
+        $fallback = [];
         foreach ($allTours as $tour) {
             $score = 0;
             // Ưu tiên đọc trực tiếp mùa vụ từ CSDL
@@ -154,19 +161,35 @@ class HomeController
             if ($score > 0) {
                 $tour['season_score'] = $score;
                 $tour['season_badge'] = $seasonInfo['badge'];
-                $filtered[] = $tour;
+                if (in_array($tour['id'], $excludeIds, true)) {
+                    $fallback[] = $tour;
+                } else {
+                    $filtered[] = $tour;
+                }
             }
         }
         usort($filtered, static fn($a, $b) => ($b['season_score'] ?? 0) <=> ($a['season_score'] ?? 0));
+        usort($fallback, static fn($a, $b) => ($b['season_score'] ?? 0) <=> ($a['season_score'] ?? 0));
+
+        // Nếu danh sách không trùng lặp chưa đủ 4 tour thì bổ sung từ fallback
+        if (count($filtered) < 4) {
+            foreach ($fallback as $fb) {
+                $filtered[] = $fb;
+                if (count($filtered) >= 4) break;
+            }
+        }
+
         return array_slice($filtered, 0, 4);
     }
 
     /**
-     * Tuyển chọn 4 tour khuyến mãi đặc biệt trong ngày với giá ưu đãi và phần trăm giảm
+     * Tuyển chọn 4 tour khuyến mãi đặc biệt trong ngày với giá ưu đãi và phần trăm giảm,
+     * ưu tiên các tour chưa xuất hiện ở các khối phía trên
      */
-    private function buildPromoTours(array $allTours): array
+    private function buildPromoTours(array $allTours, array $excludeIds = []): array
     {
         $promos = [];
+        $fallback = [];
         foreach ($allTours as $tour) {
             $discountPercent = (int) ($tour['discount_percent'] ?? 0);
             if ($discountPercent > 0 && $tour['price'] !== null) {
@@ -176,13 +199,26 @@ class HomeController
                     'tag'       => !empty($tour['promo_tag']) ? $tour['promo_tag'] : "Giảm −{$discountPercent}%",
                     'old_price' => $originalPrice,
                 ];
-                $promos[] = $tour;
+                if (in_array($tour['id'], $excludeIds, true)) {
+                    $fallback[] = $tour;
+                } else {
+                    $promos[] = $tour;
+                }
             }
         }
         // Ưu tiên tour có phần trăm giảm giá cao nhất lên trước
         usort($promos, static fn($a, $b) => ($b['promo']['percent'] ?? 0) <=> ($a['promo']['percent'] ?? 0));
+        usort($fallback, static fn($a, $b) => ($b['promo']['percent'] ?? 0) <=> ($a['promo']['percent'] ?? 0));
 
-        // Nếu chưa đủ 4 tour thì bổ sung các tour có giá thấp nhất
+        // Nếu chưa đủ 4 tour thì bổ sung từ fallback (các tour giảm giá đã ở mục khác)
+        if (count($promos) < 4) {
+            foreach ($fallback as $fb) {
+                $promos[] = $fb;
+                if (count($promos) >= 4) break;
+            }
+        }
+
+        // Nếu vẫn chưa đủ 4 tour thì bổ sung các tour có giá thấp nhất chưa nằm trong promos
         if (count($promos) < 4) {
             $sortedByPrice = $allTours;
             usort($sortedByPrice, static fn($a, $b) => ($a['price'] ?? PHP_INT_MAX) <=> ($b['price'] ?? PHP_INT_MAX));

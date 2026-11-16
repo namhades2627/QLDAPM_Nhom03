@@ -191,7 +191,7 @@ $banners = [
                             <div class="tour-bottom">
                                 <div>
                                     <?php if ($hasDiscount && $oldPrice): ?>
-                                        <span class="promo-old-price"><del><?= number_format($oldPrice, 0, ',', '.') ?> ₫</del></span>
+                                        <span class="promo-old-price"><del><?= number_format($oldPrice, 0, ',', '.') ?> ₫</del><span class="promo-discount-tag">-<?= (int) $tour['discount_percent'] ?>%</span></span>
                                     <?php else: ?>
                                         <span>Giá từ / người lớn</span>
                                     <?php endif; ?>
@@ -267,7 +267,7 @@ $banners = [
                             <div class="tour-bottom">
                                 <div>
                                     <?php if ($hasDiscount && $oldPrice): ?>
-                                        <span class="promo-old-price"><del><?= number_format($oldPrice, 0, ',', '.') ?> ₫</del></span>
+                                        <span class="promo-old-price"><del><?= number_format($oldPrice, 0, ',', '.') ?> ₫</del><span class="promo-discount-tag">-<?= (int) $tour['discount_percent'] ?>%</span></span>
                                     <?php else: ?>
                                         <span>Giá từ / người lớn</span>
                                     <?php endif; ?>
@@ -339,7 +339,7 @@ $banners = [
                             <div class="tour-bottom">
                                 <div>
                                     <?php if (!empty($tour['promo']['old_price'])): ?>
-                                        <span class="promo-old-price"><del><?= number_format($tour['promo']['old_price'], 0, ',', '.') ?> ₫</del></span>
+                                        <span class="promo-old-price"><del><?= number_format($tour['promo']['old_price'], 0, ',', '.') ?> ₫</del><span class="promo-discount-tag">-<?= (int) ($tour['promo']['percent'] ?? $tour['discount_percent'] ?? 0) ?>%</span></span>
                                     <?php else: ?>
                                         <span>Giá từ / người lớn</span>
                                     <?php endif; ?>

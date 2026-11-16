@@ -1233,6 +1233,16 @@ a, button, input, select { outline-offset: 5px; }
 .admin-accounts-pagination>span { color:#9aa3b1; }
 .admin-accounts-help { display:flex; align-items:flex-start; gap:8px; margin-top:19px; color:var(--muted); font-size:11px; line-height:1.8; }
 .admin-accounts-help .icon { width:14px; height:14px; }
+
+/* Quản lý bình luận & đánh giá admin */
+.admin-reviews-table td { vertical-align: top; }
+.admin-star-gold { color: #e59819; font-size: 14px; letter-spacing: 1px; }
+.admin-star-empty { color: #d1d5db; font-size: 14px; letter-spacing: 1px; }
+.admin-star-number { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 600; color: #536174; }
+.admin-verified-booking-tag { display: inline-block; font-size: 10px; color: #2d8a4e; background: #eef8f1; padding: 2px 7px; border-radius: 4px; margin-top: 4px; font-weight: 600; line-height: 1.4; }
+.admin-review-content-cell { max-width: 480px; word-break: break-word; }
+.admin-review-title { margin: 6px 0 3px; font-size: 12px; color: var(--ink); line-height: 1.5; }
+.admin-review-body { margin: 0; font-size: 12px; color: #536174; line-height: 1.6; }
 .admin-managed-editor { margin-bottom:24px; }
 .admin-editor-close { display:grid; place-items:center; min-width:32px; height:32px; padding:2px 7px; border-radius:6px; font-size:23px; color:#657184; line-height:1; }
 .admin-editor-close:hover { color:var(--orange); }

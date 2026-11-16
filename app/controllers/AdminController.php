@@ -85,7 +85,7 @@ class AdminController
     public function index(string $section = 'dashboard'): void
     {
         header('Cache-Control: no-store');
-        $methods = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours', 'lich_khoi_hanh'], true) ? ['GET', 'POST'] : ['GET'];
+        $methods = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours', 'lich_khoi_hanh', 'danh_gia'], true) ? ['GET', 'POST'] : ['GET'];
         if (!in_array($_SERVER['REQUEST_METHOD'], $methods, true)) {
             http_response_code(405);
             header('Allow: ' . implode(', ', $methods));
@@ -109,7 +109,7 @@ class AdminController
         $roleName = $account['vai_tro'] === 'admin' ? 'Quản trị viên' : 'Nhân viên';
         $csrfToken = $_SESSION['csrf_token'];
         $avatarUrl = self::avatarUrl($account['hinh_anh'] ?? null);
-        $adminSection = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours', 'lich_khoi_hanh'], true) ? $section : 'dashboard';
+        $adminSection = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours', 'lich_khoi_hanh', 'danh_gia'], true) ? $section : 'dashboard';
         if ($adminSection === 'tours') {
             (new AdminTourController())->index($account, $roleName, $csrfToken);
             return;
@@ -124,6 +124,10 @@ class AdminController
         }
         if ($adminSection === 'orders') {
             $this->donDat($account, $roleName, $csrfToken);
+            return;
+        }
+        if ($adminSection === 'danh_gia') {
+            $this->danhGia($account, $roleName, $csrfToken);
             return;
         }
         if (in_array($adminSection, ['accounts', 'customers'], true)) {
@@ -396,6 +400,80 @@ class AdminController
             ? $model->getAdminOrders($orderFilters['status'], $orderFilters['q'], $pageNumber)
             : ['items' => [], 'total' => 0, 'page' => 1, 'pages' => 0, 'per_page' => 10];
         require __DIR__ . '/../views/admin/don_dat.php';
+    }
+
+    private function danhGia(array $account, string $roleName, string $csrfToken): void
+    {
+        $adminSection = 'danh_gia';
+        $avatarUrl = self::avatarUrl($account['hinh_anh'] ?? null);
+        require_once __DIR__ . '/../models/danh_gia.php';
+        $model = new DanhGiaModel(getDatabaseConnection());
+
+        $query = static function (string $key): string {
+            return is_string($_GET[$key] ?? null) ? trim($_GET[$key]) : '';
+        };
+
+        $tourId = filter_var($query('tour_id'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: null;
+        $star = filter_var($query('star'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 5]]) ?: null;
+        $status = in_array($query('status'), ['hien_thi', 'an'], true) ? $query('status') : '';
+
+        $reviewFilters = [
+            'q'       => mb_substr($query('q'), 0, 120, 'UTF-8'),
+            'tour_id' => $tourId ?: '',
+            'star'    => $star ?: '',
+            'status'  => $status,
+        ];
+
+        $pageNumber = filter_var($query('p'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 1;
+
+        $reviewsUrl = static function (array $extra = []) use ($reviewFilters, $pageNumber): string {
+            $parameters = array_merge(['action' => 'danh_gia'], $reviewFilters, ['p' => $pageNumber], $extra);
+            return 'index.php?' . http_build_query(array_filter($parameters, static function ($value): bool {
+                return $value !== '' && $value !== null;
+            }));
+        };
+
+        $reviewMessage = $_SESSION['admin_reviews_message'] ?? '';
+        $reviewSuccess = !empty($_SESSION['admin_reviews_success']);
+        unset($_SESSION['admin_reviews_message'], $_SESSION['admin_reviews_success']);
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $operation = $this->input('operation');
+            $reviewId = (int) $this->input('review_id');
+
+            if (!hash_equals($csrfToken, $this->input('csrf_token'))) {
+                http_response_code(403);
+                $reviewMessage = 'Phiên gửi biểu mẫu không hợp lệ. Vui lòng tải lại trang và thử lại.';
+                $reviewSuccess = false;
+            } else {
+                $targetReview = $reviewId > 0 ? $model->findReviewById($reviewId) : null;
+                if (!$targetReview) {
+                    $reviewMessage = 'Không tìm thấy bình luận cần xử lý.';
+                    $reviewSuccess = false;
+                } elseif ($operation === 'toggle') {
+                    $newStatus = $targetReview['trang_thai'] === 'hien_thi' ? 'an' : 'hien_thi';
+                    $model->toggleReviewStatus($reviewId);
+                    $_SESSION['admin_reviews_message'] = $newStatus === 'an'
+                        ? 'Đã ẩn bình luận của khách hàng “' . $targetReview['ho_ten'] . '”.'
+                        : 'Đã hiển thị lại bình luận của khách hàng “' . $targetReview['ho_ten'] . '”.';
+                    $_SESSION['admin_reviews_success'] = true;
+                    header('Location: ' . $reviewsUrl(), true, 303);
+                    return;
+                } elseif ($operation === 'delete') {
+                    $model->deleteReview($reviewId, 0, true);
+                    $_SESSION['admin_reviews_message'] = 'Đã xóa bình luận của khách hàng “' . $targetReview['ho_ten'] . '” thành công.';
+                    $_SESSION['admin_reviews_success'] = true;
+                    header('Location: ' . $reviewsUrl(), true, 303);
+                    return;
+                }
+            }
+        }
+
+        $reviewSummary = $model->getAdminStats();
+        $tourOptions = $model->getToursForFilter();
+        $reviewList = $model->getReviewsForAdmin($pageNumber, 10, $reviewFilters['q'], $tourId, $star, $status);
+
+        require __DIR__ . '/../views/admin/danh_gia.php';
     }
 
     private function profile(TaiKhoanModel $model, array $account, string $roleName, string $csrfToken): void

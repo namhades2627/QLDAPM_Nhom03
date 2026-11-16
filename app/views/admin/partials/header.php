@@ -9,7 +9,7 @@
  */
 $adminSection = $adminSection ?? 'dashboard';
 $avatarUrl = $avatarUrl ?? '';
-$adminTitle = ['dashboard' => 'Bảng điều khiển', 'orders' => 'Quản lý đơn đặt', 'accounts' => 'Quản lý tài khoản', 'customers' => 'Quản lý khách hàng', 'danh_muc' => 'Quản lý danh mục', 'tours' => 'Quản lý tour', 'schedules' => 'Lịch khởi hành', 'profile' => 'Hồ sơ cá nhân', 'password' => 'Đổi mật khẩu'][$adminSection] ?? 'Bảng điều khiển';
+$adminTitle = ['dashboard' => 'Bảng điều khiển', 'orders' => 'Quản lý đơn đặt', 'accounts' => 'Quản lý tài khoản', 'customers' => 'Quản lý khách hàng', 'danh_muc' => 'Quản lý danh mục', 'tours' => 'Quản lý tour', 'schedules' => 'Lịch khởi hành', 'danh_gia' => 'Quản lý bình luận', 'profile' => 'Hồ sơ cá nhân', 'password' => 'Đổi mật khẩu'][$adminSection] ?? 'Bảng điều khiển';
 $escape = static function ($value): string { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); };
 ?>
 <!doctype html>
@@ -73,6 +73,7 @@ $escape = static function ($value): string { return htmlspecialchars((string) $v
             <a class="admin-nav-link<?= $adminSection === 'customers' ? ' is-active' : '' ?>" href="index.php?action=customers" <?= $adminSection === 'customers' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-user"/></svg><span>Quản lý khách hàng</span></a>
             <?php endif; ?>
             <a class="admin-nav-link<?= $adminSection === 'schedules' ? ' is-active' : '' ?>" href="index.php?action=lich_khoi_hanh" <?= $adminSection === 'schedules' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-calendar"/></svg><span>Lịch khởi hành</span></a>
+            <a class="admin-nav-link<?= $adminSection === 'danh_gia' ? ' is-active' : '' ?>" href="index.php?action=danh_gia" <?= $adminSection === 'danh_gia' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-message"/></svg><span>Quản lý bình luận</span></a>
         </nav>
         <div class="admin-sidebar-bottom">
             <a class="admin-nav-link" href="../public/index.php"><svg class="icon"><use href="#a-arrow"/></svg><span>Về website</span></a>

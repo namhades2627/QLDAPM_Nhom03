@@ -255,12 +255,74 @@ class DanhGiaModel
     }
 
     /**
-     * Dành cho quản trị: Lấy danh sách tất cả đánh giá
-     *
-     * @return array{items: array<int, array<string, mixed>>, total: int}
+     * Tìm đánh giá theo ID
      */
-    public function getReviewsForAdmin(int $page = 1, int $perPage = 15, string $search = '', ?int $tourId = null): array
+    public function findReviewById(int $id): ?array
     {
+        $stmt = $this->connection->prepare(
+            "SELECT dg.*, t.ten_tour, t.ma_tour, tk.ho_ten, tk.email
+             FROM danh_gia_tour dg
+             JOIN tour t ON t.id_tour = dg.id_tour
+             JOIN tai_khoan tk ON tk.id_tai_khoan = dg.id_tai_khoan
+             WHERE dg.id_danh_gia = ? LIMIT 1"
+        );
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    /**
+     * Thống kê tổng quan cho trang quản trị bình luận
+     *
+     * @return array{total: int, hien_thi: int, an: int, avg_rating: float}
+     */
+    public function getAdminStats(): array
+    {
+        $stmt = $this->connection->query(
+            "SELECT 
+                COUNT(*) AS total,
+                COALESCE(SUM(CASE WHEN trang_thai = 'hien_thi' THEN 1 ELSE 0 END), 0) AS hien_thi,
+                COALESCE(SUM(CASE WHEN trang_thai = 'an' THEN 1 ELSE 0 END), 0) AS an,
+                COALESCE(AVG(so_sao), 5.0) AS avg_rating
+             FROM danh_gia_tour"
+        );
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return [
+            'total'      => (int) ($row['total'] ?? 0),
+            'hien_thi'   => (int) ($row['hien_thi'] ?? 0),
+            'an'         => (int) ($row['an'] ?? 0),
+            'avg_rating' => round((float) ($row['avg_rating'] ?? 5.0), 1),
+        ];
+    }
+
+    /**
+     * Lấy danh sách tour phục vụ bộ lọc
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getToursForFilter(): array
+    {
+        $stmt = $this->connection->query(
+            "SELECT id_tour, ma_tour, ten_tour 
+             FROM tour 
+             ORDER BY ten_tour ASC"
+        );
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Dành cho quản trị: Lấy danh sách tất cả đánh giá kèm phân trang, lọc nâng cao
+     *
+     * @return array{items: array<int, array<string, mixed>>, total: int, pages: int, page: int}
+     */
+    public function getReviewsForAdmin(
+        int $page = 1,
+        int $perPage = 10,
+        string $search = '',
+        ?int $tourId = null,
+        ?int $starFilter = null,
+        string $statusFilter = ''
+    ): array {
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
 
@@ -272,9 +334,21 @@ class DanhGiaModel
             $params[] = $tourId;
         }
 
+        if ($starFilter !== null && $starFilter >= 1 && $starFilter <= 5) {
+            $where[] = 'dg.so_sao = ?';
+            $params[] = $starFilter;
+        }
+
+        if ($statusFilter === 'hien_thi' || $statusFilter === 'an') {
+            $where[] = 'dg.trang_thai = ?';
+            $params[] = $statusFilter;
+        }
+
         if ($search !== '') {
-            $where[] = '(t.ten_tour LIKE ? OR tk.ho_ten LIKE ? OR dg.noi_dung LIKE ?)';
+            $where[] = '(t.ten_tour LIKE ? OR tk.ho_ten LIKE ? OR tk.email LIKE ? OR dg.tieu_de LIKE ? OR dg.noi_dung LIKE ?)';
             $keyword = '%' . $search . '%';
+            $params[] = $keyword;
+            $params[] = $keyword;
             $params[] = $keyword;
             $params[] = $keyword;
             $params[] = $keyword;
@@ -291,11 +365,16 @@ class DanhGiaModel
         $countStmt->execute($params);
         $total = (int) $countStmt->fetchColumn();
 
-        $sql = "SELECT dg.*, t.ten_tour, t.ma_tour, tk.ho_ten, tk.email
+        $sql = "SELECT dg.*, t.ten_tour, t.ma_tour, tk.ho_ten, tk.email, tk.hinh_anh,
+                       CASE WHEN dd.id_don_dat IS NOT NULL THEN 1 ELSE 0 END AS da_dat_tour
                 FROM danh_gia_tour dg
                 JOIN tour t ON t.id_tour = dg.id_tour
                 JOIN tai_khoan tk ON tk.id_tai_khoan = dg.id_tai_khoan
+                LEFT JOIN don_dat_tour dd ON dd.id_tai_khoan = dg.id_tai_khoan
+                                         AND dd.ma_tour = t.ma_tour
+                                         AND dd.trang_thai IN ('da_xac_nhan', 'hoan_thanh')
                 WHERE $whereClause
+                GROUP BY dg.id_danh_gia
                 ORDER BY dg.tao_luc DESC
                 LIMIT $perPage OFFSET $offset";
 
@@ -307,6 +386,7 @@ class DanhGiaModel
             'items' => $items,
             'total' => $total,
             'pages' => max(1, (int) ceil($total / $perPage)),
+            'page'  => $page,
         ];
     }
 

@@ -4,6 +4,14 @@
 
 Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đặt trong `ontrip.sql`, người/AI thực hiện phải cập nhật nhật ký này trong cùng lần sửa. Ghi rõ ngày, thay đổi, ảnh hưởng dữ liệu, vị trí khối SQL và cách áp dụng. Không ghi ở đây các thao tác sử dụng website thông thường như đổi mật khẩu hoặc sửa hồ sơ cá nhân.
 
+## 16/11/2026 — Quản lý bình luận và đánh giá tour trong trang quản trị (Admin)
+
+- Thêm chức năng **Quản lý bình luận** bên trang quản trị (`action=danh_gia` / `action=reviews`), dành cho cả `admin` và `nhan_vien`.
+- Tích hợp số liệu thống kê tổng quan: Tổng số bình luận, số bình luận hiển thị công khai, số bình luận đã ẩn, điểm đánh giá trung bình.
+- Hỗ trợ bộ lọc tìm kiếm đa tiêu chí: Theo từ khóa (họ tên, email, tên tour, nội dung bình luận), theo tour cụ thể, theo số sao (1–5 sao), theo trạng thái (Hiển thị / Đã ẩn), kèm phân trang dữ liệu 10 mục/trang.
+- Thao tác kiểm duyệt: Ẩn/Hiện bình luận tức thì (`operation=toggle`), xóa bình luận vĩnh viễn (`operation=delete`) có xác nhận và kiểm tra token CSRF.
+- Sử dụng bảng `danh_gia_tour` đã có trong khối `CAP_NHAT_2026_11_08_DANH_GIA_TOUR` của `ontrip.sql`, không cần thay đổi cấu trúc bảng.
+
 ## 09/11/2026 — Hiển thị số lượng khách đã đặt tour thành công trên thẻ tour
 
 - Cập nhật truy vấn tính tổng số lượng khách hàng đã đặt tour (`SUM(so_nguoi_lon + so_tre_em)`) theo tour trong `TourModel::getPublishedTours()`, chỉ tính các đơn đặt tour không bị hủy (`trang_thai <> 'da_huy'`).

@@ -4,49 +4,6 @@
 
 Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đặt trong `ontrip.sql`, người/AI thực hiện phải cập nhật nhật ký này trong cùng lần sửa. Ghi rõ ngày, thay đổi, ảnh hưởng dữ liệu, vị trí khối SQL và cách áp dụng. Không ghi ở đây các thao tác sử dụng website thông thường như đổi mật khẩu hoặc sửa hồ sơ cá nhân.
 
-## 15/11/2026 — Bổ sung cột mã giảm giá, tiền giảm voucher và phương thức thanh toán cho đơn đặt tour
-
-- **Thay đổi:** Bổ sung các cột `ma_giam_gia` VARCHAR(50) DEFAULT NULL, `tien_giam_voucher` DECIMAL(14,0) NOT NULL DEFAULT 0, và `phuong_thuc_thanh_toan` VARCHAR(30) NOT NULL DEFAULT 'thanh_toan_sau' vào bảng `don_dat_tour`.
-- **Mục đích:** Hỗ trợ lưu trữ phương thức thanh toán khách lựa chọn (Thanh toán khi nhận xác nhận, Chuyển khoản ngân hàng, Thanh toán tại văn phòng) và thông tin chiết khấu voucher/mã giảm giá khi đặt tour.
-- **Vị trí:** Khối `BEGIN CAP_NHAT_2026_11_15_THANH_TOAN_VOUCHER` / `END CAP_NHAT_2026_11_15_THANH_TOAN_VOUCHER` ở cuối `ontrip.sql`, và cập nhật câu `CREATE TABLE IF NOT EXISTS don_dat_tour`.
-- **Máy đã có database:** Chạy khối SQL trên trong phpMyAdmin (hoặc chạy lệnh: `ALTER TABLE don_dat_tour ADD COLUMN IF NOT EXISTS ma_giam_gia VARCHAR(50) DEFAULT NULL AFTER tien_giam; ALTER TABLE don_dat_tour ADD COLUMN IF NOT EXISTS tien_giam_voucher DECIMAL(14,0) NOT NULL DEFAULT 0 AFTER ma_giam_gia; ALTER TABLE don_dat_tour ADD COLUMN IF NOT EXISTS phuong_thuc_thanh_toan VARCHAR(30) NOT NULL DEFAULT 'thanh_toan_sau' AFTER ghi_chu;`).
-- **Đã kiểm tra:** Chạy thành công trên MariaDB máy phát triển, không ảnh hưởng đơn cũ.
-
-## 13/11/2026 — Hội thoại tư vấn hai chiều và thông báo phản hồi
-
-- Thêm bảng `tin_nhan_tu_van`: hội thoại, người gửi, tên/vai trò chụp tại thời điểm gửi, nội dung, thời gian và token duy nhất chống gửi trùng. Xóa tài khoản không xóa lịch sử tin; người gửi được SET NULL, tên vẫn được giữ. Không có thao tác xóa tin trên giao diện.
-- Mở rộng `thong_bao`: `id_don_dat` cho phép NULL, thêm `id_tin_nhan` (khóa ngoại/duy nhất), thêm loại `phan_hoi_tu_van`. Các thông báo đơn đặt, trạng thái đã đọc và nội dung cũ được giữ nguyên. Mỗi phản hồi nhân viên tạo một thông báo trong cùng transaction với tin nhắn.
-- **Áp dụng:** chạy khối `BEGIN CAP_NHAT_2026_11_13_HOI_THOAI_TU_VAN` / `END CAP_NHAT_2026_11_13_HOI_THOAI_TU_VAN` sau khối thông báo cũ trong `ontrip.sql`. Cần có khối yêu cầu tư vấn trước đó. CREATE/PROCEDURE kiểm tra cột/khóa cho phép chạy lại; cài mới import toàn bộ `ontrip.sql` theo thứ tự.
-- Giữ nguyên tin nhắn mở đầu trong yêu cầu cũ, không sao chép vào bảng tin để tránh hiển thị trùng. Không gắn yêu cầu khách vãng lai với tài khoản theo email; dữ liệu này vẫn được quản trị xử lý bằng liên hệ thủ công. Không đưa ghi chú nội bộ sang tin nhắn.
-- Khách cần đăng nhập để gửi mới. Mã yêu cầu giữ trong database, không còn hiển thị trên giao diện chat/thông báo gửi. Có kiểm tra chủ hội thoại, CSRF, chống trùng và giới hạn tin nhắn; ghi chú nội bộ không trả về API khách.
-- **Đã kiểm tra:** chạy khối nâng cấp hai lần trên database hiện tại; kiểm tra gửi/đọc hai chiều, quyền sở hữu, chống gửi trùng, giới hạn gửi, rollback tin nhắn khi lỗi ghi thông báo, mở lại trạng thái, lịch sử phân trang và thông báo đơn đặt cũ. HTTP/browser kiểm tra gửi không tải lại trang, tự cập nhật hai phía, thông báo mở đúng hội thoại và giao diện 320px–desktop. Dữ liệu thử ở database riêng; máy hiện tại đã áp dụng schema, máy thành viên khác cần chạy khối tương ứng.
-
-## 13/11/2026 — Tiếp nhận và xử lý yêu cầu tư vấn
-
-- **Thay đổi:** thêm `yeu_cau_tu_van` lưu thông tin khách, chủ đề/nội dung, mã yêu cầu, trạng thái, người phụ trách, ghi chú, người cập nhật và phiên bản chống ghi đè. Thêm `gioi_han_tu_van` chứa bộ đếm chống spam dùng chung giữa các phiên, khóa băm theo IP/email và cửa sổ 15 phút; không lưu IP thô.
-- **Áp dụng:** khối `BEGIN CAP_NHAT_2026_11_13_YEU_CAU_TU_VAN` / `END CAP_NHAT_2026_11_13_YEU_CAU_TU_VAN` ngay sau khối nâng cấp ảnh tài khoản trong `ontrip.sql`. Hai câu CREATE TABLE IF NOT EXISTS phục vụ cả cài mới lẫn nâng cấp và có thể chạy lại. Máy đã có database chỉ chạy khối này trong tab SQL của phpMyAdmin, không import lại seed.
-- **Ảnh hưởng dữ liệu:** không sửa đơn đặt, tài khoản hoặc dữ liệu đã có; không khôi phục các form trước đây chỉ báo thành công bằng session. Khóa ngoại SET NULL giữ nội dung yêu cầu nếu tài khoản liên quan bị xóa. Không thêm chức năng xóa yêu cầu trong quản trị.
-- **Luồng:** khách có/không đăng nhập đều gửi được; chỉ báo thành công khi lưu thành công. Admin/nhân viên xử lý tại `action=yeu_cau_tu_van`, luồng Mới → Đang xử lý → Đã xử lý; ghi chú là nội bộ, không tự gửi email hay thông báo khách.
-- **Giới hạn gửi:** tối đa 5 yêu cầu/IP và 3 yêu cầu/email trong mỗi cửa sổ 15 phút; gửi lại cùng mã biểu mẫu hoặc cùng nội dung chuẩn hóa trong 15 phút không tạo bản ghi mới. Bộ đếm hết hạn được dọn theo lô khi nhận yêu cầu hợp lệ.
-- **Đã kiểm tra:** áp dụng khối SQL hai lần trên máy phát triển; kiểm tra lưu/gửi trùng, giới hạn email/IP, rollback khi lỗi ghi, quyền admin/nhân viên, CSRF, lọc/phân trang, luồng trạng thái và chặn lưu phiên bản cũ; kiểm tra giao diện desktop/mobile. Dữ liệu kiểm thử nằm trong database riêng. Máy phát triển đã áp dụng schema, máy thành viên khác cần tự chạy khối SQL.
-
-## 13/11/2026 — Bổ sung cột giới tính và CCCD cho người tham gia đặt tour
-
-- **Thay đổi:** Bổ sung cột `gioi_tinh` ENUM('nam', 'nu') NOT NULL DEFAULT 'nam' và `cccd` VARCHAR(30) DEFAULT NULL cho bảng `chi_tiet_don_dat` để phục vụ quản lý thông tin hành khách tham gia chuyến đi chi tiết.
-- **Ảnh hưởng dữ liệu:** Không làm thay đổi hoặc mất dữ liệu hiện có. Các bản ghi người tham gia cũ tự nhận `gioi_tinh = 'nam'` và `cccd = NULL`.
-- **Vị trí:** Khối `BEGIN CAP_NHAT_2026_11_13_HANH_KHACH_CCCD_GIOI_TINH` / `END CAP_NHAT_2026_11_13_HANH_KHACH_CCCD_GIOI_TINH` ở cuối file `ontrip.sql`, và cập nhật câu `CREATE TABLE IF NOT EXISTS chi_tiet_don_dat`.
-- **Máy đã có database:** Chọn database `ontrip` trong phpMyAdmin và chạy khối SQL trên (hoặc chạy lệnh `ALTER TABLE chi_tiet_don_dat ADD COLUMN IF NOT EXISTS gioi_tinh ENUM('nam', 'nu') NOT NULL DEFAULT 'nam' AFTER loai_khach; ALTER TABLE chi_tiet_don_dat ADD COLUMN IF NOT EXISTS cccd VARCHAR(30) DEFAULT NULL AFTER ngay_sinh;`).
-- **Đã kiểm tra:** Chạy lệnh trên MariaDB của XAMPP máy phát triển thành công; bảng `chi_tiet_don_dat` có đủ 9 cột.
-
-## 13/11/2026 — Sửa lỗi `#1005` khi tạo bảng `danh_gia_tour` (khóa ngoại sai kiểu)
-
-- **Nguyên nhân:** `danh_gia_tour.id_tour` khai báo `INT UNSIGNED` nhưng `tour.id_tour` là `BIGINT UNSIGNED`. Hai kiểu không khớp tuyệt đối nên MySQL trả `errno: 150 "Foreign key constraint is incorrectly formed"` cho `fk_danh_gia_tour`, và cả câu `CREATE TABLE` thất bại.
-- **Thay đổi:** đổi `danh_gia_tour.id_tour` từ `INT UNSIGNED` thành `BIGINT UNSIGNED` cho khớp `tour.id_tour`. Hai cột còn lại (`id_tai_khoan`, `id_don_dat`) vốn đã đúng `BIGINT UNSIGNED` nên giữ nguyên.
-- Chỉ sửa kiểu cột trong phần CREATE; không đổi tên bảng/cột, không đổi chỉ mục, không đổi hành vi `ON DELETE` (`CASCADE` cho tour/tài khoản, `SET NULL` cho đơn đặt). Model `app/models/danh_gia.php` đã dùng `BIGINT UNSIGNED` từ trước nên không cần sửa.
-- **Vị trí:** khối `BEGIN CAP_NHAT_2026_11_08_DANH_GIA_TOUR` / `END CAP_NHAT_2026_11_08_DANH_GIA_TOUR` trong `ontrip.sql`.
-- **Máy đã có database:** không cần thao tác nếu bảng `danh_gia_tour` đã tồn tại và hoạt động (cột đã đúng `BIGINT`). Nếu lần import trước dừng ở khối này thì bảng chưa được tạo — chạy lại riêng khối trên sau khi lấy code mới. Nếu bảng đã tạo được nhưng cột `id_tour` là `INT` (tạo từ phiên bản SQL cũ), cần `ALTER TABLE danh_gia_tour MODIFY id_tour BIGINT UNSIGNED NOT NULL;` rồi kiểm tra lại ràng buộc.
-- **Đã kiểm tra:** import toàn bộ `ontrip.sql` vào database tạm trên MySQL của XAMPP — tạo đủ 13 bảng, `danh_gia_tour` có 3 khóa ngoại với `id_tour`/`id_tai_khoan`/`id_don_dat` đều `bigint(20) unsigned`. Database tạm đã được xóa.
-
 ## 09/11/2026 — Hiển thị số lượng khách đã đặt tour thành công trên thẻ tour
 
 - Cập nhật truy vấn tính tổng số lượng khách hàng đã đặt tour (`SUM(so_nguoi_lon + so_tre_em)`) theo tour trong `TourModel::getPublishedTours()`, chỉ tính các đơn đặt tour không bị hủy (`trang_thai <> 'da_huy'`).

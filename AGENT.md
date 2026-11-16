@@ -101,7 +101,7 @@ Phần ảnh đại diện hiện được xử lý trong `AdminController` bằ
 | Quản lý tour | `action=tours` dành cho admin/nhân viên: thống kê, tìm/lọc/phân trang, xem chi tiết, thêm/sửa thông tin/ảnh/nhu cầu/lịch trình từng ngày, nháp/công bố/lưu trữ và xóa có xác nhận. Chặn xóa tour có lịch khởi hành; giữ mã tour, điểm đến/số ngày của tour đã có đơn đặt. Không đổi schema. |
 | Quản lý lịch khởi hành bằng thêm–sửa–xóa | Chưa triển khai; giá bán, sức chứa và lịch mở vẫn đọc dữ liệu hiện có. |
 | Quản lý danh mục | `action=danh_muc` trong DỮ LIỆU ĐIỀU HÀNH, dành cho admin/nhân viên: ba tab Khu vực, Điểm đến, Nhu cầu du lịch. Có tìm/lọc/phân trang, thêm/sửa/xóa có xác nhận và ngừng hoạt động điểm đến/nhu cầu. Không xóa danh mục có dữ liệu liên quan. Dùng schema hiện có, không cần import SQL lại. |
-| Đánh giá tour | Mới có giao diện trạng thái trống, chưa có bảng và chức năng gửi đánh giá. |
+| Đánh giá tour | **Đã triển khai:** Khách hàng đánh giá sao (1-5★), nhận xét tại chi tiết tour (`detail.php`); Quản trị viên/Nhân viên quản lý và kiểm duyệt bình luận tại `action=danh_gia` (ẩn/hiện, xóa, tìm kiếm, lọc theo tour/sao/trạng thái). Bảng `danh_gia_tour`. |
 | Google, quên mật khẩu/OTP | Chưa triển khai. |
 | Điều chỉnh lịch trình theo thời tiết/mùa vụ | Là hướng nghiệp vụ dự kiến, chưa có API hoặc xử lý. Chỉ bổ sung khi được giao và đã chốt quy tắc. |
 | Trang liên hệ & Hướng dẫn viên | **Đã triển khai (08/11/2026).** Route `page=lien_he` (alias `contact`). Bố cục thông minh, form gửi yêu cầu có CSRF và flash session. Phần đội ngũ 4 hướng dẫn viên (Tống Nhựt Nam, Trần Đăng Khoa, Tạ Hồng Quân, Nguyễn Quang Khanh) đồng bộ avatar động từ cột `hinh_anh` của bảng `tai_khoan` trong Quản lý tài khoản (admin). FAQ accordion và kênh liên hệ trực tiếp. |

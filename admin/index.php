@@ -18,7 +18,8 @@ if ($action === 'logout') {
     $controller->login();
 } else {
     try {
-        $section = in_array($action, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours', 'lich_khoi_hanh'], true) ? $action : 'dashboard';
+        if ($action === 'reviews') $action = 'danh_gia';
+        $section = in_array($action, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours', 'lich_khoi_hanh', 'yeu_cau_tu_van', 'danh_gia'], true) ? $action : 'dashboard';
         $controller->index($section);
     } catch (PDOException $exception) {
         error_log('OnTrip admin database error: ' . $exception->getMessage());

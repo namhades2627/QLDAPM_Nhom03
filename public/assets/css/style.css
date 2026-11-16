@@ -448,6 +448,7 @@ a, button, input, select { outline-offset: 5px; }
 .home-card-badge { position:absolute; top:12px; left:12px; max-width:calc(100% - 24px); padding:6px 9px; border-radius:6px; background:#fffffff5; color:#4c473f; font-size:11px; font-weight:500; line-height:1.6; }
 .badge-promo { background:#fff1e8; color:var(--orange-dark); }
 .promo-old-price { display:block; color:#727c88; font-size:12px; line-height:1.7; font-variant-numeric:tabular-nums; }
+.promo-discount-tag { display:inline-block; margin-left:4px; padding:1px 5px; font-size:11px; font-weight:700; color:#d9381e; background:#ffeae8; border-radius:4px; vertical-align:middle; line-height:1.3; }
 .promo-sale-price { font-variant-numeric:tabular-nums; }
 .seasonal-section { border-top:1px solid var(--line); }
 .promo-section { background:var(--surface); border-top:1px solid var(--line); }

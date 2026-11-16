@@ -193,20 +193,33 @@ class LichKhoiHanhModel
     /** @return array<int, array<int, array<string, mixed>>> Người tham gia nhóm theo id đơn. */
     private function getParticipantsBySchedule(int $scheduleId): array
     {
-        $statement = $this->connection->prepare(
-            'SELECT ct.id_don_dat, ct.thu_tu, ct.ho_ten, ct.loai_khach, ct.ngay_sinh, ct.ghi_chu
-             FROM chi_tiet_don_dat ct
-             JOIN don_dat_tour dd ON dd.id_don_dat = ct.id_don_dat
-             WHERE dd.id_lich_khoi_hanh = ?
-             ORDER BY ct.id_don_dat, ct.thu_tu'
-        );
-        $statement->execute([$scheduleId]);
+        try {
+            $statement = $this->connection->prepare(
+                'SELECT ct.id_don_dat, ct.thu_tu, ct.ho_ten, ct.loai_khach, ct.gioi_tinh, ct.ngay_sinh, ct.cccd, ct.ghi_chu
+                 FROM chi_tiet_don_dat ct
+                 JOIN don_dat_tour dd ON dd.id_don_dat = ct.id_don_dat
+                 WHERE dd.id_lich_khoi_hanh = ?
+                 ORDER BY ct.id_don_dat, ct.thu_tu'
+            );
+            $statement->execute([$scheduleId]);
+        } catch (Throwable) {
+            $statement = $this->connection->prepare(
+                'SELECT ct.id_don_dat, ct.thu_tu, ct.ho_ten, ct.loai_khach, ct.ngay_sinh, ct.ghi_chu
+                 FROM chi_tiet_don_dat ct
+                 JOIN don_dat_tour dd ON dd.id_don_dat = ct.id_don_dat
+                 WHERE dd.id_lich_khoi_hanh = ?
+                 ORDER BY ct.id_don_dat, ct.thu_tu'
+            );
+            $statement->execute([$scheduleId]);
+        }
         $grouped = [];
         foreach ($statement->fetchAll() as $participant) {
             $grouped[(int) $participant['id_don_dat']][] = [
                 'ho_ten' => $participant['ho_ten'],
                 'loai_khach' => $participant['loai_khach'],
+                'gioi_tinh' => $participant['gioi_tinh'] ?? 'nam',
                 'ngay_sinh' => $participant['ngay_sinh'],
+                'cccd' => $participant['cccd'] ?? '',
                 'ghi_chu' => (string) $participant['ghi_chu'],
             ];
         }

@@ -23,7 +23,7 @@ $unread = (int) ($GLOBALS['customerNotifications']['unread'] ?? 0);
         <header class="booking-heading">
             <span class="detail-kicker">TÀI KHOẢN</span>
             <h1>Thông báo</h1>
-            <p><?= $unread ?> thông báo chưa đọc · Cập nhật xác nhận, thanh toán mô phỏng và hủy đơn của bạn.</p>
+            <p><?= $unread ?> thông báo chưa đọc · Cập nhật đơn đặt và phản hồi tư vấn của bạn.</p>
         </header>
         <?php if ($unread > 0): ?>
         <form method="post" action="index.php?page=thong_bao" class="notification-read-all">
@@ -34,7 +34,7 @@ $unread = (int) ($GLOBALS['customerNotifications']['unread'] ?? 0);
         <?php endif; ?>
         <section class="notification-list" aria-label="Danh sách thông báo">
             <?php if (!$notifications['items']): ?>
-            <div class="notification-empty"><h2>Bạn chưa có thông báo</h2><p>Các cập nhật về đơn đặt sẽ xuất hiện tại đây.</p><a href="index.php?page=orders">Xem đơn đặt của tôi →</a></div>
+            <div class="notification-empty"><h2>Bạn chưa có thông báo</h2><p>Cập nhật đơn đặt và phản hồi tư vấn sẽ xuất hiện tại đây.</p><a href="index.php?page=tu_van">Xem tư vấn của tôi →</a></div>
             <?php endif; ?>
             <?php foreach ($notifications['items'] as $notice): ?>
             <form method="post" action="index.php?page=thong_bao">

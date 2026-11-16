@@ -35,8 +35,8 @@ $statusNotes = [
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="assets/css/style.css?v=20261108-notifications">
-    <script src="assets/js/script.js?v=20261108-notifications" defer></script>
+    <link rel="stylesheet" href="assets/css/style.css?v=20261113-booking">
+    <script src="assets/js/script.js?v=20261113-booking" defer></script>
 </head>
 <body class="booking-page">
 <?php require __DIR__ . '/../partials/header.php'; ?>
@@ -86,7 +86,9 @@ $statusNotes = [
                         <li>
                             <span class="order-participant-type"><?= $participant['loai_khach'] === 'tre_em' ? 'Trẻ em' : 'Người lớn' ?></span>
                             <strong><?= $escape($participant['ho_ten']) ?></strong>
+                            <span><?= ($participant['gioi_tinh'] ?? 'nam') === 'nu' ? 'Nữ' : 'Nam' ?></span>
                             <span><?= $participant['ngay_sinh'] ? 'Sinh ' . date('d/m/Y', strtotime($participant['ngay_sinh'])) : 'Chưa cung cấp ngày sinh' ?></span>
+                            <?php if (!empty($participant['cccd'])): ?><span>CCCD: <?= $escape($participant['cccd']) ?></span><?php endif; ?>
                             <?php if ($participant['ghi_chu'] !== ''): ?><em><?= $escape($participant['ghi_chu']) ?></em><?php endif; ?>
                         </li>
                         <?php endforeach; ?>

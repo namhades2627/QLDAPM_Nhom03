@@ -4,6 +4,7 @@ $tourType = $tourType ?? '';
 $tourRegion = $tourRegion ?? '';
 $isToursPage = in_array(($page ?? 'home'), ['tours', 'tour-detail'], true);
 $isHomePage = ($page ?? 'home') === 'home';
+$isContactPage = ($page ?? 'home') === 'lien_he';
 $notificationData = $GLOBALS['customerNotifications'] ?? null;
 ?>
 <!-- Biểu tượng vector nội bộ, không cần thư viện ngoài. -->
@@ -30,7 +31,7 @@ $notificationData = $GLOBALS['customerNotifications'] ?? null;
             <a class="nav-link<?= $isHomePage ? ' is-current' : '' ?>" href="index.php"<?= $isHomePage ? ' aria-current="page"' : '' ?>>Trang chủ</a>
             <a class="nav-link" href="#gioi-thieu">Giới thiệu</a>
             <a class="nav-link<?= $isToursPage ? ' is-current' : '' ?>" href="index.php?page=tours"<?= $isToursPage ? ' aria-current="page"' : '' ?>>Tour</a>
-            <a class="nav-link" href="#lien-he">Liên hệ</a>
+            <a class="nav-link<?= $isContactPage ? ' is-current' : '' ?>" href="index.php?page=lien_he"<?= $isContactPage ? ' aria-current="page"' : '' ?>>Liên hệ</a>
         </nav>
         <div class="nav-actions">
             <div class="nav-search">
@@ -54,7 +55,6 @@ $notificationData = $GLOBALS['customerNotifications'] ?? null;
                     <?php if (isset($_SESSION['tai_khoan'])): ?>
                     <span class="account-name"><?= htmlspecialchars($_SESSION['tai_khoan']['ho_ten'], ENT_QUOTES, 'UTF-8') ?></span>
                     <a href="index.php?page=orders">Đơn đặt của tôi</a>
-                    <?php if (is_array($notificationData)): ?><a href="index.php?page=thong_bao">Thông báo</a><?php endif; ?>
                     <form method="post" action="index.php?page=logout">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
                         <button class="account-logout" type="submit">Đăng xuất</button>

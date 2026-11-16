@@ -11,14 +11,39 @@ class TaiKhoanController
         return isset($_POST[$name]) && is_string($_POST[$name]) ? $_POST[$name] : '';
     }
 
+    /**
+     * Đích quay lại sau khi đăng nhập (ví dụ trang đặt tour vừa bấm).
+     * Chỉ chấp nhận đường dẫn tương đối trong website để tránh open redirect.
+     */
+    private function redirectTarget(): string
+    {
+        $raw = $_GET['redirect'] ?? null;
+        if (!is_string($raw)) {
+            return 'index.php';
+        }
+        $target = trim($raw);
+        if ($target === '' || strlen($target) > 2048
+            || strpos($target, '//') !== false
+            || strpos($target, '..') !== false
+            || strpos($target, '\\') !== false
+            || preg_match('/[\x00-\x1F\x7F]/', $target)) {
+            return 'index.php';
+        }
+        return preg_match('#^[A-Za-z0-9_./-]+\.php(\?|\#|$)#', $target) ? $target : 'index.php';
+    }
+
     public function form(string $page): void
     {
         header('Cache-Control: no-store');
+        $isRegister = $page === 'register';
+        $redirect = $this->redirectTarget();
+        $redirectQuery = $redirect === 'index.php' ? '' : '&redirect=' . rawurlencode($redirect);
+        $authRedirect = $redirect === 'index.php' ? '' : $redirect;
+        $authFormAction = 'index.php?page=' . ($isRegister ? 'register' : 'login') . $redirectQuery;
         if (isset($_SESSION['tai_khoan'])) {
-            header('Location: index.php', true, 303);
+            header('Location: ' . $redirect, true, 303);
             return;
         }
-        $isRegister = $page === 'register';
         $errors = [];
         $values = ['ho_ten' => '', 'email' => '', 'so_dien_thoai' => ''];
         $message = $_SESSION['auth_message'] ?? '';
@@ -61,7 +86,7 @@ class TaiKhoanController
                             } else {
                                 $model->createCustomer($values['ho_ten'], $values['email'], $values['so_dien_thoai'], password_hash($password, PASSWORD_DEFAULT));
                                 $_SESSION['auth_message'] = 'Đăng ký thành công. Bạn có thể đăng nhập ngay.';
-                                header('Location: index.php?page=login', true, 303);
+                                header('Location: index.php?page=login' . $redirectQuery, true, 303);
                                 return;
                             }
                         } else {
@@ -79,7 +104,8 @@ class TaiKhoanController
                                     'vai_tro' => $account['vai_tro'],
                                 ];
                                 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-                                header('Location: index.php', true, 303);
+                                // Quay lại đúng trang khách đang xem trước khi bấm đăng nhập (ví dụ trang đặt tour).
+                                header('Location: ' . $redirect, true, 303);
                                 return;
                             }
                         }

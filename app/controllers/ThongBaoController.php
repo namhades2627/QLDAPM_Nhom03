@@ -43,7 +43,7 @@ class ThongBaoController
                 echo 'Không tìm thấy thông báo.';
                 return;
             }
-            header('Location: index.php?page=orders&id=' . rawurlencode($code), true, 303);
+            header('Location: ' . $code, true, 303);
             return;
         }
         $currentPage = filter_var($_GET['trang'] ?? 1, FILTER_VALIDATE_INT) ?: 1;

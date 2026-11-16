@@ -11,6 +11,7 @@
  * @var string $authAssetPrefix
  * @var string $authHomeUrl
  * @var string $authFormAction
+ * @var string $authRedirect
  */
 $errors = $errors ?? [];
 $values = $values ?? [];
@@ -20,7 +21,9 @@ $escape = static function ($value): string { return htmlspecialchars((string) $v
 $isAdminLogin = $isAdminLogin ?? false;
 $authAssetPrefix = $authAssetPrefix ?? '';
 $authHomeUrl = $authHomeUrl ?? 'index.php';
-$authFormAction = $authFormAction ?? ('index.php?page=' . ($isRegister ? 'register' : 'login'));
+$authRedirect = $authRedirect ?? '';
+$authSwitchQuery = $authRedirect === '' ? '' : '&redirect=' . rawurlencode($authRedirect);
+$authFormAction = $authFormAction ?? ('index.php?page=' . ($isRegister ? 'register' : 'login') . $authSwitchQuery);
 $authTitle = $isAdminLogin ? 'Đăng nhập quản trị' : ($isRegister ? 'Đăng ký' : 'Đăng nhập');
 ?>
 <!doctype html>
@@ -35,7 +38,7 @@ $authTitle = $isAdminLogin ? 'Đăng nhập quản trị' : ($isRegister ? 'Đă
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="<?= $escape($authAssetPrefix) ?>assets/css/style.css?v=20261108-notifications">
+    <link rel="stylesheet" href="<?= $escape($authAssetPrefix) ?>assets/css/style.css?v=20261113-booking">
     <script src="<?= $escape($authAssetPrefix) ?>assets/js/script.js" defer></script>
 </head>
 <body class="auth-page<?= $isAdminLogin ? ' admin-login-page' : '' ?>">
@@ -100,7 +103,7 @@ $authTitle = $isAdminLogin ? 'Đăng nhập quản trị' : ($isRegister ? 'Đă
                 <?php endif; ?>
                 <button class="button button-primary auth-submit" type="submit"><?= $isRegister ? 'Đăng ký' : 'Đăng nhập' ?></button>
                 <?php if (!$isAdminLogin): ?>
-                <p class="auth-switch"><?= $isRegister ? 'Bạn đã có tài khoản?' : 'Bạn chưa có tài khoản?' ?> <a href="index.php?page=<?= $isRegister ? 'login' : 'register' ?>"><?= $isRegister ? 'Đăng nhập' : 'Đăng ký ngay' ?></a></p>
+                <p class="auth-switch"><?= $isRegister ? 'Bạn đã có tài khoản?' : 'Bạn chưa có tài khoản?' ?> <a href="index.php?page=<?= $isRegister ? 'login' : 'register' ?><?= $escape($authSwitchQuery) ?>"><?= $isRegister ? 'Đăng nhập' : 'Đăng ký ngay' ?></a></p>
                 <?php endif; ?>
             </form>
         </section>

@@ -7966,11 +7966,616 @@ select {
     vertical-align: middle;
 }
 
+/* ===== PHẦN 2: KHU VỰC NỘI DUNG CHÍNH (CỘT TRÁI 65% & MODAL LỊCH TRÌNH) ===== */
 .order-detail-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-columns: minmax(0, 65%) minmax(0, 35%);
     align-items: start;
+    gap: 28px;
+}
+
+.order-detail-main {
+    display: grid;
     gap: 24px;
+    min-width: 0;
+}
+
+/* Card 1: Tóm tắt Tour & Lịch trình (Media Object ngang) */
+.order-tour-summary-card {
+    background: var(--panel-bg);
+}
+
+.order-tour-media-row {
+    display: flex;
+    gap: 22px;
+    align-items: stretch;
+    margin-top: 14px;
+}
+
+.order-tour-thumb-col {
+    position: relative;
+    width: 220px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f0f2f5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.order-tour-thumb-img {
+    width: 100%;
+    height: 100%;
+    min-height: 160px;
+    max-height: 200px;
+    object-fit: cover;
+    display: block;
+    transition: transform .3s ease;
+}
+
+.order-tour-thumb-col:hover .order-tour-thumb-img {
+    transform: scale(1.04);
+}
+
+.order-tour-badge-overlay {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(15, 23, 42, 0.8);
+    color: #ffffff;
+    padding: 3px 9px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+    letter-spacing: .2px;
+}
+
+.order-tour-info-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.order-tour-name-heading {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.45;
+    color: var(--ink);
+    margin: 0 0 14px;
+}
+
+.order-tour-grid-2x2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 14px;
+    margin-bottom: 14px;
+}
+
+.tour-grid-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.grid-cell-icon {
+    color: var(--orange);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.grid-cell-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.grid-cell-label {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.grid-cell-val {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.grid-cell-code {
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    color: var(--orange-dark);
+    letter-spacing: .4px;
+}
+
+.order-tour-itinerary-link-row {
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.order-itinerary-popup-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--orange-dark);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color .18s ease;
+}
+
+.order-itinerary-popup-btn:hover {
+    color: var(--orange);
+    text-decoration: none;
+}
+
+.popup-btn-arrow {
+    display: inline-block;
+    transition: transform .18s ease;
+}
+
+.order-itinerary-popup-btn:hover .popup-btn-arrow {
+    transform: translateX(4px);
+}
+
+/* Card 2: Danh sách hành khách (Compact Table) */
+.order-passengers-card {
+    background: var(--panel-bg);
+}
+
+.order-passengers-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--panel-bg);
+    margin-top: 14px;
+}
+
+.order-passengers-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 13px;
+}
+
+.order-passengers-table thead th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 700;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    padding: 12px 14px;
+    border-bottom: 1.5px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.order-passengers-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background .15s ease;
+}
+
+.order-passengers-table tbody tr:hover {
+    background: #fafbfc;
+}
+
+.order-passengers-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.order-passengers-table td {
+    padding: 13px 14px;
+    vertical-align: middle;
+}
+
+.th-stt, .td-stt {
+    width: 44px;
+    text-align: center;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.passenger-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.passenger-type-badge.is-adult {
+    background: #fff4ec;
+    color: #b84417;
+    border: 1px solid #fed7aa;
+}
+
+.passenger-type-badge.is-child {
+    background: #ebf5ff;
+    color: #0969da;
+    border: 1px solid #b8d5ff;
+}
+
+.passenger-name-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.passenger-fullname {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.passenger-note-bubble {
+    display: inline-block;
+    font-size: 11px;
+    color: #92400e;
+    background: #fefce8;
+    border: 1px solid #fef08a;
+    padding: 1px 7px;
+    border-radius: 4px;
+    width: fit-content;
+}
+
+.passenger-gender-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.td-dob {
+    color: #475569;
+    white-space: nowrap;
+}
+
+.passenger-id-code {
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-size: 12.5px;
+    font-weight: 700;
+    background: #f8fafc;
+    padding: 2px 8px;
+    border-radius: 5px;
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+    letter-spacing: .4px;
+    white-space: nowrap;
+}
+
+.passenger-id-empty {
+    color: #94a3b8;
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* Modal / Popup: Lịch trình & Chính sách hoàn hủy */
+.order-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .24s ease, visibility .24s ease;
+}
+
+.order-modal-backdrop.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.order-modal-card {
+    background: #ffffff;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 760px;
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.22);
+    overflow: hidden;
+    transform: scale(0.94);
+    transition: transform .24s ease;
+}
+
+.order-modal-backdrop.is-open .order-modal-card {
+    transform: scale(1);
+}
+
+.order-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.order-modal-kicker {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--orange);
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.order-modal-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 0 0 4px;
+}
+
+.order-modal-subtitle {
+    font-size: 12.5px;
+    color: #64748b;
+    margin: 0;
+}
+
+.order-modal-subtitle strong {
+    color: var(--ink);
+}
+
+.order-modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 28px;
+    line-height: 1;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 6px;
+    transition: all .15s ease;
+}
+
+.order-modal-close-btn:hover {
+    color: var(--ink);
+    background: #e2e8f0;
+}
+
+.order-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+}
+
+.order-modal-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal-section-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink);
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--orange);
+    width: fit-content;
+}
+
+.modal-section-badge svg {
+    color: var(--orange);
+}
+
+/* Timeline */
+.modal-itinerary-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 4px;
+}
+
+.timeline-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.timeline-day-pill {
+    padding: 3px 9px;
+    border-radius: 5px;
+    background: var(--orange);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    letter-spacing: .3px;
+    flex-shrink: 0;
+}
+
+.timeline-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.timeline-day-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 5px;
+}
+
+.timeline-day-desc {
+    font-size: 12px;
+    line-height: 1.65;
+    color: #475569;
+    margin: 0;
+}
+
+.modal-itinerary-empty {
+    padding: 14px 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px dashed #cbd5e1;
+    font-size: 12.5px;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.modal-itinerary-empty p:last-child {
+    margin-bottom: 0;
+}
+
+/* Policy Table in Modal */
+.modal-policy-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal-policy-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.modal-policy-table th {
+    background: #f1f5f9;
+    padding: 10px 14px;
+    color: #334155;
+    font-weight: 700;
+    text-align: left;
+    border-bottom: 1.5px solid #e2e8f0;
+}
+
+.modal-policy-table td {
+    padding: 11px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.modal-policy-table tr:last-child td {
+    border-bottom: none;
+}
+
+.policy-tag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.tag-free {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.tag-warn {
+    background: #fef9c3;
+    color: #a16207;
+}
+
+.tag-danger {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.policy-refund {
+    font-weight: 700;
+}
+
+.refund-full {
+    color: #15803d;
+}
+
+.refund-none {
+    color: #b91c1c;
+}
+
+.policy-extra-notes {
+    font-size: 11.5px;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.policy-extra-notes ul {
+    margin: 4px 0 0;
+    padding-left: 18px;
+}
+
+.policy-extra-notes li {
+    margin-bottom: 3px;
+}
+
+.order-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+@media (max-width: 992px) {
+    .order-detail-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .order-tour-media-row {
+        flex-direction: column;
+    }
+
+    .order-tour-thumb-col {
+        width: 100%;
+        max-height: 180px;
+    }
+
+    .order-tour-grid-2x2 {
+        grid-template-columns: 1fr;
+    }
+
+    .order-modal-card {
+        max-height: 94vh;
+    }
 }
 
 .order-detail-main {

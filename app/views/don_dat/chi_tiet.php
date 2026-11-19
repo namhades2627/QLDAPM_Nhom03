@@ -56,6 +56,10 @@ $statusNotes = [
             $paid = $order['da_thanh_toan'];
             $canPay = !$paid && in_array($status, ['cho_xac_nhan', 'da_xac_nhan'], true);
             $canCancel = $status === 'cho_xac_nhan';
+            $currentMethod = !empty($order['phuong_thuc']) ? $order['phuong_thuc'] : (!empty($order['phuong_thuc_thanh_toan']) ? $order['phuong_thuc_thanh_toan'] : 'chuyen_khoan');
+            if ($currentMethod === 'thanh_toan_sau') {
+                $currentMethod = 'chuyen_khoan';
+            }
 
             $days = (int) ($order['so_ngay'] ?? 0);
             if ($days > 0) {
@@ -421,72 +425,323 @@ $statusNotes = [
                     </div>
                 </section>
 
-                <section class="booking-card">
-                    <div class="booking-card-heading"><span class="booking-step" aria-hidden="true">3</span><div><h2>Thông tin liên hệ</h2><p>OnTrip liên hệ theo thông tin bạn đã cung cấp.</p></div></div>
-                    <dl class="order-facts">
-                        <div><dt>Họ và tên</dt><dd><?= $escape($order['ho_ten']) ?></dd></div>
-                        <div><dt>Email</dt><dd><?= $escape($order['email']) ?></dd></div>
-                        <div><dt>Số điện thoại</dt><dd><?= $escape($order['so_dien_thoai']) ?></dd></div>
-                        <div><dt>Địa chỉ</dt><dd><?= $order['dia_chi'] !== '' ? $escape($order['dia_chi']) : '—' ?></dd></div>
-                    </dl>
-                    <?php if ($order['ghi_chu'] !== ''): ?>
-                    <p class="order-note"><strong>Ghi chú:</strong> <?= $escape($order['ghi_chu']) ?></p>
-                    <?php endif; ?>
+                <!-- Card 3: Thông tin liên hệ & Ghi chú (Contact & Special Requests) -->
+                <section class="booking-card order-contact-card">
+                    <div class="booking-card-heading">
+                        <span class="booking-step" aria-hidden="true">3</span>
+                        <div>
+                            <h2>Thông tin liên hệ &amp; Ghi chú</h2>
+                            <p>Thông tin người đại diện nhận vé và các lưu ý đặc biệt cho chuyến đi.</p>
+                        </div>
+                    </div>
+
+                    <!-- Chia 2 cột rõ ràng cho thông tin người đặt -->
+                    <div class="order-contact-grid">
+                        <div class="order-contact-item">
+                            <span class="contact-item-label">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                Họ và tên
+                            </span>
+                            <strong class="contact-item-value"><?= $escape($order['ho_ten']) ?></strong>
+                        </div>
+
+                        <div class="order-contact-item">
+                            <span class="contact-item-label">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                Số điện thoại
+                            </span>
+                            <?php if (!empty($order['so_dien_thoai'])): ?>
+                                <strong class="contact-item-value"><a href="tel:<?= $escape($order['so_dien_thoai']) ?>"><?= $escape($order['so_dien_thoai']) ?></a></strong>
+                            <?php else: ?>
+                                <span class="contact-item-empty">Chưa cung cấp</span>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="order-contact-item">
+                            <span class="contact-item-label">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                Email nhận xác nhận
+                            </span>
+                            <?php if (!empty($order['email'])): ?>
+                                <strong class="contact-item-value"><a href="mailto:<?= $escape($order['email']) ?>"><?= $escape($order['email']) ?></a></strong>
+                            <?php else: ?>
+                                <span class="contact-item-empty">Chưa cung cấp</span>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="order-contact-item">
+                            <span class="contact-item-label">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                Địa chỉ liên hệ
+                            </span>
+                            <?php if (!empty($order['dia_chi'])): ?>
+                                <span class="contact-item-value"><?= $escape($order['dia_chi']) ?></span>
+                            <?php else: ?>
+                                <span class="contact-item-empty">Chưa cung cấp</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Khung Ghi chú đặc biệt -->
+                    <div class="order-special-note-box">
+                        <div class="special-note-header">
+                            <div class="special-note-title">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                <span>Ghi chú &amp; Yêu cầu đặc biệt cho đoàn</span>
+                            </div>
+                            <?php if ($status === 'cho_xac_nhan'): ?>
+                            <button type="button" class="btn-edit-note" data-modal-open="edit-note-modal">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                <?= !empty($order['ghi_chu']) ? 'Chỉnh sửa ghi chú' : 'Thêm ghi chú' ?>
+                            </button>
+                            <?php endif; ?>
+                        </div>
+                        <div class="special-note-body">
+                            <?php if (!empty($order['ghi_chu'])): ?>
+                                <p class="special-note-content"><?= nl2br($escape($order['ghi_chu'])) ?></p>
+                            <?php else: ?>
+                                <p class="special-note-placeholder">Không có ghi chú hay yêu cầu đặc biệt nào (ăn chay, dị ứng, phòng gần nhau...).</p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 </section>
             </div>
 
-            <aside class="booking-sidebar" aria-label="Tổng kết đơn đặt">
-                <div class="booking-summary">
-                    <span class="detail-booking-label">TỔNG KẾT ĐƠN ĐẶT</span>
-                    <div class="booking-summary-row"><span>Người lớn × <?= (int) $order['so_nguoi_lon'] ?></span><strong><?= $money($order['so_nguoi_lon'] * $order['gia_nguoi_lon']) ?></strong></div>
-                    <div class="booking-summary-row"><span>Trẻ em × <?= (int) $order['so_tre_em'] ?></span><strong><?= $money($order['so_tre_em'] * $order['gia_tre_em']) ?></strong></div>
-                    <div class="booking-summary-row booking-summary-subtotal"><span>Tổng trước ưu đãi</span><strong><?= $money($order['tong_goc']) ?></strong></div>
-                    <?php if ((int) $order['muc_giam'] > 0): ?>
-                    <div class="booking-summary-row"><span>Ưu đãi nhóm <?= (int) $order['muc_giam'] ?>%</span><strong>−<?= $money($order['tien_giam']) ?></strong></div>
-                    <?php endif; ?>
-                    <div class="booking-summary-total"><span>Tổng thanh toán</span><strong><?= $money($order['tong_thanh_toan']) ?></strong></div>
+            <!-- PHẦN 3: KHU VỰC THANH TOÁN & TÁC VỤ – CỘT PHẢI 35% (STICKY PAYMENT & ACTION SIDEBAR) -->
+            <aside class="booking-sidebar order-sticky-sidebar" aria-label="Tổng kết đơn đặt &amp; Thanh toán">
+                <div class="order-sidebar-card">
+                    <!-- KHỐI A: CHI TIẾT HÓA ĐƠN (PRICE BREAKDOWN) -->
+                    <div class="order-sidebar-section price-breakdown-section">
+                        <h3 class="sidebar-section-title">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                            Chi tiết hóa đơn
+                        </h3>
 
-                    <?php if ($paid): ?>
-                    <div class="order-payment-done">
-                        <strong>Đã thanh toán mô phỏng</strong>
-                        <span>Phương thức: <?= $escape($paymentMethods[$order['phuong_thuc']] ?? $order['phuong_thuc']) ?></span>
-                        <span>Mã giao dịch: <?= $escape($order['ma_giao_dich']) ?></span>
-                        <span>Số tiền: <?= $money($order['so_tien_da_tra']) ?></span>
-                        <?php if (!empty($order['thanh_toan_luc'])): ?><span>Thời điểm: <?= date('d/m/Y H:i', strtotime($order['thanh_toan_luc'])) ?></span><?php endif; ?>
+                        <div class="billing-items-list">
+                            <!-- Người lớn: Liệt kê rõ đơn giá nhân với số lượng -->
+                            <div class="billing-item-row">
+                                <div class="billing-item-info">
+                                    <span class="billing-item-name">Người lớn</span>
+                                    <span class="billing-item-calc">(<?= (int) $order['so_nguoi_lon'] ?> × <?= $money($order['gia_nguoi_lon']) ?>)</span>
+                                </div>
+                                <strong class="billing-item-amount"><?= $money($order['so_nguoi_lon'] * $order['gia_nguoi_lon']) ?></strong>
+                            </div>
+
+                            <!-- Trẻ em (nếu có): Liệt kê rõ đơn giá nhân với số lượng -->
+                            <?php if ((int) $order['so_tre_em'] > 0): ?>
+                            <div class="billing-item-row">
+                                <div class="billing-item-info">
+                                    <span class="billing-item-name">Trẻ em</span>
+                                    <span class="billing-item-calc">(<?= (int) $order['so_tre_em'] ?> × <?= $money($order['gia_tre_em']) ?>)</span>
+                                </div>
+                                <strong class="billing-item-amount"><?= $money($order['so_tre_em'] * $order['gia_tre_em']) ?></strong>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- Tổng tiền gốc (nếu có giảm giá nhóm hoặc voucher) -->
+                            <?php if ((int) $order['muc_giam'] > 0 || !empty($order['ma_giam_gia'])): ?>
+                            <div class="billing-item-row billing-subtotal-row">
+                                <span class="billing-item-name">Tổng tiền gốc</span>
+                                <span class="billing-item-subtotal"><?= $money($order['tong_goc']) ?></span>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- Giảm giá nhóm (nếu có) -->
+                            <?php if ((int) $order['muc_giam'] > 0): ?>
+                            <div class="billing-item-row billing-discount-row">
+                                <span class="billing-item-name">
+                                    <span class="discount-badge">Giảm giá nhóm -<?= (int) $order['muc_giam'] ?>%</span>
+                                </span>
+                                <strong class="billing-item-discount">−<?= $money($order['tien_giam']) ?></strong>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- Voucher ưu đãi (nếu có) -->
+                            <?php if (!empty($order['ma_giam_gia']) || (int) $order['tien_giam_voucher'] > 0): ?>
+                            <div class="billing-item-row billing-discount-row">
+                                <span class="billing-item-name">
+                                    <span class="voucher-code-pill">Voucher: <?= $escape($order['ma_giam_gia']) ?></span>
+                                </span>
+                                <strong class="billing-item-discount">−<?= $money($order['tien_giam_voucher']) ?></strong>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- Thuế & Phí dịch vụ: Đã bao gồm -->
+                            <div class="billing-item-row billing-vat-row">
+                                <span class="billing-item-name">Thuế &amp; Phí dịch vụ</span>
+                                <span class="vat-included-tag">Đã bao gồm</span>
+                            </div>
+                        </div>
+
+                        <!-- Tổng thanh toán: Nổi bật với cỡ chữ lớn 22px-24px màu đỏ/cam thương hiệu -->
+                        <div class="order-total-highlight-card">
+                            <div class="order-total-label-group">
+                                <span class="total-label-main">Tổng thanh toán</span>
+                                <span class="total-label-sub">Đã bao gồm toàn bộ thuế phí</span>
+                            </div>
+                            <div class="order-total-price-display"><?= $money($order['tong_thanh_toan']) ?></div>
+                        </div>
                     </div>
-                    <?php elseif ($canPay): ?>
-                    <form class="order-payment-form" method="post" action="index.php?page=orders">
-                        <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
-                        <input type="hidden" name="ma_don" value="<?= $escape($order['ma_don']) ?>">
-                        <input type="hidden" name="operation" value="pay">
-                        <label class="booking-field"><span>Phương thức thanh toán</span>
-                            <select name="phuong_thuc" required>
-                                <?php foreach ($paymentMethods as $value => $label): ?>
-                                <option value="<?= $escape($value) ?>"><?= $escape($label) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </label>
-                        <p class="booking-summary-note">Thanh toán trong bản demo chỉ là mô phỏng, không phát sinh giao dịch thật.</p>
-                        <button class="button button-primary booking-submit" type="submit">Xác nhận thanh toán</button>
-                    </form>
+
+                    <!-- KHỐI B: PHƯƠNG THỨC THANH TOÁN (PAYMENT METHOD) -->
+                    <?php if ($paid): ?>
+                        <!-- ĐÃ THANH TOÁN: BIÊN LAI XÁC NHẬN -->
+                        <div class="order-sidebar-section payment-receipt-section">
+                            <div class="payment-receipt-badge">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                <span>Thanh toán thành công</span>
+                            </div>
+                            <div class="payment-receipt-details">
+                                <div class="receipt-row">
+                                    <span>Phương thức:</span>
+                                    <strong><?= $escape($paymentMethods[$order['phuong_thuc']] ?? $order['phuong_thuc']) ?></strong>
+                                </div>
+                                <div class="receipt-row">
+                                    <span>Mã giao dịch:</span>
+                                    <code><?= $escape($order['ma_giao_dich']) ?></code>
+                                </div>
+                                <div class="receipt-row">
+                                    <span>Số tiền đã trả:</span>
+                                    <strong class="receipt-paid-amount"><?= $money($order['so_tien_da_tra']) ?></strong>
+                                </div>
+                                <?php if (!empty($order['thanh_toan_luc'])): ?>
+                                <div class="receipt-row">
+                                    <span>Thời điểm:</span>
+                                    <span><?= date('d/m/Y H:i', strtotime($order['thanh_toan_luc'])) ?></span>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php elseif ($status === 'da_huy'): ?>
+                        <div class="order-sidebar-section payment-cancelled-section">
+                            <div class="cancelled-notice-badge">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                                <span>Đơn đặt đã bị hủy</span>
+                            </div>
+                            <p class="cancelled-notice-desc">Đơn tour này đã hủy nên không thể thực hiện giao dịch thanh toán.</p>
+                        </div>
+                    <?php else: ?>
+                        <!-- FORM CHỌN PHƯƠNG THỨC & SUBMIT -->
+                        <form id="order-payment-sidebar-form" method="post" action="index.php?page=orders" class="order-payment-sidebar-form">
+                            <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
+                            <input type="hidden" name="ma_don" value="<?= $escape($order['ma_don']) ?>">
+                            <input type="hidden" name="operation" value="<?= $status === 'da_xac_nhan' ? 'pay' : 'update_payment_method' ?>">
+
+                            <div class="order-sidebar-section payment-methods-section">
+                                <h3 class="sidebar-section-title">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                                    Phương thức thanh toán
+                                </h3>
+                                <p class="payment-section-desc">Chọn hình thức thanh toán thuận tiện nhất cho bạn:</p>
+
+                                <!-- Radio Cards trực quan -->
+                                <div class="payment-radio-cards" role="radiogroup" aria-label="Chọn phương thức thanh toán">
+                                    <!-- 1. Chuyển khoản ngân hàng VietQR -->
+                                    <label class="payment-radio-card <?= $currentMethod === 'chuyen_khoan' ? 'is-selected' : '' ?>">
+                                        <input type="radio" name="phuong_thuc" value="chuyen_khoan" <?= $currentMethod === 'chuyen_khoan' ? 'checked' : '' ?> class="payment-radio-input">
+                                        <div class="payment-radio-custom" aria-hidden="true"></div>
+                                        <div class="payment-method-icon icon-vietqr">
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                        </div>
+                                        <div class="payment-method-details">
+                                            <span class="method-title">Chuyển khoản ngân hàng</span>
+                                            <span class="method-subtitle">VietQR - Tự động xác nhận 24/7</span>
+                                        </div>
+                                    </label>
+
+                                    <!-- 2. Ví điện tử (MoMo / ZaloPay) -->
+                                    <label class="payment-radio-card <?= $currentMethod === 'vi_dien_tu' ? 'is-selected' : '' ?>">
+                                        <input type="radio" name="phuong_thuc" value="vi_dien_tu" <?= $currentMethod === 'vi_dien_tu' ? 'checked' : '' ?> class="payment-radio-input">
+                                        <div class="payment-radio-custom" aria-hidden="true"></div>
+                                        <div class="payment-method-icon icon-ewallet">
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg>
+                                        </div>
+                                        <div class="payment-method-details">
+                                            <span class="method-title">Ví điện tử</span>
+                                            <span class="method-subtitle">MoMo / ZaloPay</span>
+                                        </div>
+                                    </label>
+
+                                    <!-- 3. Thẻ quốc tế (Visa / Mastercard) -->
+                                    <label class="payment-radio-card <?= $currentMethod === 'the' ? 'is-selected' : '' ?>">
+                                        <input type="radio" name="phuong_thuc" value="the" <?= $currentMethod === 'the' ? 'checked' : '' ?> class="payment-radio-input">
+                                        <div class="payment-radio-custom" aria-hidden="true"></div>
+                                        <div class="payment-method-icon icon-card">
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                                        </div>
+                                        <div class="payment-method-details">
+                                            <span class="method-title">Thẻ quốc tế</span>
+                                            <span class="method-subtitle">Visa / Mastercard</span>
+                                        </div>
+                                    </label>
+
+                                    <!-- 4. Thanh toán tại văn phòng OnTrip -->
+                                    <label class="payment-radio-card <?= $currentMethod === 'tai_van_phong' ? 'is-selected' : '' ?>">
+                                        <input type="radio" name="phuong_thuc" value="tai_van_phong" <?= $currentMethod === 'tai_van_phong' ? 'checked' : '' ?> class="payment-radio-input">
+                                        <div class="payment-radio-custom" aria-hidden="true"></div>
+                                        <div class="payment-method-icon icon-office">
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"></path><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line><line x1="9" y1="13" x2="9.01" y2="13"></line><line x1="15" y1="13" x2="15.01" y2="13"></line></svg>
+                                        </div>
+                                        <div class="payment-method-details">
+                                            <span class="method-title">Tại văn phòng OnTrip</span>
+                                            <span class="method-subtitle">Tiền mặt hoặc quẹt thẻ tại quầy</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- KHỐI C: CỤM NÚT HÀNH ĐỘNG (ACTION BUTTONS) -->
+                            <div class="order-sidebar-section action-buttons-section">
+                                <?php if ($status === 'da_xac_nhan'): ?>
+                                    <!-- ĐÃ XÁC NHẬN CHỖ: CHO PHÉP XÁC NHẬN & THANH TOÁN NGAY -->
+                                    <button type="submit" class="btn-primary-action btn-pay-now">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                                        <span>Xác nhận &amp; Thanh toán ngay</span>
+                                    </button>
+                                    <p class="action-note-sub">Thanh toán trong bản demo là mô phỏng an toàn, không trừ tiền thật.</p>
+                                <?php elseif ($status === 'cho_xac_nhan'): ?>
+                                    <!-- ĐANG CHỜ XÁC NHẬN CHỖ: LƯU PHƯƠNG THỨC -->
+                                    <button type="submit" class="btn-primary-action btn-save-payment-method">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                                        <span>Lưu phương thức thanh toán</span>
+                                    </button>
+                                    <p class="action-note-sub">OnTrip đang kiểm tra tình trạng chỗ. Cổng thanh toán sẽ mở ngay khi tư vấn viên chốt giữ chỗ thành công.</p>
+                                <?php endif; ?>
+                            </div>
+                        </form>
                     <?php endif; ?>
 
+                    <!-- NÚT PHỤ (SECONDARY CTA): HỦY ĐƠN ĐẶT -->
                     <?php if ($canCancel): ?>
-                    <form class="order-cancel-form" method="post" action="index.php?page=orders" data-confirm="Hủy đơn đặt tour này?">
-                        <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
-                        <input type="hidden" name="ma_don" value="<?= $escape($order['ma_don']) ?>">
-                        <input type="hidden" name="operation" value="cancel">
-                        <button class="booking-cancel" type="submit">Hủy đơn</button>
-                    </form>
+                    <div class="order-cancel-trigger-wrap">
+                        <button type="button" class="btn-cancel-order-trigger" data-modal-open="cancel-order-modal">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                            <span>Hủy đơn đặt tour</span>
+                        </button>
+                        <span class="cancel-help-text">Miễn phí hủy trong giai đoạn chờ xác nhận chỗ</span>
+                    </div>
                     <?php endif; ?>
 
                     <?php if (in_array($order['trang_thai'], ['da_xac_nhan', 'hoan_thanh'], true)): ?>
-                    <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);">
-                        <a class="button button-primary" style="width: 100%; text-align: center; display: block;" href="index.php?page=tour-detail&amp;id=<?= $escape(rawurlencode($order['ma_tour'])) ?>#danh-gia">⭐ Đánh giá tour này</a>
+                    <div class="order-rate-tour-wrap">
+                        <a class="btn-rate-tour-link" href="index.php?page=tour-detail&amp;id=<?= $escape(rawurlencode($order['ma_tour'])) ?>#danh-gia">⭐ Đánh giá tour này</a>
                     </div>
                     <?php endif; ?>
 
-                    <a class="booking-back-link" href="index.php?page=orders">← Về danh sách đơn</a>
+                    <!-- BOX HỖ TRỢ NHANH (FOOTER CỦA SIDEBAR) -->
+                    <div class="order-quick-support-box">
+                        <div class="support-box-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        </div>
+                        <div class="support-box-content">
+                            <strong class="support-title">Cần hỗ trợ gấp về đơn hàng?</strong>
+                            <p class="support-desc">Gọi ngay Hotline <a href="tel:19002345" class="support-hotline-link"><strong>1900 2345</strong></a> (24/7) hoặc Chat với tư vấn viên OnTrip.</p>
+                        </div>
+                    </div>
+
+                    <div class="order-back-list-wrap">
+                        <a class="booking-back-link" href="index.php?page=orders">← Về danh sách đơn</a>
+                    </div>
                 </div>
             </aside>
         </div>
@@ -584,6 +839,77 @@ $statusNotes = [
                 <div class="order-modal-footer">
                     <button type="button" class="button button-primary modal-close-action-btn" data-modal-close>Đã hiểu và Đóng</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Modal Popup 2: Chỉnh sửa ghi chú đặc biệt -->
+        <div class="order-modal-backdrop" id="edit-note-modal" aria-hidden="true" role="dialog" aria-labelledby="modal-note-title">
+            <div class="order-modal-card order-modal-sm">
+                <div class="order-modal-header">
+                    <div>
+                        <span class="order-modal-kicker">CẬP NHẬT ĐƠN ĐẶT</span>
+                        <h3 id="modal-note-title" class="order-modal-title">Ghi chú &amp; Yêu cầu đặc biệt</h3>
+                    </div>
+                    <button type="button" class="order-modal-close-btn" data-modal-close aria-label="Đóng popup">&times;</button>
+                </div>
+                <form method="post" action="index.php?page=orders" class="order-modal-form">
+                    <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
+                    <input type="hidden" name="ma_don" value="<?= $escape($order['ma_don']) ?>">
+                    <input type="hidden" name="operation" value="update_note">
+                    <div class="order-modal-body">
+                        <p class="modal-form-intro">Nhập các yêu cầu hoặc lưu ý riêng cho đoàn của bạn (ví dụ: ăn chay trường, dị ứng thức ăn, xếp phòng gần nhau, đón tại điểm hẹn...).</p>
+                        <div class="form-group-note">
+                            <label for="order-edit-note-textarea" class="modal-input-label">Nội dung ghi chú:</label>
+                            <textarea id="order-edit-note-textarea" name="ghi_chu" rows="4" class="modal-textarea" placeholder="Ví dụ: Có 1 khách ăn chay; xin vui lòng sắp xếp phòng giường đôi liền kề..."><?= $escape($order['ghi_chu']) ?></textarea>
+                        </div>
+                    </div>
+                    <div class="order-modal-footer">
+                        <button type="button" class="button button-secondary" data-modal-close>Hủy bỏ</button>
+                        <button type="submit" class="button button-primary">Lưu ghi chú</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Popup 3: Xác nhận lý do hủy đơn -->
+        <div class="order-modal-backdrop" id="cancel-order-modal" aria-hidden="true" role="dialog" aria-labelledby="modal-cancel-title">
+            <div class="order-modal-card order-modal-sm">
+                <div class="order-modal-header modal-header-danger">
+                    <div>
+                        <span class="order-modal-kicker kicker-danger">HỦY YÊU CẦU ĐẶT TOUR</span>
+                        <h3 id="modal-cancel-title" class="order-modal-title">Xác nhận hủy đơn đặt</h3>
+                    </div>
+                    <button type="button" class="order-modal-close-btn" data-modal-close aria-label="Đóng popup">&times;</button>
+                </div>
+                <form method="post" action="index.php?page=orders" class="order-modal-form">
+                    <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
+                    <input type="hidden" name="ma_don" value="<?= $escape($order['ma_don']) ?>">
+                    <input type="hidden" name="operation" value="cancel">
+                    <div class="order-modal-body">
+                        <div class="cancel-warning-banner">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                            <div>
+                                <strong>Bạn có chắc chắn muốn hủy đơn này?</strong>
+                                <p>Số chỗ đang được giữ sẽ được giải phóng cho hành khách khác trên hệ thống.</p>
+                            </div>
+                        </div>
+
+                        <div class="form-group-cancel-reason">
+                            <label for="cancel-reason-select" class="modal-input-label">Vui lòng chọn lý do hủy:</label>
+                            <select id="cancel-reason-select" name="ly_do_huy" class="modal-select">
+                                <option value="Thay đổi kế hoạch / Chọn điểm đến khác">Thay đổi kế hoạch / Chọn điểm đến khác</option>
+                                <option value="Có việc bận đột xuất / Trùng lịch trình">Có việc bận đột xuất / Trùng lịch trình</option>
+                                <option value="Muốn đổi ngày khởi hành hoặc số lượng khách">Muốn đổi ngày khởi hành hoặc số lượng khách</option>
+                                <option value="Đặt nhầm thông tin / Thử nghiệm tính năng">Đặt nhầm thông tin / Thử nghiệm tính năng</option>
+                                <option value="Lý do cá nhân khác">Lý do cá nhân khác</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="order-modal-footer">
+                        <button type="button" class="button button-secondary" data-modal-close>Giữ lại đơn này</button>
+                        <button type="submit" class="button btn-confirm-cancel">Xác nhận hủy đơn</button>
+                    </div>
+                </form>
             </div>
         </div>
         <?php endif; ?>

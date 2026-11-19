@@ -2281,3 +2281,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+
+// Chi tiết đơn đặt: Xử lý Radio Cards chọn phương thức thanh toán
+document.addEventListener('DOMContentLoaded', () => {
+    const radioCards = document.querySelectorAll('.payment-radio-card');
+    if (!radioCards.length) return;
+
+    radioCards.forEach(card => {
+        const input = card.querySelector('input[type="radio"][name="phuong_thuc"]');
+        if (!input) return;
+
+        input.addEventListener('change', () => {
+            radioCards.forEach(c => c.classList.remove('is-selected'));
+            if (input.checked) {
+                card.classList.add('is-selected');
+            }
+        });
+
+        card.addEventListener('click', () => {
+            if (!input.checked) {
+                input.checked = true;
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    });
+});

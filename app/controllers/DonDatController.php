@@ -356,8 +356,17 @@ class DonDatController
                             'success' => true,
                         ];
                     } elseif ($operation === 'cancel') {
-                        $this->model->cancelAccountOrder($accountId, $maDon);
-                        $flash = ['message' => 'Đã hủy đơn đặt tour.', 'success' => true];
+                        $reason = trim($this->input('ly_do_huy'));
+                        $this->model->cancelAccountOrder($accountId, $maDon, $reason);
+                        $flash = ['message' => 'Đã hủy đơn đặt tour thành công.', 'success' => true];
+                    } elseif ($operation === 'update_note') {
+                        $note = trim($this->input('ghi_chu'));
+                        $this->model->updateOrderNote($accountId, $maDon, $note);
+                        $flash = ['message' => 'Đã cập nhật ghi chú đặc biệt cho chuyến đi thành công.', 'success' => true];
+                    } elseif ($operation === 'update_payment_method') {
+                        $method = trim($this->input('phuong_thuc'));
+                        $this->model->updatePaymentMethod($accountId, $maDon, $method);
+                        $flash = ['message' => 'Đã lưu phương thức thanh toán dự kiến thành công.', 'success' => true];
                     }
                 } catch (DomainException $exception) {
                     $flash = ['message' => $exception->getMessage(), 'success' => false];

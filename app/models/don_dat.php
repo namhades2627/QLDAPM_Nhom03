@@ -18,9 +18,10 @@ class DonDatModel
 
     /** Phương thức thanh toán mô phỏng. */
     public const PAYMENT_METHODS = [
-        'chuyen_khoan' => 'Chuyển khoản ngân hàng',
-        'the' => 'Thẻ ngân hàng',
-        'vi_dien_tu' => 'Ví điện tử',
+        'chuyen_khoan'  => 'Chuyển khoản ngân hàng (VietQR - Tự động xác nhận)',
+        'vi_dien_tu'    => 'Ví điện tử (MoMo / ZaloPay)',
+        'the'           => 'Thẻ quốc tế (Visa / Mastercard)',
+        'tai_van_phong' => 'Thanh toán tại văn phòng OnTrip',
     ];
 
     /** @var PDO Kết nối database được truyền từ Controller. */
@@ -477,13 +478,13 @@ class DonDatModel
         return $order;
     }
 
-    /** Khách tự hủy đơn đang chờ xác nhận. */
-    public function cancelAccountOrder(int $accountId, string $maDon): void
+    /** Khách tự hủy đơn đang chờ xác nhận kèm lý do. */
+    public function cancelAccountOrder(int $accountId, string $maDon, string $reason = ''): void
     {
         $this->connection->beginTransaction();
         try {
             $statement = $this->connection->prepare(
-                'SELECT id_don_dat, trang_thai FROM don_dat_tour WHERE ma_don = ? AND id_tai_khoan = ? FOR UPDATE'
+                'SELECT id_don_dat, trang_thai, ghi_chu FROM don_dat_tour WHERE ma_don = ? AND id_tai_khoan = ? FOR UPDATE'
             );
             $statement->execute([$maDon, $accountId]);
             $order = $statement->fetch();
@@ -493,8 +494,12 @@ class DonDatModel
             if ($order['trang_thai'] !== 'cho_xac_nhan') {
                 throw new DomainException('Chỉ hủy được đơn đang chờ xác nhận. Vui lòng liên hệ OnTrip.');
             }
-            $this->connection->prepare("UPDATE don_dat_tour SET trang_thai = 'da_huy' WHERE id_don_dat = ?")
-                ->execute([(int) $order['id_don_dat']]);
+            $note = (string) ($order['ghi_chu'] ?? '');
+            if ($reason !== '') {
+                $note = trim($note . ($note !== '' ? ' | ' : '') . '[Lý do hủy: ' . $reason . ']');
+            }
+            $this->connection->prepare("UPDATE don_dat_tour SET trang_thai = 'da_huy', ghi_chu = ?, cap_nhat_luc = CURRENT_TIMESTAMP WHERE id_don_dat = ?")
+                ->execute([$note !== '' ? $note : null, (int) $order['id_don_dat']]);
             (new ThongBaoModel($this->connection))->createForOrder((int) $order['id_don_dat'], 'huy_don');
             $this->connection->commit();
         } catch (Throwable $exception) {
@@ -503,6 +508,39 @@ class DonDatModel
             }
             throw $exception;
         }
+    }
+
+    /** Cập nhật ghi chú đặc biệt cho đơn khi còn ở trạng thái chờ xác nhận. */
+    public function updateOrderNote(int $accountId, string $maDon, string $note): void
+    {
+        if (mb_strlen($note, 'UTF-8') > 500) {
+            throw new DomainException('Ghi chú đặc biệt không được vượt quá 500 ký tự.');
+        }
+        $check = $this->connection->prepare("SELECT trang_thai FROM don_dat_tour WHERE ma_don = ? AND id_tai_khoan = ?");
+        $check->execute([$maDon, $accountId]);
+        $status = $check->fetchColumn();
+        if (!$status) {
+            throw new DomainException('Không tìm thấy đơn đặt này.');
+        }
+        if ($status !== 'cho_xac_nhan') {
+            throw new DomainException('Chỉ có thể chỉnh sửa ghi chú khi đơn đang chờ xác nhận.');
+        }
+        $statement = $this->connection->prepare(
+            "UPDATE don_dat_tour SET ghi_chu = ?, cap_nhat_luc = CURRENT_TIMESTAMP WHERE ma_don = ? AND id_tai_khoan = ? AND trang_thai = 'cho_xac_nhan'"
+        );
+        $statement->execute([$note !== '' ? $note : null, $maDon, $accountId]);
+    }
+
+    /** Lưu phương thức thanh toán dự kiến khi khách chọn trước. */
+    public function updatePaymentMethod(int $accountId, string $maDon, string $method): void
+    {
+        if (!isset(self::PAYMENT_METHODS[$method])) {
+            throw new DomainException('Phương thức thanh toán không hợp lệ.');
+        }
+        $statement = $this->connection->prepare(
+            "UPDATE don_dat_tour SET phuong_thuc_thanh_toan = ?, cap_nhat_luc = CURRENT_TIMESTAMP WHERE ma_don = ? AND id_tai_khoan = ?"
+        );
+        $statement->execute([$method, $maDon, $accountId]);
     }
 
     /** Thanh toán mô phỏng: ghi nhận giao dịch thành công cho đơn của chính khách hàng. */
@@ -537,6 +575,15 @@ class DonDatModel
                 "INSERT INTO thanh_toan (id_don_dat, phuong_thuc, so_tien, ma_giao_dich, trang_thai)
                  VALUES (?, ?, ?, ?, 'thanh_cong')"
             )->execute([(int) $order['id_don_dat'], $method, (int) $order['tong_thanh_toan'], $maGiaoDich]);
+
+            // Cập nhật phương thức thanh toán thực tế vào đơn
+            $this->connection->prepare(
+                "UPDATE don_dat_tour SET phuong_thuc_thanh_toan = ?, cap_nhat_luc = CURRENT_TIMESTAMP WHERE id_don_dat = ?"
+            )->execute([$method, (int) $order['id_don_dat']]);
+
+            (new ThongBaoModel($this->connection))->createForOrder((int) $order['id_don_dat'], 'thanh_toan');
+            $this->connection->commit();
+            return $maGiaoDich;
             (new ThongBaoModel($this->connection))->createForOrder((int) $order['id_don_dat'], 'thanh_toan');
             $this->connection->commit();
             return $maGiaoDich;

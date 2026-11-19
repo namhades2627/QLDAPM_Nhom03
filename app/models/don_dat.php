@@ -376,8 +376,11 @@ class DonDatModel
 
     private function orderSelect(): string
     {
-        return "SELECT dd.*, tt.phuong_thuc, tt.ma_giao_dich, tt.so_tien AS so_tien_da_tra, tt.tao_luc AS thanh_toan_luc
+        return "SELECT dd.*, 
+                       t.id_tour, t.duong_dan_anh, t.so_ngay, t.gioi_thieu,
+                       tt.phuong_thuc, tt.ma_giao_dich, tt.so_tien AS so_tien_da_tra, tt.tao_luc AS thanh_toan_luc
                 FROM don_dat_tour dd
+                LEFT JOIN tour t ON t.ma_tour = dd.ma_tour
                 LEFT JOIN thanh_toan tt ON tt.id_don_dat = dd.id_don_dat AND tt.trang_thai = 'thanh_cong'";
     }
 
@@ -435,12 +438,28 @@ class DonDatModel
         }
     }
 
+    /** @return array<int, array<string, mixed>> */
+    private function getItinerary(int $tourId): array
+    {
+        try {
+            $statement = $this->connection->prepare(
+                'SELECT ngay_thu, tieu_de, noi_dung FROM lich_trinh_ngay WHERE id_tour = ? ORDER BY ngay_thu ASC'
+            );
+            $statement->execute([$tourId]);
+            return $statement->fetchAll();
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
     private function normalizeOrder(array $order): array
     {
         foreach (['id_don_dat', 'so_nguoi_lon', 'so_tre_em', 'gia_nguoi_lon', 'gia_tre_em',
             'tong_goc', 'muc_giam', 'tien_giam', 'tong_thanh_toan'] as $key) {
             $order[$key] = (int) $order[$key];
         }
+        $order['so_ngay'] = isset($order['so_ngay']) ? (int) $order['so_ngay'] : 0;
+        $order['duong_dan_anh'] = (string) ($order['duong_dan_anh'] ?? '');
         $order['tien_giam_voucher'] = isset($order['tien_giam_voucher']) ? (int) $order['tien_giam_voucher'] : 0;
         $order['ma_giam_gia'] = (string) ($order['ma_giam_gia'] ?? '');
         $order['phuong_thuc_thanh_toan'] = (string) ($order['phuong_thuc_thanh_toan'] ?? 'thanh_toan_sau');
@@ -454,6 +473,7 @@ class DonDatModel
     {
         $order = $this->normalizeOrder($order);
         $order['participants'] = $this->getParticipants($order['id_don_dat']);
+        $order['itinerary'] = !empty($order['id_tour']) ? $this->getItinerary((int) $order['id_tour']) : [];
         return $order;
     }
 

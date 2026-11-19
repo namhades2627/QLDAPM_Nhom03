@@ -2233,3 +2233,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// Chi tiết đơn đặt: Mở và đóng Modal Lịch trình & Chính sách hoàn hủy
+document.addEventListener('DOMContentLoaded', () => {
+    // Mở modal
+    document.querySelectorAll('[data-modal-open]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const modalId = btn.dataset.modalOpen;
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            }
+        });
+    });
+
+    // Đóng modal
+    function closeModal(modal) {
+        if (!modal) return;
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.order-modal-backdrop').forEach(modal => {
+        // Click các nút có attribute data-modal-close
+        modal.querySelectorAll('[data-modal-close]').forEach(closeBtn => {
+            closeBtn.addEventListener('click', () => closeModal(modal));
+        });
+
+        // Click ra ngoài vùng thẻ card để đóng
+        modal.addEventListener('click', e => {
+            if (e.target === modal) {
+                closeModal(modal);
+            }
+        });
+    });
+
+    // Đóng modal bằng phím Escape
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            const openModal = document.querySelector('.order-modal-backdrop.is-open');
+            if (openModal) {
+                closeModal(openModal);
+            }
+        }
+    });
+});

@@ -57,6 +57,15 @@ $statusNotes = [
             $canPay = !$paid && in_array($status, ['cho_xac_nhan', 'da_xac_nhan'], true);
             $canCancel = $status === 'cho_xac_nhan';
 
+            $days = (int) ($order['so_ngay'] ?? 0);
+            if ($days > 0) {
+                $nights = max(1, $days - 1);
+                $durationText = $days . ' Ngày ' . $nights . ' Đêm';
+            } else {
+                $durationText = '2 Ngày 1 Đêm';
+            }
+            $tourImage = !empty($order['duong_dan_anh']) ? $order['duong_dan_anh'] : 'assets/images/tours/mb01.jpg';
+
             // Trạng thái cho 4 bước trong Progress Stepper:
             // 1. Đã gửi yêu cầu (Hoàn thành - Xanh lá)
             // 2. Chờ xác nhận chỗ (Đang xử lý - Cam nhấp nháy khi cho_xac_nhan)
@@ -269,30 +278,147 @@ $statusNotes = [
 
         <div class="order-detail-layout">
             <div class="order-detail-main">
-                <section class="booking-card">
-                    <div class="booking-card-heading"><span class="booking-step" aria-hidden="true">1</span><div><h2>Thông tin chuyến đi</h2><p>Đơn giá được lưu tại thời điểm đặt nên không đổi khi OnTrip cập nhật giá tour.</p></div></div>
-                    <dl class="order-facts order-facts-inline">
-                        <div><dt>Mã tour</dt><dd><?= $escape($order['ma_tour']) ?></dd></div>
-                        <div><dt>Khởi hành</dt><dd><?= date('d/m/Y', strtotime($order['ngay_khoi_hanh'])) ?></dd></div>
-                        <div><dt>Điểm khởi hành</dt><dd><?= $escape($order['diem_khoi_hanh']) ?></dd></div>
-                        <div><dt>Ngày đặt</dt><dd><?= date('d/m/Y H:i', strtotime($order['tao_luc'])) ?></dd></div>
-                    </dl>
+                <!-- Card 1: Tóm tắt Tour & Lịch trình (Tour Summary Card) -->
+                <section class="booking-card order-tour-summary-card">
+                    <div class="booking-card-heading">
+                        <span class="booking-step" aria-hidden="true">1</span>
+                        <div>
+                            <h2>Tóm tắt Tour &amp; Lịch trình</h2>
+                            <p>Thông tin cốt lõi về chuyến đi và thời gian khởi hành.</p>
+                        </div>
+                    </div>
+
+                    <div class="order-tour-media-row">
+                        <div class="order-tour-thumb-col">
+                            <img class="order-tour-thumb-img" src="<?= $escape($tourImage) ?>" alt="<?= $escape($order['ten_tour']) ?>" loading="lazy" onerror="this.onerror=null;this.src='assets/images/favicon.svg';">
+                            <span class="order-tour-badge-overlay"><?= $escape($durationText) ?></span>
+                        </div>
+                        <div class="order-tour-info-col">
+                            <h3 class="order-tour-name-heading"><?= $escape($order['ten_tour']) ?></h3>
+                            
+                            <!-- Grid 2x2 thông tin cốt lõi -->
+                            <div class="order-tour-grid-2x2">
+                                <div class="tour-grid-cell">
+                                    <span class="grid-cell-icon" aria-hidden="true">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16"></path><path d="M4 15h16"></path><path d="M10 3L8 21"></path><path d="M16 3l-2 18"></path></svg>
+                                    </span>
+                                    <div class="grid-cell-meta">
+                                        <span class="grid-cell-label">Mã tour</span>
+                                        <strong class="grid-cell-val grid-cell-code"><?= $escape($order['ma_tour']) ?></strong>
+                                    </div>
+                                </div>
+
+                                <div class="tour-grid-cell">
+                                    <span class="grid-cell-icon" aria-hidden="true">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    </span>
+                                    <div class="grid-cell-meta">
+                                        <span class="grid-cell-label">Ngày khởi hành</span>
+                                        <strong class="grid-cell-val"><?= date('d/m/Y', strtotime($order['ngay_khoi_hanh'])) ?></strong>
+                                    </div>
+                                </div>
+
+                                <div class="tour-grid-cell">
+                                    <span class="grid-cell-icon" aria-hidden="true">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                    </span>
+                                    <div class="grid-cell-meta">
+                                        <span class="grid-cell-label">Điểm khởi hành</span>
+                                        <strong class="grid-cell-val"><?= $escape($order['diem_khoi_hanh']) ?></strong>
+                                    </div>
+                                </div>
+
+                                <div class="tour-grid-cell">
+                                    <span class="grid-cell-icon" aria-hidden="true">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    </span>
+                                    <div class="grid-cell-meta">
+                                        <span class="grid-cell-label">Thời lượng</span>
+                                        <strong class="grid-cell-val"><?= $escape($durationText) ?></strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Đường link mở Modal lịch trình & chính sách hoàn hủy -->
+                            <div class="order-tour-itinerary-link-row">
+                                <button type="button" class="order-itinerary-popup-btn" data-modal-open="tour-itinerary-modal">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                    <span>Xem lại lịch trình &amp; chính sách hoàn hủy</span>
+                                    <span class="popup-btn-arrow" aria-hidden="true">&rarr;</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
-                <section class="booking-card">
-                    <div class="booking-card-heading"><span class="booking-step" aria-hidden="true">2</span><div><h2>Người tham gia</h2><p>Danh sách khách đi cùng đơn đặt này.</p></div></div>
-                    <ul class="order-participants">
-                        <?php foreach ($order['participants'] as $participant): ?>
-                        <li>
-                            <span class="order-participant-type"><?= $participant['loai_khach'] === 'tre_em' ? 'Trẻ em' : 'Người lớn' ?></span>
-                            <strong><?= $escape($participant['ho_ten']) ?></strong>
-                            <span><?= ($participant['gioi_tinh'] ?? 'nam') === 'nu' ? 'Nữ' : 'Nam' ?></span>
-                            <span><?= $participant['ngay_sinh'] ? 'Sinh ' . date('d/m/Y', strtotime($participant['ngay_sinh'])) : 'Chưa cung cấp ngày sinh' ?></span>
-                            <?php if (!empty($participant['cccd'])): ?><span>CCCD: <?= $escape($participant['cccd']) ?></span><?php endif; ?>
-                            <?php if ($participant['ghi_chu'] !== ''): ?><em><?= $escape($participant['ghi_chu']) ?></em><?php endif; ?>
-                        </li>
-                        <?php endforeach; ?>
-                    </ul>
+                <!-- Card 2: Danh sách hành khách (Passengers List - Compact Table) -->
+                <section class="booking-card order-passengers-card">
+                    <div class="booking-card-heading">
+                        <span class="booking-step" aria-hidden="true">2</span>
+                        <div>
+                            <h2>Danh sách hành khách (<?= count($order['participants']) ?> khách)</h2>
+                            <p>Danh sách chi tiết thành viên tham gia chuyến đi.</p>
+                        </div>
+                    </div>
+
+                    <div class="order-passengers-table-wrapper">
+                        <table class="order-passengers-table">
+                            <thead>
+                                <tr>
+                                    <th class="th-stt">#</th>
+                                    <th class="th-type">Phân loại</th>
+                                    <th class="th-name">Họ và tên</th>
+                                    <th class="th-gender">Giới tính</th>
+                                    <th class="th-dob">Ngày sinh</th>
+                                    <th class="th-id">CCCD / Hộ chiếu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($order['participants'] as $index => $participant): ?>
+                                <?php
+                                    $isChild = ($participant['loai_khach'] === 'tre_em');
+                                    $gender = ($participant['gioi_tinh'] ?? 'nam') === 'nu' ? 'Nữ' : 'Nam';
+                                    $dobFormatted = !empty($participant['ngay_sinh']) ? date('d/m/Y', strtotime($participant['ngay_sinh'])) : '—';
+                                ?>
+                                <tr>
+                                    <td class="td-stt"><?= $index + 1 ?></td>
+                                    <td class="td-type">
+                                        <span class="passenger-type-badge <?= $isChild ? 'is-child' : 'is-adult' ?>">
+                                            <?php if ($isChild): ?>
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M6 20v-2a6 6 0 0 1 12 0v2"></path></svg>
+                                                Trẻ em
+                                            <?php else: ?>
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                                Người lớn
+                                            <?php endif; ?>
+                                        </span>
+                                    </td>
+                                    <td class="td-name">
+                                        <div class="passenger-name-cell">
+                                            <strong class="passenger-fullname"><?= $escape($participant['ho_ten']) ?></strong>
+                                            <?php if (!empty($participant['ghi_chu'])): ?>
+                                                <span class="passenger-note-bubble" title="Ghi chú">
+                                                    Ghi chú: <?= $escape($participant['ghi_chu']) ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                    <td class="td-gender">
+                                        <span class="passenger-gender-pill"><?= $gender ?></span>
+                                    </td>
+                                    <td class="td-dob"><?= $dobFormatted ?></td>
+                                    <td class="td-id">
+                                        <?php if (!empty($participant['cccd'])): ?>
+                                            <code class="passenger-id-code"><?= $escape($participant['cccd']) ?></code>
+                                        <?php else: ?>
+                                            <span class="passenger-id-empty"><?= $isChild ? 'Theo người bảo hộ' : '—' ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </section>
 
                 <section class="booking-card">
@@ -363,6 +489,102 @@ $statusNotes = [
                     <a class="booking-back-link" href="index.php?page=orders">← Về danh sách đơn</a>
                 </div>
             </aside>
+        </div>
+
+        <!-- Modal Popup: Xem lại lịch trình & chính sách hoàn hủy -->
+        <div class="order-modal-backdrop" id="tour-itinerary-modal" aria-hidden="true" role="dialog" aria-labelledby="modal-itinerary-title">
+            <div class="order-modal-card">
+                <div class="order-modal-header">
+                    <div>
+                        <span class="order-modal-kicker">THÔNG TIN TOUR &amp; CHÍNH SÁCH</span>
+                        <h3 id="modal-itinerary-title" class="order-modal-title"><?= $escape($order['ten_tour']) ?></h3>
+                        <p class="order-modal-subtitle">
+                            <span>Khởi hành: <strong><?= date('d/m/Y', strtotime($order['ngay_khoi_hanh'])) ?></strong></span> &bull; 
+                            <span>Từ: <strong><?= $escape($order['diem_khoi_hanh']) ?></strong></span> &bull; 
+                            <span>Thời lượng: <strong><?= $escape($durationText) ?></strong></span>
+                        </p>
+                    </div>
+                    <button type="button" class="order-modal-close-btn" data-modal-close aria-label="Đóng popup">&times;</button>
+                </div>
+
+                <div class="order-modal-body">
+                    <!-- Mục 1: Lịch trình chi tiết -->
+                    <div class="order-modal-section">
+                        <div class="modal-section-badge">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            <span>Lịch trình tour chi tiết</span>
+                        </div>
+
+                        <?php if (!empty($order['itinerary'])): ?>
+                            <div class="modal-itinerary-timeline">
+                                <?php foreach ($order['itinerary'] as $day): ?>
+                                    <div class="timeline-item">
+                                        <div class="timeline-day-pill">Ngày <?= (int) $day['ngay_thu'] ?></div>
+                                        <div class="timeline-content">
+                                            <h4 class="timeline-day-title"><?= $escape($day['tieu_de']) ?></h4>
+                                            <p class="timeline-day-desc"><?= nl2br($escape($day['noi_dung'])) ?></p>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="modal-itinerary-empty">
+                                <p>Chương trình tour trọn gói <strong><?= $escape($durationText) ?></strong> khởi hành từ <strong><?= $escape($order['diem_khoi_hanh']) ?></strong>.</p>
+                                <p>Lịch trình chi tiết theo giờ, xe đón và hướng dẫn viên sẽ được OnTrip gửi qua Zalo/Email và thông báo trực tiếp tới quý khách trước ngày khởi hành.</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Mục 2: Chính sách hoàn hủy -->
+                    <div class="order-modal-section">
+                        <div class="modal-section-badge">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            <span>Chính sách hoàn hủy chuẩn OnTrip</span>
+                        </div>
+
+                        <div class="modal-policy-container">
+                            <table class="modal-policy-table">
+                                <thead>
+                                    <tr>
+                                        <th>Thời gian báo hủy</th>
+                                        <th>Mức phí áp dụng</th>
+                                        <th>Chi phí hoàn lại</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Báo hủy <strong>trước ngày đi từ 7 ngày trở lên</strong></td>
+                                        <td><span class="policy-tag tag-free">Miễn phí (0%)</span></td>
+                                        <td><strong class="policy-refund refund-full">Hoàn 100%</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Báo hủy <strong>từ 3 đến dưới 7 ngày</strong> trước ngày đi</td>
+                                        <td><span class="policy-tag tag-warn">30% giá trị tour</span></td>
+                                        <td><strong class="policy-refund">Hoàn 70%</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Báo hủy <strong>dưới 3 ngày</strong> hoặc không đến điểm tập kết</td>
+                                        <td><span class="policy-tag tag-danger">100% giá trị tour</span></td>
+                                        <td><strong class="policy-refund refund-none">Không hoàn lại</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="policy-extra-notes">
+                                <p><strong>Lưu ý quan trọng:</strong></p>
+                                <ul>
+                                    <li>Trường hợp hủy do thời tiết xấu hoặc thiên tai bất khả kháng, OnTrip bảo lưu 100% tiền tour hoặc dời ngày khởi hành miễn phí cho khách.</li>
+                                    <li>Người lớn khi tham gia tour bắt buộc xuất trình CCCD / Hộ chiếu bản gốc còn hạn sử dụng tại điểm đón.</li>
+                                    <li>Mọi yêu cầu hoàn hủy vui lòng liên hệ hotline hỗ trợ 24/7 của OnTrip hoặc nhấn nút "Hủy đơn" trên hệ thống trước thời hạn quy định.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-modal-footer">
+                    <button type="button" class="button button-primary modal-close-action-btn" data-modal-close>Đã hiểu và Đóng</button>
+                </div>
+            </div>
         </div>
         <?php endif; ?>
     </div>

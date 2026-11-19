@@ -56,11 +56,211 @@ $statusNotes = [
             $paid = $order['da_thanh_toan'];
             $canPay = !$paid && in_array($status, ['cho_xac_nhan', 'da_xac_nhan'], true);
             $canCancel = $status === 'cho_xac_nhan';
+
+            // Trạng thái cho 4 bước trong Progress Stepper:
+            // 1. Đã gửi yêu cầu (Hoàn thành - Xanh lá)
+            // 2. Chờ xác nhận chỗ (Đang xử lý - Cam nhấp nháy khi cho_xac_nhan)
+            // 3. Thanh toán (Chưa thực hiện - Xám)
+            // 4. Hoàn tất & Nhận vé (Chưa thực hiện - Xám)
+            $step1Class = 'is-completed';
+            $step2Class = 'is-upcoming';
+            $step3Class = 'is-upcoming';
+            $step4Class = 'is-upcoming';
+
+            $step2Desc = 'Đang kiểm tra tình trạng chỗ';
+            $step3Desc = 'Chưa thực hiện';
+            $step4Desc = 'Chưa thực hiện';
+
+            if ($status === 'cho_xac_nhan') {
+                $step2Class = 'is-active';
+                $step2Desc = 'Đang kiểm tra chỗ trống';
+            } elseif ($status === 'da_xac_nhan') {
+                $step2Class = 'is-completed';
+                $step2Desc = 'Chỗ đã được giữ';
+                if ($paid) {
+                    $step3Class = 'is-completed';
+                    $step3Desc = 'Đã thanh toán';
+                    $step4Class = 'is-active';
+                    $step4Desc = 'Sẵn sàng khởi hành';
+                } else {
+                    $step3Class = 'is-active';
+                    $step3Desc = 'Chờ bạn thanh toán';
+                }
+            } elseif ($status === 'hoan_thanh') {
+                $step2Class = 'is-completed';
+                $step2Desc = 'Chỗ đã được giữ';
+                $step3Class = 'is-completed';
+                $step3Desc = 'Đã thanh toán';
+                $step4Class = 'is-completed';
+                $step4Desc = 'Hoàn tất chuyến đi';
+            } elseif ($status === 'da_huy') {
+                $step2Class = 'is-cancelled';
+                $step2Desc = 'Đã hủy đơn';
+                $step3Desc = 'Không áp dụng';
+                $step4Desc = 'Không áp dụng';
+            }
         ?>
-        <header class="booking-heading order-detail-heading">
-            <span class="detail-kicker">MÃ ĐƠN <?= $escape($order['ma_don']) ?></span>
-            <h1><?= $escape($order['ten_tour']) ?></h1>
-            <p><span class="order-status <?= $statusClasses[$status] ?? '' ?>"><?= $escape($order['trang_thai_nhan']) ?></span> <?= $escape($statusNotes[$status] ?? '') ?></p>
+
+        <header class="order-detail-header">
+            <!-- 1. Tiêu đề chính & Badge trạng thái màu cam nổi bật -->
+            <div class="order-header-main">
+                <div class="order-header-title-wrap">
+                    <h1 class="order-header-title"><?= $escape($order['ten_tour']) ?></h1>
+                    <span class="order-status-badge status-<?= $escape($status) ?>">
+                        <span class="status-dot-pulse" aria-hidden="true"></span>
+                        <?= $escape($order['trang_thai_nhan']) ?>
+                    </span>
+                </div>
+
+                <!-- 2. Mã đơn & Nút sao chép nhanh, Thời gian tạo đơn -->
+                <div class="order-meta-row">
+                    <div class="order-code-group">
+                        <span class="order-meta-label">Mã đơn:</span>
+                        <strong class="order-code-text" id="order-code-display"><?= $escape($order['ma_don']) ?></strong>
+                        <button type="button" class="order-copy-btn" data-copy-target="#order-code-display" title="Sao chép mã đơn" aria-label="Sao chép mã đơn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <span class="copy-label">Sao chép</span>
+                        </button>
+                    </div>
+                    <span class="order-meta-sep" aria-hidden="true">&bull;</span>
+                    <div class="order-created-time">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>Thời gian tạo đơn: <strong><?= date('d/m/Y H:i', strtotime($order['tao_luc'])) ?></strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Thanh tiến trình đơn hàng (Order Progress Stepper - 4 bước) -->
+            <div class="order-stepper-card" aria-label="Tiến trình xử lý đơn hàng">
+                <ol class="order-stepper">
+                    <!-- Bước 1: Đã gửi yêu cầu (Hoàn thành - Xanh lá) -->
+                    <li class="order-step <?= $step1Class ?>">
+                        <div class="order-step-indicator">
+                            <span class="order-step-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="order-step-content">
+                            <span class="order-step-badge">Bước 1</span>
+                            <strong class="order-step-title">Đã gửi yêu cầu</strong>
+                            <span class="order-step-desc">Ghi nhận vào hệ thống</span>
+                        </div>
+                    </li>
+
+                    <!-- Bước 2: Chờ xác nhận chỗ (Đang xử lý - Cam nhấp nháy khi cho_xac_nhan) -->
+                    <li class="order-step <?= $step2Class ?>">
+                        <div class="order-step-track" aria-hidden="true"></div>
+                        <div class="order-step-indicator">
+                            <span class="order-step-icon">
+                                <?php if ($step2Class === 'is-completed'): ?>
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                <?php elseif ($step2Class === 'is-cancelled'): ?>
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                <?php else: ?>
+                                    <span class="stepper-dot-pulse" aria-hidden="true"></span>
+                                <?php endif; ?>
+                            </span>
+                        </div>
+                        <div class="order-step-content">
+                            <span class="order-step-badge">Bước 2</span>
+                            <strong class="order-step-title">Chờ xác nhận chỗ</strong>
+                            <span class="order-step-desc"><?= $step2Desc ?></span>
+                        </div>
+                    </li>
+
+                    <!-- Bước 3: Thanh toán (Chưa thực hiện - Xám) -->
+                    <li class="order-step <?= $step3Class ?>">
+                        <div class="order-step-track" aria-hidden="true"></div>
+                        <div class="order-step-indicator">
+                            <span class="order-step-icon">
+                                <?php if ($step3Class === 'is-completed'): ?>
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                <?php elseif ($step3Class === 'is-active'): ?>
+                                    <span class="stepper-dot-pulse" aria-hidden="true"></span>
+                                <?php else: ?>
+                                    <span>3</span>
+                                <?php endif; ?>
+                            </span>
+                        </div>
+                        <div class="order-step-content">
+                            <span class="order-step-badge">Bước 3</span>
+                            <strong class="order-step-title">Thanh toán</strong>
+                            <span class="order-step-desc"><?= $step3Desc ?></span>
+                        </div>
+                    </li>
+
+                    <!-- Bước 4: Hoàn tất & Nhận vé (Chưa thực hiện - Xám) -->
+                    <li class="order-step <?= $step4Class ?>">
+                        <div class="order-step-track" aria-hidden="true"></div>
+                        <div class="order-step-indicator">
+                            <span class="order-step-icon">
+                                <?php if ($step4Class === 'is-completed'): ?>
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                <?php elseif ($step4Class === 'is-active'): ?>
+                                    <span class="stepper-dot-pulse" aria-hidden="true"></span>
+                                <?php else: ?>
+                                    <span>4</span>
+                                <?php endif; ?>
+                            </span>
+                        </div>
+                        <div class="order-step-content">
+                            <span class="order-step-badge">Bước 4</span>
+                            <strong class="order-step-title">Hoàn tất &amp; Nhận vé</strong>
+                            <span class="order-step-desc"><?= $step4Desc ?></span>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+
+            <!-- 4. Banner thông báo hành động -->
+            <div class="order-action-banner <?= $status === 'cho_xac_nhan' ? 'is-warning' : ($status === 'da_huy' ? 'is-muted' : 'is-info') ?>">
+                <div class="banner-icon-col" aria-hidden="true">
+                    <?php if ($status === 'cho_xac_nhan'): ?>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <?php elseif ($status === 'da_huy'): ?>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                    <?php else: ?>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <?php endif; ?>
+                </div>
+                <div class="banner-body">
+                    <strong class="banner-heading">
+                        <?php if ($status === 'cho_xac_nhan'): ?>
+                            Đang xử lý xác nhận chỗ
+                        <?php elseif ($status === 'da_xac_nhan'): ?>
+                            <?= $paid ? 'Đơn đã xác nhận &amp; hoàn tất thanh toán' : 'Chỗ đã được xác nhận! Vui lòng thanh toán' ?>
+                        <?php elseif ($status === 'hoan_thanh'): ?>
+                            Chuyến đi đã hoàn thành
+                        <?php elseif ($status === 'da_huy'): ?>
+                            Đơn đặt tour đã được hủy
+                        <?php endif; ?>
+                    </strong>
+                    <p class="banner-text">
+                        <?php if ($status === 'cho_xac_nhan'): ?>
+                            OnTrip đang kiểm tra tình trạng chỗ. Bạn có thể chọn trước phương thức thanh toán hoặc hủy đơn miễn phí trong giai đoạn này.
+                        <?php else: ?>
+                            <?= $escape($statusNotes[$status] ?? '') ?>
+                        <?php endif; ?>
+                    </p>
+                </div>
+            </div>
         </header>
 
         <?php if (is_array($flash) && ($flash['message'] ?? '') !== ''): ?>

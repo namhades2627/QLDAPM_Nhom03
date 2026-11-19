@@ -2193,3 +2193,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// Chi tiết đơn đặt: Nút sao chép mã đơn nhanh (Copy to Clipboard)
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-copy-target]').forEach(button => {
+        button.addEventListener('click', async () => {
+            const targetSelector = button.dataset.copyTarget;
+            const targetEl = document.querySelector(targetSelector);
+            const textToCopy = targetEl ? targetEl.textContent.trim() : (button.dataset.copyText || '');
+            if (!textToCopy) return;
+
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(textToCopy);
+                } else {
+                    const tempInput = document.createElement('textarea');
+                    tempInput.value = textToCopy;
+                    tempInput.style.position = 'fixed';
+                    tempInput.style.opacity = '0';
+                    document.body.appendChild(tempInput);
+                    tempInput.focus();
+                    tempInput.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInput);
+                }
+
+                const labelEl = button.querySelector('.copy-label') || button;
+                const originalText = labelEl.textContent;
+                button.classList.add('is-copied');
+                labelEl.textContent = 'Đã chép! ✓';
+
+                setTimeout(() => {
+                    button.classList.remove('is-copied');
+                    labelEl.textContent = originalText;
+                }, 2000);
+            } catch (err) {
+                console.error('Không thể sao chép:', err);
+            }
+        });
+    });
+});

@@ -13791,3 +13791,185 @@ a.touchpoint-item:hover {
         text-align: center;
     }
 }
+
+
+/* ==========================================================================
+   DANH SÁCH ĐƠN ĐẶT (ORDER LIST): PHẦN 3 - ACTIONS, PRICE & EMPTY STATES
+   ========================================================================== */
+
+/* Trạng thái rỗng ban đầu (Empty State) */
+.order-empty-state {
+    padding: 60px 24px;
+    text-align: center;
+    background: var(--panel-bg, #ffffff);
+    border: 1px dashed var(--line, #cbd5e1);
+    border-radius: 16px;
+    margin-top: 10px;
+}
+
+.empty-state-illustration {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: #fff7ed;
+    color: var(--orange, #ea580c);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    border: 1.5px solid #fed7aa;
+}
+
+.order-empty-state h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--ink, #1e293b);
+    margin: 0 0 10px 0;
+}
+
+.order-empty-state p {
+    font-size: 14px;
+    color: var(--muted, #64748b);
+    max-width: 480px;
+    margin: 0 auto 26px auto;
+    line-height: 1.6;
+}
+
+.empty-state-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+/* Chân thẻ: Giá tiền & Nút tác vụ thông minh */
+.price-col-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.price-sub-note {
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.note-paid {
+    color: #16a34a;
+}
+
+.note-waiting-pay {
+    color: #ea580c;
+}
+
+.note-pending {
+    color: #d97706;
+}
+
+.note-cancelled {
+    color: #dc2626;
+}
+
+.order-card-price-col {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.price-col-amount {
+    font-size: 21px;
+    font-weight: 800;
+    color: var(--orange, #ea580c);
+    letter-spacing: -.5px;
+}
+
+/* Nút tác vụ thông minh */
+.order-card-actions-col {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-action-cancel {
+    background: none;
+    border: none;
+    padding: 7px 11px;
+    color: #ef4444;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 6px;
+    transition: all .15s ease;
+}
+
+.btn-action-cancel:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+    text-decoration: underline;
+}
+
+.btn-action-review {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 14px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #b45309;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all .15s ease;
+}
+
+.btn-action-review:hover {
+    background: #fef3c7;
+    border-color: #f59e0b;
+    color: #92400e;
+}
+
+.btn-action-pay {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+    background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(234, 88, 12, 0.25);
+    text-decoration: none;
+    transition: all .18s ease;
+}
+
+.btn-action-pay:hover {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(234, 88, 12, 0.35);
+    color: #ffffff;
+}
+
+.btn-action-view {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all .18s ease;
+}
+
+.btn-action-view:hover {
+    transform: translateY(-1px);
+}

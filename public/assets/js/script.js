@@ -1007,7 +1007,53 @@ document.addEventListener('DOMContentLoaded', () => {
         pagination.append(buildPageButton('›', currentPage + 1, currentPage === pageCount));
         const summary = [];
         const destination = cards.find(card => Number(card.dataset.destinationId) === criteria.destination);
-        if (destination) summary.push(destination.dataset.destination);
+        if (destination) {
+            summary.push(destination.dataset.destination);
+        } else if (criteria.region) {
+            const regOption = form.elements.region.selectedOptions[0];
+            if (regOption && regOption.value) summary.push(regOption.textContent.trim());
+        }
+        if (criteria.origin) {
+            summary.push('Từ ' + criteria.origin);
+        }
+        if (criteria.days > 0) {
+            summary.push(criteria.days + ' ngày');
+        }
+        if (criteria.budget > 0) {
+            const b = criteria.budget;
+            let formatted = '';
+            if (b >= 1000000) {
+                const mil = b / 1000000;
+                formatted = (Math.floor(mil) === mil ? mil : mil.toFixed(1).replace('.', ',')) + ' triệu';
+            } else if (b >= 1000) {
+                formatted = b.toLocaleString('vi-VN') + ' ₫';
+            } else {
+                formatted = b + ' ₫';
+            }
+            summary.push('Dưới ' + formatted);
+        } else if (criteria.price) {
+            const priceOption = form.elements.price.selectedOptions[0];
+            if (priceOption && priceOption.value) summary.push(priceOption.textContent.trim());
+        }
+        if (criteria.adults > 1 || criteria.children > 0) {
+            const guestParts = [];
+            if (criteria.adults > 0) guestParts.push(criteria.adults + ' người lớn');
+            if (criteria.children > 0) guestParts.push(criteria.children + ' trẻ em');
+            summary.push(guestParts.join(', '));
+        }
+        if (criteria.month > 0) {
+            summary.push('Khởi hành: Tháng ' + criteria.month);
+        }
+        if (criteria.season) {
+            const seasonLabels = { xuan: 'Mùa Xuân', ha: 'Mùa Hè', thu: 'Mùa Thu', dong: 'Mùa Đông' };
+            if (seasonLabels[criteria.season]) summary.push(seasonLabels[criteria.season]);
+        }
+        if (criteria.needs && criteria.needs.length) {
+            criteria.needs.forEach(need => {
+                const labelEl = form.querySelector(`input[name="needs[]"][value="${need}"]`)?.parentElement?.querySelector('span');
+                if (labelEl) summary.push(labelEl.textContent.trim());
+            });
+        }
         const summaryElement = document.querySelector('.catalog-search-summary');
         if (summaryElement) {
             summaryElement.textContent = summary.join(' · ');
@@ -1026,6 +1072,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (summary.length > 0) {
                     smartBadge.hidden = false;
                     smartBadgeText.textContent = summary.join(' · ');
+                } else {
+                    smartBadge.hidden = true;
                 }
             }
         }
@@ -1073,6 +1121,11 @@ document.addEventListener('DOMContentLoaded', () => {
         form.elements.destination.value = '0';
         applyFilters(event);
     });
+    if (form.elements.price) {
+        form.elements.price.addEventListener('change', () => {
+            if (form.elements.budget) form.elements.budget.value = '';
+        });
+    }
     const highlightBackdrop = keywordInput.parentElement?.querySelector('.search-highlight-backdrop');
     function syncHighlight() {
         if (!highlightBackdrop) return;

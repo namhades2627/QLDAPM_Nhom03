@@ -271,6 +271,35 @@ class TourController
         if ($filters['days'] > 0) {
             $searchSummary[] = $filters['days'] . ' ngày';
         }
+        if ($filters['budget'] > 0) {
+            $b = (int) $filters['budget'];
+            if ($b >= 1000000) {
+                $mil = $b / 1000000;
+                $formatted = (floor($mil) == $mil ? (int) $mil : rtrim(rtrim(number_format($mil, 1, ',', '.'), '0'), ',')) . ' triệu';
+            } elseif ($b >= 1000) {
+                $formatted = number_format($b, 0, ',', '.') . ' ₫';
+            } else {
+                $formatted = $b . ' ₫';
+            }
+            $searchSummary[] = 'Dưới ' . $formatted;
+        } elseif ($filters['price'] !== '') {
+            $priceLabels = [
+                '0-5000000' => 'Dưới 5 triệu',
+                '5000000-10000000' => '5 – dưới 10 triệu',
+                '10000000-20000000' => '10 – dưới 20 triệu',
+                '20000000-50000000' => '20 – dưới 50 triệu',
+                '50000000-' => 'Từ 50 triệu',
+            ];
+            if (isset($priceLabels[$filters['price']])) {
+                $searchSummary[] = $priceLabels[$filters['price']];
+            }
+        }
+        if ($filters['adults'] > 1 || $filters['children'] > 0) {
+            $guestParts = [];
+            if ($filters['adults'] > 0) $guestParts[] = $filters['adults'] . ' người lớn';
+            if ($filters['children'] > 0) $guestParts[] = $filters['children'] . ' trẻ em';
+            $searchSummary[] = implode(', ', $guestParts);
+        }
         if ($filters['month'] > 0) {
             $searchSummary[] = 'Khởi hành: Tháng ' . $filters['month'];
         }

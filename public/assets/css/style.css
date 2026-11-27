@@ -13453,3 +13453,341 @@ a.touchpoint-item:hover {
         font-size: 12.5px;
     }
 }
+
+
+/* ==========================================================================
+   DANH SÁCH ĐƠN ĐẶT (ORDER LIST): THẺ ĐƠN HÀNG DẠNG MEDIA CARD
+   ========================================================================== */
+
+.order-media-card {
+    background: var(--panel-bg, #ffffff);
+    border: 1px solid var(--line, #e2e8f0);
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+    transition: all .2s ease;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.order-media-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    border-color: #cbd5e1;
+}
+
+.order-card-inner {
+    display: flex;
+    gap: 20px;
+    padding: 18px 20px;
+    align-items: stretch;
+}
+
+/* 1. Thumbnail Column */
+.order-card-thumb-col {
+    width: 180px;
+    flex-shrink: 0;
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f1f5f9;
+}
+
+.order-card-thumb-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 140px;
+    position: relative;
+}
+
+.order-card-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .35s ease;
+}
+
+.order-media-card:hover .order-card-thumb-img {
+    transform: scale(1.05);
+}
+
+.order-card-duration-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(15, 23, 42, 0.82);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 5px;
+    backdrop-filter: blur(4px);
+    letter-spacing: .3px;
+}
+
+/* 2. Body Column */
+.order-card-body-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.order-card-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.order-card-code-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.order-code-label {
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: .4px;
+}
+
+.order-code-val {
+    font-family: monospace, monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    letter-spacing: .5px;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+}
+
+.order-card-copy-btn {
+    position: relative;
+    background: none;
+    border: none;
+    padding: 4px;
+    color: #94a3b8;
+    cursor: pointer;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s ease;
+}
+
+.order-card-copy-btn:hover {
+    color: var(--orange, #cc5b2d);
+    background: #fff7ed;
+}
+
+.copy-tooltip {
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #ffffff;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+    white-space: nowrap;
+    z-index: 5;
+}
+
+.order-card-copy-btn.is-copied .copy-tooltip {
+    opacity: 1;
+}
+
+.order-card-badges-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Pay Pill */
+.order-pay-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.pay-paid {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.pay-unpaid {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+/* Tour Title */
+.order-card-tour-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ink, #1e293b);
+    margin: 0 0 12px 0;
+    line-height: 1.35;
+}
+
+.order-card-tour-title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color .15s ease;
+}
+
+.order-card-tour-title a:hover {
+    color: var(--orange, #cc5b2d);
+}
+
+/* Facts Grid */
+.order-card-facts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 18px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border-radius: 9px;
+    border: 1px solid var(--line, #e2e8f0);
+}
+
+.card-fact-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12.5px;
+    min-width: 0;
+}
+
+.fact-item-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--orange, #cc5b2d);
+    flex-shrink: 0;
+}
+
+.fact-item-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.fact-label {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.fact-val {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #334155;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Foot Row */
+.order-card-foot-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 20px;
+    background: #ffffff;
+    border-top: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+}
+
+.order-card-price-col {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.price-col-label {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.price-col-amount {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--orange, #ea580c);
+}
+
+.order-card-actions-col {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.order-action-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 7px;
+}
+
+@media (max-width: 680px) {
+    .order-card-inner {
+        flex-direction: column;
+        gap: 14px;
+        padding: 14px 16px;
+    }
+
+    .order-card-thumb-col {
+        width: 100%;
+        height: 175px;
+    }
+
+    .order-card-facts-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .order-card-foot-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+
+    .order-card-actions-col {
+        width: 100%;
+    }
+
+    .order-action-btn {
+        flex: 1;
+        text-align: center;
+    }
+}

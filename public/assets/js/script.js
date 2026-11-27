@@ -422,6 +422,14 @@ function setupSearchAutocomplete(input) {
         }
     });
 
+    dropdown.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        const item = e.target.closest('.autocomplete-item, .autocomplete-footer');
+        if (item && item.dataset.url && e.button === 0) {
+            window.location.assign(item.dataset.url);
+        }
+    });
+
     dropdown.addEventListener('click', (e) => {
         const item = e.target.closest('.autocomplete-item, .autocomplete-footer');
         if (item && item.dataset.url) {

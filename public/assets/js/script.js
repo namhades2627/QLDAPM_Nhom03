@@ -335,63 +335,37 @@ function setupSearchAutocomplete(input) {
             dropdown.innerHTML = '';
             activeIndex = -1;
 
-            const destinations = data.destinations || [];
             const tours = data.tours || [];
 
-            if (destinations.length === 0 && tours.length === 0) {
-                dropdown.innerHTML = `<div class="autocomplete-empty">Không tìm thấy điểm đến hoặc tour phù hợp với "<strong>${escapeHtml(query)}</strong>"</div>`;
+            if (tours.length === 0) {
+                dropdown.innerHTML = `<div class="autocomplete-empty">Không tìm thấy tour phù hợp với "<strong>${escapeHtml(query)}</strong>"</div>`;
                 dropdown.hidden = false;
                 return;
             }
 
-            // 1. Nhóm điểm đến phù hợp (tối đa 3 điểm đến)
-            if (destinations.length > 0) {
-                const sectionTitle = document.createElement('div');
-                sectionTitle.className = 'autocomplete-section-title';
-                sectionTitle.innerHTML = `<span>📍</span> Điểm đến phù hợp`;
-                dropdown.appendChild(sectionTitle);
+            // Gợi ý tour cho bạn
+            const sectionTitle = document.createElement('div');
+            sectionTitle.className = 'autocomplete-section-title';
+            sectionTitle.innerHTML = `<span>✨</span> Gợi ý tour cho bạn`;
+            dropdown.appendChild(sectionTitle);
 
-                destinations.forEach(dest => {
-                    const item = document.createElement('div');
-                    item.className = 'autocomplete-item autocomplete-item-dest';
-                    item.setAttribute('role', 'option');
-                    item.dataset.url = `index.php?page=tours&type=all&destination=${dest.id}&q=${encodeURIComponent(dest.name)}`;
-                    item.innerHTML = `
-                        <span class="autocomplete-icon">📍</span>
-                        <div class="autocomplete-dest-text">
-                            <span class="autocomplete-dest-name">${highlightMatch(dest.name, query)}</span>
-                            <span class="autocomplete-dest-count">${dest.tour_count} tour</span>
+            tours.forEach(t => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item autocomplete-item-tour';
+                item.setAttribute('role', 'option');
+                item.dataset.url = `index.php?page=tour-detail&type=${t.type}&id=${t.id}`;
+                item.innerHTML = `
+                    <img src="${t.image}" class="autocomplete-tour-thumb" alt="${escapeHtml(t.name)}" loading="lazy">
+                    <div class="autocomplete-tour-text">
+                        <span class="autocomplete-tour-title">${highlightMatch(t.name, query)}</span>
+                        <div class="autocomplete-tour-sub">
+                            <span class="autocomplete-tour-dur">⏱️ ${escapeHtml(t.duration)}</span>
+                            <span class="autocomplete-tour-price">Giá từ <strong>${escapeHtml(t.price_format)}</strong></span>
                         </div>
-                    `;
-                    dropdown.appendChild(item);
-                });
-            }
-
-            // 2. Nhóm tour gợi ý (tối đa 2 tour có ảnh và giá)
-            if (tours.length > 0) {
-                const sectionTitle = document.createElement('div');
-                sectionTitle.className = 'autocomplete-section-title';
-                sectionTitle.innerHTML = `<span>✨</span> Gợi ý tour cho bạn`;
-                dropdown.appendChild(sectionTitle);
-
-                tours.forEach(t => {
-                    const item = document.createElement('div');
-                    item.className = 'autocomplete-item autocomplete-item-tour';
-                    item.setAttribute('role', 'option');
-                    item.dataset.url = `index.php?page=tour-detail&type=${t.type}&id=${t.id}`;
-                    item.innerHTML = `
-                        <img src="${t.image}" class="autocomplete-tour-thumb" alt="${escapeHtml(t.name)}" loading="lazy">
-                        <div class="autocomplete-tour-text">
-                            <span class="autocomplete-tour-title">${highlightMatch(t.name, query)}</span>
-                            <div class="autocomplete-tour-sub">
-                                <span class="autocomplete-tour-dur">⏱️ ${escapeHtml(t.duration)}</span>
-                                <span class="autocomplete-tour-price">Giá từ <strong>${escapeHtml(t.price_format)}</strong></span>
-                            </div>
-                        </div>
-                    `;
-                    dropdown.appendChild(item);
-                });
-            }
+                    </div>
+                `;
+                dropdown.appendChild(item);
+            });
 
             // Footer xem tất cả
             const footer = document.createElement('div');

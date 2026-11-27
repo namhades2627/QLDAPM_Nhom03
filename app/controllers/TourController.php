@@ -70,39 +70,12 @@ class TourController
 
             $normQuery = TourModel::normalizeSearch($query);
             $compactQuery = str_replace([' ', '-', '.'], '', $normQuery);
-            $availableDestinations = $this->model->getAvailableDestinations();
             $allTours = array_map([$this, 'prepareImage'], array_merge(
                 $this->model->getPublishedTours('domestic'),
                 $this->model->getPublishedTours('international')
             ));
 
-            // 1. Tìm tối đa 3 điểm đến phù hợp nhất
-            $matchedDestinations = [];
-            foreach ($availableDestinations as $dest) {
-                $name = $dest['name'];
-                $normName = TourModel::normalizeSearch($name);
-                $compactName = str_replace([' ', '-', '.'], '', $normName);
-                $score = 0;
-                if (mb_stripos($name, $query) === 0 || mb_stripos($normName, $normQuery) === 0 || ($compactQuery !== '' && str_starts_with($compactName, $compactQuery))) {
-                    $score = 100; // Khớp từ đầu
-                } elseif (mb_stripos($name, $query) !== false || mb_stripos($normName, $normQuery) !== false || ($compactQuery !== '' && str_contains($compactName, $compactQuery))) {
-                    $score = 50; // Chứa từ khóa
-                }
-                if ($score > 0) {
-                    $score += (int) ($dest['tour_count'] ?? 0);
-                    $matchedDestinations[] = [
-                        'id' => (int) $dest['id'],
-                        'name' => $name,
-                        'type' => $dest['type'] ?? 'domestic',
-                        'tour_count' => (int) ($dest['tour_count'] ?? 0),
-                        'score' => $score,
-                    ];
-                }
-            }
-            usort($matchedDestinations, static fn($a, $b) => $b['score'] <=> $a['score']);
-            $matchedDestinations = array_slice($matchedDestinations, 0, 3);
-
-            // 2. Tìm tối đa 2 tour gợi ý phù hợp nhất (theo tên tour, điểm đến)
+            // Tìm tối đa 4 tour gợi ý phù hợp nhất (theo tên tour, điểm đến)
             $scoredTours = [];
             foreach ($allTours as $t) {
                 $score = 0;
@@ -132,7 +105,7 @@ class TourController
             }
             usort($scoredTours, static fn($a, $b) => $b['score'] <=> $a['score']);
             $matchedTours = [];
-            foreach (array_slice($scoredTours, 0, 2) as $item) {
+            foreach (array_slice($scoredTours, 0, 4) as $item) {
                 $t = $item['tour'];
                 $matchedTours[] = [
                     'id' => $t['id'],
@@ -149,7 +122,7 @@ class TourController
 
             echo json_encode([
                 'success' => true,
-                'destinations' => $matchedDestinations,
+                'destinations' => [],
                 'tours' => $matchedTours,
             ], JSON_UNESCAPED_UNICODE);
             return;

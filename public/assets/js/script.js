@@ -274,6 +274,200 @@ function createTourSearchUrl(query, form = null) {
     return new URL(`index.php?${params.toString()}`, window.location.href);
 }
 
+/* ===== LIVE AUTOCOMPLETE TÌM KIẾM THEO TÊN TOUR & ĐIỂM ĐẾN ===== */
+function setupSearchAutocomplete(input) {
+    if (!input || input.dataset.hasAutocomplete === '1') return;
+    input.dataset.hasAutocomplete = '1';
+
+    const wrapper = input.closest('.catalog-search-field-wrap')
+        || input.closest('.nav-search-panel')
+        || input.closest('.search-field')
+        || input.parentElement;
+
+    if (getComputedStyle(wrapper).position === 'static') {
+        wrapper.style.position = 'relative';
+    }
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'ontrip-autocomplete-dropdown';
+    dropdown.setAttribute('role', 'listbox');
+    dropdown.hidden = true;
+    wrapper.appendChild(dropdown);
+
+    let debounceTimer = null;
+    let activeIndex = -1;
+
+    function hideDropdown() {
+        dropdown.hidden = true;
+        dropdown.innerHTML = '';
+        activeIndex = -1;
+    }
+
+    function escapeHtml(str) {
+        return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function highlightMatch(text, query) {
+        if (!query) return escapeHtml(text);
+        const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${safeQuery})`, 'gi');
+        return escapeHtml(text).replace(regex, '<span class="autocomplete-highlight">$1</span>');
+    }
+
+    function updateActiveItem(items) {
+        items.forEach((item, idx) => {
+            if (idx === activeIndex) {
+                item.classList.add('is-active');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('is-active');
+            }
+        });
+    }
+
+    async function fetchSuggestions(query) {
+        try {
+            const res = await fetch(`index.php?page=tours&action=autocomplete&q=${encodeURIComponent(query)}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            if (input.value.trim() !== query) return;
+
+            dropdown.innerHTML = '';
+            activeIndex = -1;
+
+            const destinations = data.destinations || [];
+            const tours = data.tours || [];
+
+            if (destinations.length === 0 && tours.length === 0) {
+                dropdown.innerHTML = `<div class="autocomplete-empty">Không tìm thấy điểm đến hoặc tour phù hợp với "<strong>${escapeHtml(query)}</strong>"</div>`;
+                dropdown.hidden = false;
+                return;
+            }
+
+            // 1. Nhóm điểm đến phù hợp (tối đa 3 điểm đến)
+            if (destinations.length > 0) {
+                const sectionTitle = document.createElement('div');
+                sectionTitle.className = 'autocomplete-section-title';
+                sectionTitle.innerHTML = `<span>📍</span> Điểm đến phù hợp`;
+                dropdown.appendChild(sectionTitle);
+
+                destinations.forEach(dest => {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item autocomplete-item-dest';
+                    item.setAttribute('role', 'option');
+                    item.dataset.url = `index.php?page=tours&type=all&destination=${dest.id}&q=${encodeURIComponent(dest.name)}`;
+                    item.innerHTML = `
+                        <span class="autocomplete-icon">📍</span>
+                        <div class="autocomplete-dest-text">
+                            <span class="autocomplete-dest-name">${highlightMatch(dest.name, query)}</span>
+                            <span class="autocomplete-dest-count">${dest.tour_count} tour</span>
+                        </div>
+                    `;
+                    dropdown.appendChild(item);
+                });
+            }
+
+            // 2. Nhóm tour gợi ý (tối đa 2 tour có ảnh và giá)
+            if (tours.length > 0) {
+                const sectionTitle = document.createElement('div');
+                sectionTitle.className = 'autocomplete-section-title';
+                sectionTitle.innerHTML = `<span>✨</span> Gợi ý tour cho bạn`;
+                dropdown.appendChild(sectionTitle);
+
+                tours.forEach(t => {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item autocomplete-item-tour';
+                    item.setAttribute('role', 'option');
+                    item.dataset.url = `index.php?page=tour-detail&type=${t.type}&id=${t.id}`;
+                    item.innerHTML = `
+                        <img src="${t.image}" class="autocomplete-tour-thumb" alt="${escapeHtml(t.name)}" loading="lazy">
+                        <div class="autocomplete-tour-text">
+                            <span class="autocomplete-tour-title">${highlightMatch(t.name, query)}</span>
+                            <div class="autocomplete-tour-sub">
+                                <span class="autocomplete-tour-dur">⏱️ ${escapeHtml(t.duration)}</span>
+                                <span class="autocomplete-tour-price">Giá từ <strong>${escapeHtml(t.price_format)}</strong></span>
+                            </div>
+                        </div>
+                    `;
+                    dropdown.appendChild(item);
+                });
+            }
+
+            // Footer xem tất cả
+            const footer = document.createElement('div');
+            footer.className = 'autocomplete-footer';
+            footer.dataset.url = `index.php?page=tours&type=all&q=${encodeURIComponent(query)}`;
+            footer.innerHTML = `<span>Xem tất cả kết quả cho "<strong>${escapeHtml(query)}</strong>" &rarr;</span>`;
+            dropdown.appendChild(footer);
+
+            dropdown.hidden = false;
+        } catch (e) {
+            console.error('Lỗi khi tải dữ liệu autocomplete:', e);
+        }
+    }
+
+    input.addEventListener('input', () => {
+        const val = input.value.trim();
+        clearTimeout(debounceTimer);
+        if (val.length < 1) {
+            hideDropdown();
+            return;
+        }
+        debounceTimer = setTimeout(() => {
+            fetchSuggestions(val);
+        }, 180);
+    });
+
+    input.addEventListener('focus', () => {
+        const val = input.value.trim();
+        if (val.length >= 1 && dropdown.children.length > 0) {
+            dropdown.hidden = false;
+        }
+    });
+
+    input.addEventListener('keydown', (e) => {
+        if (dropdown.hidden) return;
+        const items = dropdown.querySelectorAll('.autocomplete-item, .autocomplete-footer');
+        if (!items.length) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIndex = (activeIndex + 1) % items.length;
+            updateActiveItem(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIndex = (activeIndex - 1 + items.length) % items.length;
+            updateActiveItem(items);
+        } else if (e.key === 'Enter') {
+            if (activeIndex >= 0 && items[activeIndex]) {
+                e.preventDefault();
+                window.location.assign(items[activeIndex].dataset.url);
+            }
+        } else if (e.key === 'Escape') {
+            hideDropdown();
+        }
+    });
+
+    dropdown.addEventListener('click', (e) => {
+        const item = e.target.closest('.autocomplete-item, .autocomplete-footer');
+        if (item && item.dataset.url) {
+            window.location.assign(item.dataset.url);
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target)) {
+            hideDropdown();
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    setupSearchAutocomplete(document.querySelector('#navbar-search-input'));
+    setupSearchAutocomplete(document.querySelector('.tour-search input[name="q"]'));
+    setupSearchAutocomplete(document.querySelector('#catalog-keyword'));
+});
+
 /* ===== NAVBAR DÙNG CHUNG ===== */
 
 /* NAVBAR DÙNG CHUNG cho trang chủ và trang danh sách tour. */
@@ -708,6 +902,64 @@ document.addEventListener('DOMContentLoaded', () => {
         return button;
     }
 
+    function renderFallbackRecommendations(criteria) {
+        const fallbackSection = document.querySelector('#catalog-fallback');
+        const fallbackMessage = document.querySelector('#catalog-fallback-message');
+        const fallbackGrid = document.querySelector('#catalog-fallback-grid');
+        if (!fallbackSection || !fallbackGrid || !fallbackMessage) return;
+
+        let candidateCards = cards.slice();
+        if (criteria.destination) {
+            const sameDest = candidateCards.filter(c => Number(c.dataset.destinationId) === criteria.destination);
+            if (sameDest.length) candidateCards = sameDest;
+        } else if (criteria.region) {
+            const sameReg = candidateCards.filter(c => c.dataset.region === criteria.region);
+            if (sameReg.length) candidateCards = sameReg;
+        }
+
+        let message = 'Chưa có tour phù hợp chính xác mọi tiêu chí đã chọn, OnTrip gợi ý cho bạn 3 tour nổi bật được nhiều khách yêu thích nhất:';
+        let fallbackCards = [];
+
+        if (criteria.budget > 0) {
+            const prices = candidateCards.map(c => Number(c.dataset.price || 0)).filter(p => p > 0);
+            const minPrice = prices.length ? Math.min(...prices) : 0;
+            const formattedBudget = new Intl.NumberFormat('vi-VN').format(criteria.budget) + ' ₫';
+            const formattedMin = minPrice > 0 ? new Intl.NumberFormat('vi-VN').format(minPrice) + ' ₫' : 'mức giá tốt nhất';
+            message = `Không có tour dưới ${formattedBudget}, nhưng OnTrip gợi ý cho bạn 3 tour tương tự chỉ từ ${formattedMin}:`;
+
+            candidateCards.sort((a, b) => Number(a.dataset.price || 999999999) - Number(b.dataset.price || 999999999));
+            fallbackCards = candidateCards.slice(0, 3);
+        } else if (criteria.date) {
+            const [y, m, d] = criteria.date.split('-');
+            const formattedDate = `${d}/${m}/${y}`;
+            message = `Chưa có lịch khởi hành vào ngày ${formattedDate}, OnTrip gợi ý cho bạn các tour có lịch khởi hành gần nhất:`;
+            candidateCards.sort((a, b) => Number(b.dataset.booked || 0) - Number(a.dataset.booked || 0));
+            fallbackCards = candidateCards.slice(0, 3);
+        } else if (criteria.days > 0) {
+            message = `Chưa có tour đúng ${criteria.days} ngày, OnTrip gợi ý cho bạn 3 tour có thời lượng tương tự:`;
+            candidateCards.sort((a, b) => Math.abs(Number(a.dataset.days || 0) - criteria.days) - Math.abs(Number(b.dataset.days || 0) - criteria.days));
+            fallbackCards = candidateCards.slice(0, 3);
+        } else {
+            message = 'Chưa có tour phù hợp chính xác mọi tiêu chí đã chọn, OnTrip gợi ý cho bạn 3 tour nổi bật được nhiều khách yêu thích nhất:';
+            candidateCards.sort((a, b) => Number(b.dataset.booked || 0) - Number(a.dataset.booked || 0));
+            fallbackCards = candidateCards.slice(0, 3);
+        }
+
+        fallbackMessage.textContent = message;
+        fallbackGrid.innerHTML = '';
+
+        fallbackCards.forEach(card => {
+            const clone = card.cloneNode(true);
+            clone.hidden = false;
+            clone.removeAttribute('hidden');
+            clone.classList.remove('catalog-card');
+            clone.classList.add('home-suggest-card', 'fallback-suggest-card');
+            fallbackGrid.appendChild(clone);
+        });
+
+        fallbackSection.hidden = fallbackCards.length === 0;
+    }
+
     function renderResults() {
         const baseMatched = cards.filter(matches);
         const sortValue = sortInput ? sortInput.value : 'default';
@@ -766,6 +1018,9 @@ document.addEventListener('DOMContentLoaded', () => {
         grid.append(fragment);
         grid.hidden = filtered.length === 0;
         document.querySelector('#catalog-empty').hidden = filtered.length !== 0;
+        if (filtered.length === 0) {
+            renderFallbackRecommendations(criteria);
+        }
 
         const count = document.createElement('strong');
         count.textContent = String(filtered.length);

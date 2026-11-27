@@ -159,11 +159,21 @@ class TourController
             $destinationRegions['americas-oceania'] = 'Châu Mỹ – Úc';
         }
         $origins = [];
+        $destinationOptions = [];
         foreach ($tours as $tour) {
             foreach ($tour['origins'] as $origin) {
                 $origins[$origin] = $origin;
             }
+            $destId = (int) ($tour['destination_id'] ?? 0);
+            if ($destId > 0 && !isset($destinationOptions[$destId])) {
+                $destinationOptions[$destId] = [
+                    'id' => $destId,
+                    'name' => $tour['destination'],
+                    'region' => $tour['region'],
+                ];
+            }
         }
+        uasort($destinationOptions, static fn($a, $b) => strcmp(TourModel::normalizeSearch($a['name']), TourModel::normalizeSearch($b['name'])));
         $date = $this->queryString('date');
         $parsedDate = preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date)
             ? DateTimeImmutable::createFromFormat('!Y-m-d', $date) : false;

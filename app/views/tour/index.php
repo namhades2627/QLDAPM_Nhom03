@@ -75,17 +75,23 @@ $visibleCodes = array_column(array_slice($matchedTours, 0, $pageSize), 'id');
             <form id="catalog-filters" class="catalog-filter-form">
                 <input type="hidden" name="q" value="<?= $escape($keyword) ?>">
                 <input type="hidden" name="raw_q" value="<?= $escape($rawQuery) ?>">
-                <input type="hidden" name="destination" value="<?= (int) $filters['destination'] ?>">
                 <input type="hidden" name="days" value="<?= (int) $filters['days'] ?>">
                 <input type="hidden" name="adults" value="<?= (int) $filters['adults'] ?>">
                 <input type="hidden" name="children" value="<?= (int) $filters['children'] ?>">
                 <input type="hidden" name="budget" value="<?= (int) $filters['budget'] ?>">
                 <input type="hidden" name="month" value="<?= (int) ($filters['month'] ?? 0) ?>">
                 <input type="hidden" name="season" value="<?= $escape($filters['season'] ?? '') ?>">
-                <label class="catalog-field"><span>ĐIỂM ĐẾN</span>
-                    <select name="region"><option value="">Tất cả điểm đến</option>
+                <label class="catalog-field"><span>KHU VỰC</span>
+                    <select name="region"><option value="">Tất cả khu vực</option>
                         <?php foreach ($destinationRegions as $region => $label): ?>
                             <option value="<?= $escape($region) ?>" data-region-type="<?= $escape($destinationRegionTypes[$region]) ?>" <?= $tourRegion === $region ? 'selected' : '' ?>><?= $escape($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+                <label class="catalog-field"><span>ĐỊA ĐIỂM</span>
+                    <select name="destination"><option value="0">Tất cả địa điểm</option>
+                        <?php foreach ($destinationOptions as $dest): ?>
+                            <option value="<?= (int) $dest['id'] ?>" data-region="<?= $escape($dest['region']) ?>" <?= (int) $filters['destination'] === (int) $dest['id'] ? 'selected' : '' ?>><?= $escape($dest['name']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </label>

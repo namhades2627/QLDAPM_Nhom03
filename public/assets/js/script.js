@@ -1116,11 +1116,35 @@ document.addEventListener('DOMContentLoaded', () => {
         window.history.replaceState(null, '', searchUrl());
     }
 
+    const destSelect = form.elements.destination;
+    const defaultDestOption = destSelect && destSelect.tagName === 'SELECT' ? destSelect.options[0] : null;
+    const allDestinationOptions = destSelect && destSelect.tagName === 'SELECT' ? Array.from(destSelect.options).slice(1) : [];
+
+    function syncDestinationOptions() {
+        if (!destSelect || destSelect.tagName !== 'SELECT' || !defaultDestOption) return;
+        const selectedRegion = form.elements.region.value;
+        const currentDest = destSelect.value;
+        destSelect.replaceChildren(defaultDestOption);
+        let stillValid = false;
+        allDestinationOptions.forEach(opt => {
+            if (!selectedRegion || opt.dataset.region === selectedRegion) {
+                destSelect.append(opt);
+                if (opt.value === currentDest) stillValid = true;
+            }
+        });
+        destSelect.value = stillValid ? currentDest : '0';
+    }
+    syncDestinationOptions();
+
     form.addEventListener('submit', applyFilters);
     form.elements.region.addEventListener('change', event => {
-        form.elements.destination.value = '0';
+        if (form.elements.destination) form.elements.destination.value = '0';
+        syncDestinationOptions();
         applyFilters(event);
     });
+    if (destSelect && destSelect.tagName === 'SELECT') {
+        destSelect.addEventListener('change', applyFilters);
+    }
     if (form.elements.price) {
         form.elements.price.addEventListener('change', () => {
             if (form.elements.budget) form.elements.budget.value = '';
@@ -1198,6 +1222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (highlightBackdrop) highlightBackdrop.innerHTML = '';
         sortInput.value = 'default';
         form.elements.region.value = '';
+        syncDestinationOptions();
         form.elements.destination.value = '0';
         form.elements.origin.value = '';
         form.elements.date.value = '';

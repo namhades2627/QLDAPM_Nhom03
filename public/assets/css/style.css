@@ -14587,3 +14587,170 @@ a.touchpoint-item:hover {
         flex-direction: column;
     }
 }
+
+
+/* ===== PHẢN HỒI ĐÁNH GIÁ CỦA QUẢN TRỊ VIÊN (ADMIN & TOUR DETAIL) ===== */
+.admin-row-button.is-reply {
+    color: #2563eb;
+    border-color: #dbeafe;
+    background: #eff6ff;
+}
+
+.admin-row-button.is-reply:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+
+.admin-row-button.is-reply.has-reply {
+    color: #059669;
+    border-color: #d1fae5;
+    background: #ecfdf5;
+}
+
+.admin-row-button.is-reply.has-reply:hover {
+    background: #d1fae5;
+    border-color: #6ee7b7;
+    color: #047857;
+}
+
+.admin-review-reply-box {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-left: 3px solid var(--orange, #cc5b2d);
+    border-radius: 6px;
+    background: #fff7f3;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #334155;
+}
+
+.admin-review-reply-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: #9a3412;
+}
+
+.admin-review-reply-header span {
+    color: #64748b;
+    font-size: 11px;
+}
+
+.admin-review-reply-box p {
+    margin: 0;
+}
+
+.admin-reply-form {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.admin-reply-form[hidden] {
+    display: none;
+}
+
+.admin-reply-form textarea {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+    background: #ffffff;
+    color: #1e293b;
+}
+
+.admin-reply-form textarea:focus {
+    outline: none;
+    border-color: var(--orange, #cc5b2d);
+    box-shadow: 0 0 0 3px rgba(204, 91, 45, 0.12);
+}
+
+.admin-reply-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-reply-submit,
+.admin-reply-cancel {
+    min-height: 32px;
+    padding: 5px 12px;
+    font-size: 12px;
+    border-radius: 6px;
+}
+
+.admin-reply-cancel {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+}
+
+.admin-reply-cancel:hover {
+    background: #f1f5f9;
+}
+
+.admin-reply-delete {
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    color: #dc2626;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 6px;
+}
+
+.admin-reply-delete:hover {
+    text-decoration: underline;
+}
+
+/* Hiển thị phản hồi của OnTrip dưới đánh giá ở trang Chi tiết Tour */
+.review-admin-reply {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-left: 3px solid var(--orange, #cc5b2d);
+    border-radius: 8px;
+    background: #fff8f5;
+}
+
+.review-admin-reply-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.review-admin-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--orange-dark, #a4411b);
+    letter-spacing: 0.2px;
+}
+
+.review-admin-reply-header time {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.review-admin-reply-content {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.65;
+    color: #334155;
+}

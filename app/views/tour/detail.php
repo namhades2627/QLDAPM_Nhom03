@@ -350,6 +350,18 @@ if (!empty($itineraryWeather)) {
                                         <div class="review-item-content">
                                             <?= nl2br($escape($rev['noi_dung'])) ?>
                                         </div>
+
+                                        <?php if (!empty($rev['phan_hoi_admin'])): ?>
+                                            <div class="review-admin-reply">
+                                                <div class="review-admin-reply-header">
+                                                    <span class="review-admin-badge">Phản hồi từ OnTrip</span>
+                                                    <?php if (!empty($rev['phan_hoi_luc'])): ?>
+                                                        <time datetime="<?= $escape($rev['phan_hoi_luc']) ?>"><?= date('d/m/Y', strtotime($rev['phan_hoi_luc'])) ?></time>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <p class="review-admin-reply-content"><?= nl2br($escape($rev['phan_hoi_admin'])) ?></p>
+                                            </div>
+                                        <?php endif; ?>
                                     </article>
                                 <?php endforeach; ?>
                             </div>

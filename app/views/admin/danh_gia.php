@@ -166,6 +166,30 @@ $reviewStats = [
                                     <p class="admin-review-title"><strong><?= $escape($rev['tieu_de']) ?></strong></p>
                                 <?php endif; ?>
                                 <p class="admin-review-body"><?= nl2br($escape($rev['noi_dung'])) ?></p>
+                                <?php if (!empty($rev['phan_hoi_admin'])): ?>
+                                    <div class="admin-review-reply-box">
+                                        <div class="admin-review-reply-header">
+                                            <strong>↳ Phản hồi từ <?= $escape($rev['ten_nguoi_phan_hoi'] ?: 'Quản trị viên OnTrip') ?></strong>
+                                            <?php if (!empty($rev['phan_hoi_luc'])): ?>
+                                                <span><?= date('d/m/Y H:i', strtotime($rev['phan_hoi_luc'])) ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <p><?= nl2br($escape($rev['phan_hoi_admin'])) ?></p>
+                                    </div>
+                                <?php endif; ?>
+                                <form method="post" action="<?= $escape($reviewsUrl()) ?>" class="admin-reply-form" id="reply-form-<?= (int) $rev['id_danh_gia'] ?>" hidden>
+                                    <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
+                                    <input type="hidden" name="operation" value="reply">
+                                    <input type="hidden" name="review_id" value="<?= (int) $rev['id_danh_gia'] ?>">
+                                    <textarea name="reply_content" rows="3" maxlength="2000" required placeholder="Nhập nội dung phản hồi gửi tới khách hàng <?= $escape($rev['ho_ten']) ?>..."><?= $escape($rev['phan_hoi_admin'] ?? '') ?></textarea>
+                                    <div class="admin-reply-form-actions">
+                                        <button type="submit" class="button button-primary admin-reply-submit">Gửi phản hồi</button>
+                                        <button type="button" class="button admin-reply-cancel" data-reply-cancel="<?= (int) $rev['id_danh_gia'] ?>">Hủy</button>
+                                        <?php if (!empty($rev['phan_hoi_admin'])): ?>
+                                            <button type="submit" name="operation" value="delete_reply" class="admin-reply-delete" formnovalidate onclick="return confirm('Bạn có chắc muốn xóa phản hồi này?');">Xóa phản hồi</button>
+                                        <?php endif; ?>
+                                    </div>
+                                </form>
                             </div>
                         </td>
                         <td class="admin-table-date">
@@ -180,6 +204,13 @@ $reviewStats = [
                         </td>
                         <td>
                             <div class="admin-row-actions">
+                                <!-- Nút Trả lời / Sửa phản hồi -->
+                                <button type="button" class="admin-row-button is-reply<?= !empty($rev['phan_hoi_admin']) ? ' has-reply' : '' ?>"
+                                        data-reply-toggle="<?= (int) $rev['id_danh_gia'] ?>"
+                                        aria-label="<?= !empty($rev['phan_hoi_admin']) ? 'Sửa phản hồi' : 'Trả lời đánh giá' ?>"
+                                        title="<?= !empty($rev['phan_hoi_admin']) ? 'Sửa phản hồi đã gửi' : 'Trả lời tin nhắn đánh giá' ?>">
+                                    <svg class="icon"><use href="#a-message"/></svg>
+                                </button>
                                 <!-- Nút Ẩn / Hiện -->
                                 <form method="post" action="<?= $escape($reviewsUrl()) ?>">
                                     <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
@@ -233,4 +264,33 @@ $reviewStats = [
         </div>
     </section>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-reply-toggle]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-reply-toggle');
+            var form = document.getElementById('reply-form-' + id);
+            if (!form) return;
+            var isHidden = form.hasAttribute('hidden');
+            if (isHidden) {
+                form.removeAttribute('hidden');
+                var textarea = form.querySelector('textarea');
+                if (textarea) {
+                    textarea.focus();
+                    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+                }
+            } else {
+                form.setAttribute('hidden', '');
+            }
+        });
+    });
+    document.querySelectorAll('[data-reply-cancel]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-reply-cancel');
+            var form = document.getElementById('reply-form-' + id);
+            if (form) form.setAttribute('hidden', '');
+        });
+    });
+});
+</script>
 <?php require __DIR__ . '/partials/footer.php'; ?>

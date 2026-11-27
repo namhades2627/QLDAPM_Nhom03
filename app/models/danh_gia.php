@@ -26,6 +26,9 @@ class DanhGiaModel
             `so_sao` TINYINT UNSIGNED NOT NULL,
             `tieu_de` VARCHAR(150) DEFAULT NULL,
             `noi_dung` TEXT NOT NULL,
+            `phan_hoi_admin` TEXT DEFAULT NULL,
+            `nguoi_phan_hoi` BIGINT UNSIGNED DEFAULT NULL,
+            `phan_hoi_luc` TIMESTAMP NULL DEFAULT NULL,
             `trang_thai` ENUM('hien_thi', 'an') NOT NULL DEFAULT 'hien_thi',
             `tao_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             `cap_nhat_luc` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -43,6 +46,21 @@ class DanhGiaModel
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 
         $this->connection->exec($sql);
+
+        // Bổ sung cột phản hồi admin nếu bảng đã được tạo trước đó
+        try {
+            $colCheck = $this->connection->query("SHOW COLUMNS FROM `danh_gia_tour` LIKE 'phan_hoi_admin'")->fetch();
+            if (!$colCheck) {
+                $this->connection->exec(
+                    "ALTER TABLE `danh_gia_tour`
+                     ADD COLUMN `phan_hoi_admin` TEXT DEFAULT NULL AFTER `noi_dung`,
+                     ADD COLUMN `nguoi_phan_hoi` BIGINT UNSIGNED DEFAULT NULL AFTER `phan_hoi_admin`,
+                     ADD COLUMN `phan_hoi_luc` TIMESTAMP NULL DEFAULT NULL AFTER `nguoi_phan_hoi`"
+                );
+            }
+        } catch (Throwable $e) {
+            // Bỏ qua nếu không thể alter
+        }
 
         // Nạp dữ liệu mẫu ban đầu nếu bảng đang rỗng
         $count = (int) $this->connection->query("SELECT COUNT(*) FROM `danh_gia_tour`")->fetchColumn();
@@ -76,11 +94,14 @@ class DanhGiaModel
         }
 
         $sql = "SELECT dg.id_danh_gia, dg.id_tour, dg.id_tai_khoan, dg.id_don_dat, dg.so_sao,
-                       dg.tieu_de, dg.noi_dung, dg.tao_luc, dg.cap_nhat_luc,
+                       dg.tieu_de, dg.noi_dung, dg.phan_hoi_admin, dg.nguoi_phan_hoi, dg.phan_hoi_luc,
+                       dg.tao_luc, dg.cap_nhat_luc,
                        tk.ho_ten, tk.hinh_anh, tk.vai_tro,
+                       adm.ho_ten AS ten_nguoi_phan_hoi,
                        CASE WHEN dd.id_don_dat IS NOT NULL THEN 1 ELSE 0 END AS da_dat_tour
                 FROM danh_gia_tour dg
                 JOIN tai_khoan tk ON tk.id_tai_khoan = dg.id_tai_khoan
+                LEFT JOIN tai_khoan adm ON adm.id_tai_khoan = dg.nguoi_phan_hoi
                 LEFT JOIN don_dat_tour dd ON dd.id_tai_khoan = dg.id_tai_khoan 
                                          AND dd.ma_tour = (SELECT ma_tour FROM tour WHERE id_tour = dg.id_tour)
                                          AND dd.trang_thai IN ('da_xac_nhan', 'hoan_thanh')
@@ -366,10 +387,12 @@ class DanhGiaModel
         $total = (int) $countStmt->fetchColumn();
 
         $sql = "SELECT dg.*, t.ten_tour, t.ma_tour, tk.ho_ten, tk.email, tk.hinh_anh,
+                       adm.ho_ten AS ten_nguoi_phan_hoi,
                        CASE WHEN dd.id_don_dat IS NOT NULL THEN 1 ELSE 0 END AS da_dat_tour
                 FROM danh_gia_tour dg
                 JOIN tour t ON t.id_tour = dg.id_tour
                 JOIN tai_khoan tk ON tk.id_tai_khoan = dg.id_tai_khoan
+                LEFT JOIN tai_khoan adm ON adm.id_tai_khoan = dg.nguoi_phan_hoi
                 LEFT JOIN don_dat_tour dd ON dd.id_tai_khoan = dg.id_tai_khoan
                                          AND dd.ma_tour = t.ma_tour
                                          AND dd.trang_thai IN ('da_xac_nhan', 'hoan_thanh')
@@ -398,6 +421,53 @@ class DanhGiaModel
         $stmt = $this->connection->prepare(
             "UPDATE danh_gia_tour 
              SET trang_thai = IF(trang_thai = 'hien_thi', 'an', 'hien_thi')
+             WHERE id_danh_gia = ?"
+        );
+        return $stmt->execute([$reviewId]);
+    }
+
+    /**
+     * Lưu phản hồi của quản trị viên đối với đánh giá của khách hàng
+     *
+     * @return array{success: bool, message: string}
+     */
+    public function saveAdminReply(int $reviewId, int $adminId, string $replyContent): array
+    {
+        $replyContent = trim($replyContent);
+        if (mb_strlen($replyContent, 'UTF-8') < 2) {
+            return [
+                'success' => false,
+                'message' => 'Nội dung phản hồi cần có ít nhất 2 ký tự.',
+            ];
+        }
+        if (mb_strlen($replyContent, 'UTF-8') > 2000) {
+            return [
+                'success' => false,
+                'message' => 'Nội dung phản hồi không được vượt quá 2000 ký tự.',
+            ];
+        }
+
+        $stmt = $this->connection->prepare(
+            "UPDATE danh_gia_tour
+             SET phan_hoi_admin = ?, nguoi_phan_hoi = ?, phan_hoi_luc = NOW()
+             WHERE id_danh_gia = ?"
+        );
+        $stmt->execute([$replyContent, $adminId > 0 ? $adminId : null, $reviewId]);
+
+        return [
+            'success' => true,
+            'message' => 'Đã gửi phản hồi tới đánh giá của khách hàng.',
+        ];
+    }
+
+    /**
+     * Xóa phản hồi của quản trị viên
+     */
+    public function deleteAdminReply(int $reviewId): bool
+    {
+        $stmt = $this->connection->prepare(
+            "UPDATE danh_gia_tour
+             SET phan_hoi_admin = NULL, nguoi_phan_hoi = NULL, phan_hoi_luc = NULL
              WHERE id_danh_gia = ?"
         );
         return $stmt->execute([$reviewId]);

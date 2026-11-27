@@ -470,6 +470,21 @@ class AdminController
                     $_SESSION['admin_reviews_success'] = true;
                     header('Location: ' . $reviewsUrl(), true, 303);
                     return;
+                } elseif ($operation === 'reply') {
+                    $replyContent = $this->input('reply_content');
+                    $result = $model->saveAdminReply($reviewId, (int) ($account['id_tai_khoan'] ?? 0), $replyContent);
+                    $_SESSION['admin_reviews_message'] = $result['success']
+                        ? 'Đã lưu phản hồi cho bình luận của khách hàng “' . $targetReview['ho_ten'] . '”.'
+                        : $result['message'];
+                    $_SESSION['admin_reviews_success'] = $result['success'];
+                    header('Location: ' . $reviewsUrl(), true, 303);
+                    return;
+                } elseif ($operation === 'delete_reply') {
+                    $model->deleteAdminReply($reviewId);
+                    $_SESSION['admin_reviews_message'] = 'Đã xóa phản hồi khỏi bình luận của khách hàng “' . $targetReview['ho_ten'] . '”.';
+                    $_SESSION['admin_reviews_success'] = true;
+                    header('Location: ' . $reviewsUrl(), true, 303);
+                    return;
                 }
             }
         }

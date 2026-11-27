@@ -13973,3 +13973,409 @@ a.touchpoint-item:hover {
 .btn-action-view:hover {
     transform: translateY(-1px);
 }
+
+
+/* ==========================================================================
+   DANH SÁCH ĐƠN ĐẶT (ORDER LIST): BỐ CỤC 3 CỘT HOÀN CHỈNH CHO THẺ ĐƠN HÀNG
+   ========================================================================== */
+
+.order-card-row {
+    display: flex;
+    align-items: stretch;
+    gap: 20px;
+    padding: 18px 20px;
+}
+
+.order-card-thumb-col {
+    width: 210px;
+    min-width: 210px;
+    max-width: 210px;
+    height: 145px;
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #f1f5f9;
+}
+
+.order-card-thumb-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.order-card-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .35s ease;
+}
+
+.order-media-card:hover .order-card-thumb-img {
+    transform: scale(1.05);
+}
+
+.order-card-duration-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(15, 23, 42, 0.85);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+    z-index: 2;
+}
+
+.order-card-info-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.order-card-meta-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+
+.order-code-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+}
+
+.code-label {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.code-text {
+    font-family: monospace, monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    background: #f1f5f9;
+    padding: 2px 7px;
+    border-radius: 5px;
+    border: 1px solid #e2e8f0;
+    letter-spacing: .4px;
+}
+
+.order-copy-code-btn {
+    position: relative;
+    background: none;
+    border: none;
+    padding: 4px;
+    color: #94a3b8;
+    cursor: pointer;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s ease;
+}
+
+.order-copy-code-btn:hover {
+    color: #ea580c;
+    background: #fff7ed;
+}
+
+.copy-bubble {
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #ffffff;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.order-copy-code-btn.is-copied .copy-bubble {
+    opacity: 1;
+}
+
+.order-badges-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.order-tour-title {
+    font-size: 16.5px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 10px 0;
+    line-height: 1.35;
+}
+
+.order-tour-title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color .15s ease;
+}
+
+.order-tour-title a:hover {
+    color: #ea580c;
+}
+
+.order-specs-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.spec-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    min-width: 0;
+}
+
+.spec-icon {
+    color: #ea580c;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.spec-label {
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.spec-val {
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Cột 3: Giá tiền & Nút Tác vụ */
+.order-card-action-col {
+    width: 210px;
+    min-width: 210px;
+    border-left: 1px solid #f1f5f9;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+.action-col-price-block {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    text-align: right;
+    margin-bottom: 12px;
+}
+
+.price-title {
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+}
+
+.price-number {
+    font-size: 22px;
+    font-weight: 800;
+    color: #ea580c;
+    letter-spacing: -.5px;
+    line-height: 1.2;
+}
+
+.price-status-tag {
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 2px;
+}
+
+.action-col-buttons-block {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.btn-primary-detail {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #ffffff;
+    background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(234, 88, 12, 0.28);
+    transition: all .18s ease;
+    box-sizing: border-box;
+    text-align: center;
+    cursor: pointer;
+}
+
+.btn-primary-detail:hover {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.38);
+    color: #ffffff;
+}
+
+.btn-sub-pay {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #ffffff;
+    background: #0284c7;
+    border: none;
+    border-radius: 7px;
+    text-decoration: none;
+    transition: all .15s ease;
+    box-sizing: border-box;
+}
+
+.btn-sub-pay:hover {
+    background: #0369a1;
+    color: #ffffff;
+}
+
+.btn-sub-cancel {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #dc2626;
+    background: #fef2f2;
+    border: 1px solid #fee2e2;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all .15s ease;
+    box-sizing: border-box;
+}
+
+.btn-sub-cancel:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.btn-sub-review {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #b45309;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 7px;
+    text-decoration: none;
+    transition: all .15s ease;
+    box-sizing: border-box;
+}
+
+.btn-sub-review:hover {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+@media (max-width: 860px) {
+    .order-card-row {
+        flex-direction: column;
+        gap: 14px;
+        padding: 14px 16px;
+    }
+
+    .order-card-thumb-col {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        height: 180px;
+    }
+
+    .order-card-action-col {
+        width: 100%;
+        min-width: 100%;
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid #f1f5f9;
+        padding-top: 12px;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .action-col-price-block {
+        text-align: left;
+        margin-bottom: 0;
+    }
+
+    .action-col-buttons-block {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+@media (max-width: 600px) {
+    .order-specs-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .order-card-action-col {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .action-col-buttons-block {
+        flex-direction: column;
+    }
+}

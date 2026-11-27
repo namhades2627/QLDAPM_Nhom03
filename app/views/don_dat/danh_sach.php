@@ -15,6 +15,7 @@ $statusClasses = [
     'da_huy' => 'is-cancelled',
 ];
 
+$csrfToken = $_SESSION['csrf_token'] ?? '';
 $totalOrders = count($orders);
 $countsByStatus = [
     'all' => $totalOrders,
@@ -110,10 +111,19 @@ $activeStatus = is_string($_GET['status'] ?? null) && isset($countsByStatus[$_GE
         <?php endif; ?>
 
         <?php if (!$orders): ?>
-        <div class="booking-empty">
-            <h2>Bạn chưa có đơn đặt tour nào</h2>
-            <p>Các tour đang mở nhận đặt sẵn sàng cho chuyến đi tiếp theo của bạn.</p>
-            <a class="button button-primary" href="index.php?page=tours&amp;type=domestic">Khám phá tour</a>
+        <div class="booking-empty order-empty-state">
+            <div class="empty-state-illustration" aria-hidden="true">
+                <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+            </div>
+            <h2>Bạn chưa có chuyến đi nào</h2>
+            <p>Hàng trăm điểm đến hấp dẫn và những hành trình tuyệt vời đang chờ đón bạn. Hãy lên kế hoạch cho kỳ nghỉ tiếp theo ngay hôm nay!</p>
+            <div class="empty-state-actions">
+                <a class="button button-primary" href="index.php?page=tours&amp;type=domestic">Khám phá tour trong nước</a>
+                <a class="button button-secondary" href="index.php?page=tours&amp;type=international">Tour quốc tế</a>
+            </div>
         </div>
         <?php else: ?>
         <div class="order-list" id="order-cards-list">
@@ -228,17 +238,53 @@ $activeStatus = is_string($_GET['status'] ?? null) && isset($countsByStatus[$_GE
                     </div>
                 </div>
 
-                <!-- Hàng chân thẻ (Giá tiền & Nút thao tác) -->
+                <!-- Hàng chân thẻ: Giá tiền & Cụm nút tác vụ thông minh -->
                 <div class="order-card-foot-row">
                     <div class="order-card-price-col">
-                        <span class="price-col-label">Tổng thanh toán:</span>
+                        <div class="price-col-info">
+                            <span class="price-col-label">Tổng thanh toán:</span>
+                            <?php if ($isPaid): ?>
+                                <span class="price-sub-note note-paid">✓ Đã thanh toán</span>
+                            <?php elseif ($order['trang_thai'] === 'da_xac_nhan'): ?>
+                                <span class="price-sub-note note-waiting-pay">Chờ thanh toán</span>
+                            <?php elseif ($order['trang_thai'] === 'cho_xac_nhan'): ?>
+                                <span class="price-sub-note note-pending">Chờ xác nhận chỗ</span>
+                            <?php elseif ($order['trang_thai'] === 'da_huy'): ?>
+                                <span class="price-sub-note note-cancelled">Đã hủy đơn</span>
+                            <?php endif; ?>
+                        </div>
                         <strong class="price-col-amount"><?= $money($order['tong_thanh_toan']) ?></strong>
                     </div>
+
                     <div class="order-card-actions-col">
-                        <a class="button button-secondary order-action-btn" href="<?= $detailUrl ?>">Xem chi tiết</a>
-                        <?php if (in_array($order['trang_thai'], ['da_xac_nhan', 'hoan_thanh'], true)): ?>
-                            <a class="button button-secondary order-action-btn" href="index.php?page=tour-detail&amp;id=<?= $escape(rawurlencode($order['ma_tour'])) ?>#danh-gia">⭐ Đánh giá tour</a>
+                        <!-- Nút Hủy đơn (khi đơn đang chờ xác nhận) -->
+                        <?php if ($order['trang_thai'] === 'cho_xac_nhan'): ?>
+                            <button type="button" class="btn-action-cancel" data-cancel-modal-trigger data-order-code="<?= $escape($order['ma_don']) ?>" data-tour-name="<?= $escape($order['ten_tour']) ?>">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                                <span>Hủy đơn</span>
+                            </button>
                         <?php endif; ?>
+
+                        <!-- Nút Đánh giá tour (nếu đã hoàn thành) -->
+                        <?php if (in_array($order['trang_thai'], ['da_xac_nhan', 'hoan_thanh'], true)): ?>
+                            <a class="button button-secondary order-action-btn btn-action-review" href="index.php?page=tour-detail&amp;id=<?= $escape(rawurlencode($order['ma_tour'])) ?>#danh-gia">
+                                ⭐ Đánh giá
+                            </a>
+                        <?php endif; ?>
+
+                        <!-- Nút Thanh toán ngay (nếu đã xác nhận chỗ nhưng chưa thanh toán) -->
+                        <?php if ($order['trang_thai'] === 'da_xac_nhan' && !$isPaid): ?>
+                            <a class="button button-primary order-action-btn btn-action-pay" href="<?= $detailUrl ?>">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                                <span>Thanh toán ngay</span>
+                            </a>
+                        <?php endif; ?>
+
+                        <!-- Nút chính: Xem chi tiết -->
+                        <a class="button <?= ($order['trang_thai'] === 'da_xac_nhan' && !$isPaid) ? 'button-secondary' : 'button-primary' ?> order-action-btn btn-action-view" href="<?= $detailUrl ?>">
+                            <span>Xem chi tiết</span>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </a>
                     </div>
                 </div>
             </article>
@@ -259,6 +305,48 @@ $activeStatus = is_string($_GET['status'] ?? null) && isset($countsByStatus[$_GE
             <button type="button" id="btn-reset-order-filter" class="button button-secondary">Đặt lại bộ lọc</button>
         </div>
         <?php endif; ?>
+
+        <!-- Modal Popup Xác nhận Hủy đơn từ Danh sách -->
+        <div class="order-modal-backdrop" id="list-cancel-order-modal" aria-hidden="true" role="dialog" aria-labelledby="modal-list-cancel-title">
+            <div class="order-modal-card order-modal-sm">
+                <div class="order-modal-header modal-header-danger">
+                    <div>
+                        <span class="order-modal-kicker kicker-danger">HỦY YÊU CẦU ĐẶT TOUR</span>
+                        <h3 id="modal-list-cancel-title" class="order-modal-title">Xác nhận hủy đơn đặt</h3>
+                    </div>
+                    <button type="button" class="order-modal-close-btn" data-modal-close aria-label="Đóng popup">&times;</button>
+                </div>
+                <form method="post" action="index.php?page=orders" class="order-modal-form">
+                    <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
+                    <input type="hidden" name="ma_don" id="cancel-modal-order-code" value="">
+                    <input type="hidden" name="operation" value="cancel">
+                    <div class="order-modal-body">
+                        <div class="cancel-warning-banner">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                            <div>
+                                <strong id="cancel-modal-tour-display">Bạn có chắc chắn muốn hủy đơn này?</strong>
+                                <p>Mã đơn: <code id="cancel-modal-code-display"></code>. Số chỗ đang được giữ sẽ được giải phóng cho hành khách khác trên hệ thống.</p>
+                            </div>
+                        </div>
+
+                        <div class="form-group-cancel-reason">
+                            <label for="cancel-reason-select" class="modal-input-label">Vui lòng chọn lý do hủy:</label>
+                            <select id="cancel-reason-select" name="ly_do_huy" class="modal-select">
+                                <option value="Thay đổi kế hoạch / Chọn điểm đến khác">Thay đổi kế hoạch / Chọn điểm đến khác</option>
+                                <option value="Có việc bận đột xuất / Trùng lịch trình">Có việc bận đột xuất / Trùng lịch trình</option>
+                                <option value="Muốn đổi ngày khởi hành hoặc số lượng khách">Muốn đổi ngày khởi hành hoặc số lượng khách</option>
+                                <option value="Đặt nhầm thông tin / Thử nghiệm tính năng">Đặt nhầm thông tin / Thử nghiệm tính năng</option>
+                                <option value="Lý do cá nhân khác">Lý do cá nhân khác</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="order-modal-footer">
+                        <button type="button" class="button button-secondary" data-modal-close>Giữ lại đơn này</button>
+                        <button type="submit" class="button btn-confirm-cancel">Xác nhận hủy đơn</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </main>
 <?php require __DIR__ . '/../partials/footer.php'; ?>

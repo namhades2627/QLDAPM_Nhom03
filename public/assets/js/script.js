@@ -2427,3 +2427,28 @@ document.addEventListener('DOMContentLoaded', () => {
         filterOrders();
     }
 });
+
+
+// Danh sách đơn đặt: Mở modal hủy đơn nhanh
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-cancel-modal-trigger]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const orderCode = btn.dataset.orderCode || '';
+            const tourName = btn.dataset.tourName || '';
+            const modal = document.getElementById('list-cancel-order-modal');
+            if (!modal) return;
+
+            const inputCode = document.getElementById('cancel-modal-order-code');
+            const codeDisplay = document.getElementById('cancel-modal-code-display');
+            const tourDisplay = document.getElementById('cancel-modal-tour-display');
+
+            if (inputCode) inputCode.value = orderCode;
+            if (codeDisplay) codeDisplay.textContent = orderCode;
+            if (tourDisplay) tourDisplay.textContent = 'Hủy đơn đặt: ' + tourName;
+
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        });
+    });
+});

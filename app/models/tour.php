@@ -161,7 +161,7 @@ class TourModel
         return $tours;
     }
 
-    private function normalizeSearch(string $value): string
+    public static function normalizeSearch(string $value): string
     {
         $value = mb_strtolower(trim($value), 'UTF-8');
         $groups = ['a' => 'àáạảãâầấậẩẫăằắặẳẵ', 'e' => 'èéẹẻẽêềếệểễ',

@@ -57,6 +57,77 @@ class TourController
 
     public function index(): void
     {
+        // Xử lý yêu cầu Live Autocomplete khi gõ phím
+        if ($this->queryString('action') === 'autocomplete') {
+            if (!headers_sent()) {
+                header('Content-Type: application/json; charset=utf-8');
+            }
+            $query = mb_substr(trim($this->queryString('q')), 0, 100, 'UTF-8');
+            if ($query === '') {
+                echo json_encode(['success' => true, 'destinations' => [], 'tours' => []], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            $normQuery = TourModel::normalizeSearch($query);
+            $compactQuery = str_replace([' ', '-', '.'], '', $normQuery);
+            $allTours = array_map([$this, 'prepareImage'], array_merge(
+                $this->model->getPublishedTours('domestic'),
+                $this->model->getPublishedTours('international')
+            ));
+
+            // Tìm tối đa 4 tour gợi ý phù hợp nhất (theo tên tour, điểm đến)
+            $scoredTours = [];
+            foreach ($allTours as $t) {
+                $score = 0;
+                $tName = $t['name'];
+                $normTName = TourModel::normalizeSearch($tName);
+                $compactTName = str_replace([' ', '-', '.'], '', $normTName);
+                $tDest = $t['destination'];
+                $normTDest = TourModel::normalizeSearch($tDest);
+                $compactTDest = str_replace([' ', '-', '.'], '', $normTDest);
+
+                if (mb_stripos($tName, $query) !== false) {
+                    $score += 100;
+                } elseif (mb_stripos($normTName, $normQuery) !== false || ($compactQuery !== '' && str_contains($compactTName, $compactQuery))) {
+                    $score += 80;
+                }
+                if (mb_stripos($tDest, $query) !== false) {
+                    $score += 50;
+                } elseif (mb_stripos($normTDest, $normQuery) !== false || ($compactQuery !== '' && str_contains($compactTDest, $compactQuery))) {
+                    $score += 40;
+                }
+
+                if ($score > 0) {
+                    // Ưu tiên tour có số lượt đặt cao hơn khi điểm khớp tương đương
+                    $score += min(50, (int) ($t['booked_count'] ?? 0));
+                    $scoredTours[] = ['tour' => $t, 'score' => $score];
+                }
+            }
+            usort($scoredTours, static fn($a, $b) => $b['score'] <=> $a['score']);
+            $matchedTours = [];
+            foreach (array_slice($scoredTours, 0, 4) as $item) {
+                $t = $item['tour'];
+                $matchedTours[] = [
+                    'id' => $t['id'],
+                    'type' => $t['type'],
+                    'name' => $t['name'],
+                    'destination' => $t['destination'],
+                    'duration' => $t['duration'],
+                    'price' => $t['price'],
+                    'price_format' => $t['price'] !== null ? number_format($t['price'], 0, ',', '.') . ' ₫' : 'Đang cập nhật',
+                    'image' => $t['image'],
+                    'booked_count' => (int) ($t['booked_count'] ?? 0),
+                ];
+            }
+
+            echo json_encode([
+                'success' => true,
+                'destinations' => [],
+                'tours' => $matchedTours,
+            ], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
         $page = 'tours';
         $requestedType = $this->queryString('type');
         $keyword = mb_substr($this->queryString('q'), 0, 255, 'UTF-8');
@@ -88,11 +159,21 @@ class TourController
             $destinationRegions['americas-oceania'] = 'Châu Mỹ – Úc';
         }
         $origins = [];
+        $destinationOptions = [];
         foreach ($tours as $tour) {
             foreach ($tour['origins'] as $origin) {
                 $origins[$origin] = $origin;
             }
+            $destId = (int) ($tour['destination_id'] ?? 0);
+            if ($destId > 0 && !isset($destinationOptions[$destId])) {
+                $destinationOptions[$destId] = [
+                    'id' => $destId,
+                    'name' => $tour['destination'],
+                    'region' => $tour['region'],
+                ];
+            }
         }
+        uasort($destinationOptions, static fn($a, $b) => strcmp(TourModel::normalizeSearch($a['name']), TourModel::normalizeSearch($b['name'])));
         $date = $this->queryString('date');
         $parsedDate = preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date)
             ? DateTimeImmutable::createFromFormat('!Y-m-d', $date) : false;
@@ -200,6 +281,35 @@ class TourController
         if ($filters['days'] > 0) {
             $searchSummary[] = $filters['days'] . ' ngày';
         }
+        if ($filters['budget'] > 0) {
+            $b = (int) $filters['budget'];
+            if ($b >= 1000000) {
+                $mil = $b / 1000000;
+                $formatted = (floor($mil) == $mil ? (int) $mil : rtrim(rtrim(number_format($mil, 1, ',', '.'), '0'), ',')) . ' triệu';
+            } elseif ($b >= 1000) {
+                $formatted = number_format($b, 0, ',', '.') . ' ₫';
+            } else {
+                $formatted = $b . ' ₫';
+            }
+            $searchSummary[] = 'Dưới ' . $formatted;
+        } elseif ($filters['price'] !== '') {
+            $priceLabels = [
+                '0-5000000' => 'Dưới 5 triệu',
+                '5000000-10000000' => '5 – dưới 10 triệu',
+                '10000000-20000000' => '10 – dưới 20 triệu',
+                '20000000-50000000' => '20 – dưới 50 triệu',
+                '50000000-' => 'Từ 50 triệu',
+            ];
+            if (isset($priceLabels[$filters['price']])) {
+                $searchSummary[] = $priceLabels[$filters['price']];
+            }
+        }
+        if ($filters['adults'] > 1 || $filters['children'] > 0) {
+            $guestParts = [];
+            if ($filters['adults'] > 0) $guestParts[] = $filters['adults'] . ' người lớn';
+            if ($filters['children'] > 0) $guestParts[] = $filters['children'] . ' trẻ em';
+            $searchSummary[] = implode(', ', $guestParts);
+        }
         if ($filters['month'] > 0) {
             $searchSummary[] = 'Khởi hành: Tháng ' . $filters['month'];
         }
@@ -223,6 +333,56 @@ class TourController
                 $safeDisplay
             );
         }
+        // Xử lý cơ chế gợi ý nới lỏng khi 0 kết quả (Fallback Recommendations)
+        $fallbackDiagnostic = null;
+        if (empty($matchedTours)) {
+            $reason = 'general';
+            $message = 'Chưa có tour phù hợp chính xác mọi tiêu chí đã chọn, OnTrip gợi ý cho bạn 3 tour nổi bật được nhiều khách yêu thích nhất:';
+            $candidateTours = $tours;
+            if ($filters['destination'] > 0) {
+                $sameDestTours = array_filter($tours, static fn($t) => (int) $t['destination_id'] === $filters['destination']);
+                if (!empty($sameDestTours)) $candidateTours = array_values($sameDestTours);
+            } elseif ($tourRegion !== '') {
+                $sameRegionTours = array_filter($tours, static fn($t) => $t['region'] === $tourRegion);
+                if (!empty($sameRegionTours)) $candidateTours = array_values($sameRegionTours);
+            }
+
+            if ($filters['budget'] > 0) {
+                $reason = 'budget';
+                $validPrices = array_filter(array_column($candidateTours, 'price'), static fn($p) => $p !== null && $p > 0);
+                $minPrice = !empty($validPrices) ? min($validPrices) : 0;
+                $formattedBudget = number_format($filters['budget'], 0, ',', '.') . ' ₫';
+                $formattedMin = $minPrice > 0 ? number_format($minPrice, 0, ',', '.') . ' ₫' : 'mức giá tốt nhất';
+                $message = "Không có tour dưới {$formattedBudget}, nhưng OnTrip gợi ý cho bạn 3 tour tương tự chỉ từ {$formattedMin}:";
+                usort($candidateTours, static fn($a, $b) => ($a['price'] ?? PHP_INT_MAX) <=> ($b['price'] ?? PHP_INT_MAX));
+                $fallbackTours = array_slice($candidateTours, 0, 3);
+            } elseif ($filters['date'] !== '') {
+                $reason = 'date';
+                $formattedDate = date('d/m/Y', strtotime($filters['date']));
+                $message = "Chưa có lịch khởi hành vào ngày {$formattedDate}, OnTrip gợi ý cho bạn các tour có lịch khởi hành gần nhất:";
+                usort($candidateTours, static fn($a, $b) => ((int) ($b['booked_count'] ?? 0)) <=> ((int) ($a['booked_count'] ?? 0)));
+                $fallbackTours = array_slice($candidateTours, 0, 3);
+            } elseif ($filters['days'] > 0) {
+                $reason = 'days';
+                $message = "Chưa có tour đúng {$filters['days']} ngày, OnTrip gợi ý cho bạn 3 tour có thời lượng tương tự:";
+                usort($candidateTours, static function ($a, $b) use ($filters) {
+                    $diffA = abs((int) ($a['days'] ?? 0) - $filters['days']);
+                    $diffB = abs((int) ($b['days'] ?? 0) - $filters['days']);
+                    return $diffA <=> $diffB;
+                });
+                $fallbackTours = array_slice($candidateTours, 0, 3);
+            } else {
+                usort($candidateTours, static fn($a, $b) => ((int) ($b['booked_count'] ?? 0)) <=> ((int) ($a['booked_count'] ?? 0)));
+                $fallbackTours = array_slice($candidateTours, 0, 3);
+            }
+
+            $fallbackDiagnostic = [
+                'reason' => $reason,
+                'message' => $message,
+                'tours' => $fallbackTours,
+            ];
+        }
+
         require __DIR__ . '/../views/tour/index.php';
     }
 

@@ -75,17 +75,23 @@ $visibleCodes = array_column(array_slice($matchedTours, 0, $pageSize), 'id');
             <form id="catalog-filters" class="catalog-filter-form">
                 <input type="hidden" name="q" value="<?= $escape($keyword) ?>">
                 <input type="hidden" name="raw_q" value="<?= $escape($rawQuery) ?>">
-                <input type="hidden" name="destination" value="<?= (int) $filters['destination'] ?>">
                 <input type="hidden" name="days" value="<?= (int) $filters['days'] ?>">
                 <input type="hidden" name="adults" value="<?= (int) $filters['adults'] ?>">
                 <input type="hidden" name="children" value="<?= (int) $filters['children'] ?>">
                 <input type="hidden" name="budget" value="<?= (int) $filters['budget'] ?>">
                 <input type="hidden" name="month" value="<?= (int) ($filters['month'] ?? 0) ?>">
                 <input type="hidden" name="season" value="<?= $escape($filters['season'] ?? '') ?>">
-                <label class="catalog-field"><span>ĐIỂM ĐẾN</span>
-                    <select name="region"><option value="">Tất cả điểm đến</option>
+                <label class="catalog-field"><span>KHU VỰC</span>
+                    <select name="region"><option value="">Tất cả khu vực</option>
                         <?php foreach ($destinationRegions as $region => $label): ?>
                             <option value="<?= $escape($region) ?>" data-region-type="<?= $escape($destinationRegionTypes[$region]) ?>" <?= $tourRegion === $region ? 'selected' : '' ?>><?= $escape($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+                <label class="catalog-field"><span>ĐỊA ĐIỂM</span>
+                    <select name="destination"><option value="0">Tất cả địa điểm</option>
+                        <?php foreach ($destinationOptions as $dest): ?>
+                            <option value="<?= (int) $dest['id'] ?>" data-region="<?= $escape($dest['region']) ?>" <?= (int) $filters['destination'] === (int) $dest['id'] ? 'selected' : '' ?>><?= $escape($dest['name']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </label>
@@ -200,7 +206,52 @@ $visibleCodes = array_column(array_slice($matchedTours, 0, $pageSize), 'id');
                 <?php endforeach; ?>
             </div>
             <div id="catalog-empty" class="catalog-empty" <?= $initialCount ? 'hidden' : '' ?>>
-                <svg class="icon"><use href="#i-search"/></svg><h3>Chưa tìm thấy tour phù hợp</h3><p>Thử thay đổi điểm đến, ngày đi hoặc mức giá để có thêm lựa chọn.</p><button class="button button-primary" type="button" data-catalog-reset>Xóa bộ lọc</button>
+                <div class="catalog-empty-icon-wrap">
+                    <svg class="icon"><use href="#i-search"/></svg>
+                </div>
+                <h3>Chưa tìm thấy tour phù hợp</h3>
+                <p id="catalog-empty-subtitle">Thử thay đổi điểm đến, ngày đi hoặc mức giá để có thêm lựa chọn.</p>
+                <div class="catalog-empty-reset-wrap">
+                    <button class="button button-primary" type="button" data-catalog-reset>Xóa tất cả bộ lọc</button>
+                </div>
+
+                <!-- KHỐI GỢI Ý NỚI LỎNG (FALLBACK RECOMMENDATIONS) -->
+                <div id="catalog-fallback" class="catalog-fallback-section" <?= empty($fallbackDiagnostic) ? 'hidden' : '' ?>>
+                    <div class="catalog-fallback-header">
+                        <span class="catalog-fallback-sparkle">✨ GỢI Ý DÀNH CHO BẠN</span>
+                        <h4 id="catalog-fallback-message"><?= $escape($fallbackDiagnostic['message'] ?? 'OnTrip gợi ý cho bạn các tour nổi bật được nhiều khách yêu thích nhất:') ?></h4>
+                    </div>
+                    <div id="catalog-fallback-grid" class="tour-grid catalog-fallback-grid">
+                        <?php if (!empty($fallbackDiagnostic['tours'])): ?>
+                            <?php foreach ($fallbackDiagnostic['tours'] as $fTour): ?>
+                                <article class="tour-card home-suggest-card fallback-suggest-card">
+                                    <div class="tour-image-wrap">
+                                        <img src="<?= $escape($fTour['image']) ?>" alt="<?= $escape($fTour['destination']) ?>" width="600" height="450" loading="lazy">
+                                        <span class="tour-duration"><svg class="icon"><use href="#i-clock"/></svg><?= $escape($fTour['duration']) ?></span>
+                                    </div>
+                                    <div class="tour-body">
+                                        <p class="tour-place"><?= $escape($fTour['destination']) ?></p>
+                                        <h3><?= $escape($fTour['name']) ?></h3>
+                                        <p class="tour-meta"><svg class="icon"><use href="#i-pin"/></svg><?= $fTour['origin'] !== '' ? 'Từ ' . $escape($fTour['origin']) : 'Khởi hành linh hoạt' ?></p>
+                                        <p class="tour-booked-meta">
+                                            <svg class="icon"><use href="#i-user"/></svg>
+                                            <span class="tour-booked-text">
+                                                <strong><?= number_format($fTour['booked_count'] ?? 0, 0, ',', '.') ?></strong> khách đã đặt thành công
+                                            </span>
+                                        </p>
+                                        <div class="tour-bottom">
+                                            <div>
+                                                <span>Giá từ / người lớn</span>
+                                                <p><?= $fTour['price'] !== null ? '<strong>' . number_format($fTour['price'], 0, ',', '.') . '</strong><span> ₫</span>' : 'Đang cập nhật' ?></p>
+                                            </div>
+                                            <a class="tour-detail" href="index.php?page=tour-detail&amp;type=<?= $escape($fTour['type']) ?>&amp;id=<?= $escape($fTour['id']) ?>" aria-label="Chi tiết <?= $escape($fTour['name']) ?>"><svg class="icon"><use href="#i-arrow"/></svg></a>
+                                        </div>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
             <div class="catalog-list-footer">
                 <nav id="catalog-pagination" class="catalog-pagination" aria-label="Phân trang danh sách tour"></nav>

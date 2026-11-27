@@ -85,8 +85,7 @@ $banners = [
                 <div class="search-row">
                     <label class="search-field">
                         <span>ĐIỂM ĐẾN</span>
-                        <span class="field-control"><svg class="icon"><use href="#i-pin"/></svg><input type="text" name="q" list="search-destinations" maxlength="255" placeholder="Điểm đến hoặc yêu cầu tìm tour..."></span>
-                        <datalist id="search-destinations"><?php foreach ($availableDestinations as $destination): ?><option value="<?= $escape($destination['name']) ?>"></option><?php endforeach; ?></datalist>
+                        <span class="field-control"><svg class="icon"><use href="#i-pin"/></svg><input type="text" name="q" maxlength="255" placeholder="Điểm đến hoặc yêu cầu tìm tour..." autocomplete="off"></span>
                     </label>
                     <label class="search-field">
                         <span>NGÀY KHỞI HÀNH</span>

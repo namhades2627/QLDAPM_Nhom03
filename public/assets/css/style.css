@@ -13187,3 +13187,269 @@ a.touchpoint-item:hover {
         gap: 6px;
     }
 }
+
+
+/* ==========================================================================
+   DANH SÁCH ĐƠN ĐẶT (ORDER LIST): HEADER, SEARCH & STATUS TABS
+   ========================================================================== */
+
+.order-list-page .booking-main {
+    padding-bottom: 50px;
+}
+
+.order-list-header {
+    margin-bottom: 24px;
+}
+
+.order-list-header-top {
+    margin-bottom: 18px;
+}
+
+.order-list-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0 8px;
+    flex-wrap: wrap;
+}
+
+.order-list-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--ink, #1e293b);
+    letter-spacing: -.5px;
+    margin: 0;
+}
+
+.order-list-total-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #ffedd5;
+    color: #9a3412;
+    border: 1px solid #fed7aa;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.order-list-subtitle {
+    font-size: 14px;
+    color: var(--muted, #64748b);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Toolbar Card chứa Search & Tabs */
+.order-toolbar-card {
+    background: var(--panel-bg, #ffffff);
+    border: 1px solid var(--line, #e2e8f0);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Thanh tìm kiếm nhanh */
+.order-search-box {
+    position: relative;
+    width: 100%;
+}
+
+.order-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.order-search-input {
+    width: 100%;
+    height: 44px;
+    padding: 10px 40px 10px 42px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 9px;
+    background: #f8fafc;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--ink, #1e293b);
+    transition: all .18s ease;
+    box-sizing: border-box;
+}
+
+.order-search-input:focus {
+    outline: none;
+    background: #ffffff;
+    border-color: var(--orange, #cc5b2d);
+    box-shadow: 0 0 0 3px rgba(204, 91, 45, 0.12);
+}
+
+.order-search-input::placeholder {
+    color: #94a3b8;
+}
+
+.order-search-clear-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    border: none;
+    color: #475569;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background .15s ease;
+}
+
+.order-search-clear-btn:hover {
+    background: #cbd5e1;
+    color: var(--ink, #1e293b);
+}
+
+/* Thanh Tabs trạng thái */
+.order-status-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.order-status-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.order-status-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .18s ease;
+    user-select: none;
+}
+
+.order-status-tab:hover {
+    background: #e2e8f0;
+    color: var(--ink, #1e293b);
+}
+
+.order-status-tab.is-active {
+    background: #fff7ed;
+    border-color: #fed7aa;
+    color: #9a3412;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(154, 52, 18, 0.08);
+}
+
+.tab-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #94a3b8;
+    flex-shrink: 0;
+}
+
+.tab-pending .tab-dot {
+    background: #f97316;
+}
+
+.tab-confirmed .tab-dot {
+    background: #0284c7;
+}
+
+.tab-completed .tab-dot {
+    background: #16a34a;
+}
+
+.tab-cancelled .tab-dot {
+    background: #dc2626;
+}
+
+.tab-count {
+    font-size: 11.5px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.06);
+    color: inherit;
+    font-weight: 700;
+}
+
+.order-status-tab.is-active .tab-count {
+    background: #fed7aa;
+    color: #7c2d12;
+}
+
+/* Khung thông báo rỗng khi lọc */
+.order-filter-no-results {
+    padding: 42px 20px;
+    text-align: center;
+    background: var(--panel-bg, #ffffff);
+    border: 1px dashed var(--line, #cbd5e1);
+    border-radius: 12px;
+    margin-top: 18px;
+}
+
+.no-results-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: #f8fafc;
+    color: #94a3b8;
+    margin-bottom: 14px;
+}
+
+.order-filter-no-results h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink, #1e293b);
+    margin: 0 0 6px 0;
+}
+
+.order-filter-no-results p {
+    font-size: 13.5px;
+    color: var(--muted, #64748b);
+    margin: 0 0 18px 0;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 640px) {
+    .order-list-title {
+        font-size: 22px;
+    }
+
+    .order-toolbar-card {
+        padding: 12px 14px;
+    }
+
+    .order-status-tab {
+        padding: 7px 11px;
+        font-size: 12.5px;
+    }
+}

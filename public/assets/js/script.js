@@ -2307,3 +2307,123 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+
+// Danh sách đơn đặt của tôi: Tìm kiếm nhanh & Lọc theo Tabs trạng thái
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('order-search-input');
+    const searchClearBtn = document.getElementById('order-search-clear');
+    const statusTabs = document.querySelectorAll('.order-status-tab');
+    const orderCards = document.querySelectorAll('#order-cards-list .order-card');
+    const emptyNotice = document.getElementById('order-filter-empty');
+    const resetFilterBtn = document.getElementById('btn-reset-order-filter');
+
+    if (!orderCards.length && !searchInput) return;
+
+    function removeVietnameseTones(str) {
+        if (!str) return '';
+        str = str.toLowerCase();
+        str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
+        str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
+        str = str.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
+        str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
+        str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
+        str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
+        str = str.replace(/đ/g, 'd');
+        return str;
+    }
+
+    let activeFilter = 'all';
+    // Đọc trạng thái từ tab đang active ban đầu (theo URL GET ?status=...)
+    const initialActiveTab = document.querySelector('.order-status-tab.is-active');
+    if (initialActiveTab && initialActiveTab.dataset.statusFilter) {
+        activeFilter = initialActiveTab.dataset.statusFilter;
+    }
+
+    function filterOrders() {
+        const keyword = searchInput ? removeVietnameseTones(searchInput.value.trim()) : '';
+        let visibleCount = 0;
+
+        orderCards.forEach(card => {
+            const cardStatus = card.dataset.orderStatus || '';
+            const cardSearchText = card.dataset.searchText || removeVietnameseTones(card.textContent);
+
+            const matchStatus = (activeFilter === 'all' || cardStatus === activeFilter);
+            const matchKeyword = (!keyword || cardSearchText.includes(keyword));
+
+            if (matchStatus && matchKeyword) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        if (emptyNotice) {
+            emptyNotice.hidden = visibleCount > 0;
+        }
+
+        // Cập nhật URL parameter mà không tải lại trang
+        if (window.history && window.history.replaceState) {
+            const url = new URL(window.location.href);
+            if (activeFilter === 'all') {
+                url.searchParams.delete('status');
+            } else {
+                url.searchParams.set('status', activeFilter);
+            }
+            window.history.replaceState(null, '', url.toString());
+        }
+    }
+
+    // Sự kiện click chọn tab
+    statusTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            statusTabs.forEach(t => t.classList.remove('is-active'));
+            tab.classList.add('is-active');
+            activeFilter = tab.dataset.statusFilter || 'all';
+            filterOrders();
+        });
+    });
+
+    // Sự kiện gõ tìm kiếm
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            if (searchClearBtn) {
+                searchClearBtn.hidden = searchInput.value.length === 0;
+            }
+            filterOrders();
+        });
+    }
+
+    // Nút xóa tìm kiếm
+    if (searchClearBtn) {
+        searchClearBtn.addEventListener('click', () => {
+            if (searchInput) {
+                searchInput.value = '';
+                searchClearBtn.hidden = true;
+                searchInput.focus();
+                filterOrders();
+            }
+        });
+    }
+
+    // Nút đặt lại bộ lọc
+    if (resetFilterBtn) {
+        resetFilterBtn.addEventListener('click', () => {
+            if (searchInput) {
+                searchInput.value = '';
+                if (searchClearBtn) searchClearBtn.hidden = true;
+            }
+            statusTabs.forEach(t => {
+                t.classList.toggle('is-active', (t.dataset.statusFilter || '') === 'all');
+            });
+            activeFilter = 'all';
+            filterOrders();
+        });
+    }
+
+    // Kích hoạt lọc lần đầu nếu tab ban đầu khác 'all'
+    if (activeFilter !== 'all') {
+        filterOrders();
+    }
+});

@@ -2196,7 +2196,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Chi tiết đơn đặt: Nút sao chép mã đơn nhanh (Copy to Clipboard)
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-copy-target]').forEach(button => {
+    document.querySelectorAll('[data-copy-target], [data-copy-text]').forEach(button => {
         button.addEventListener('click', async () => {
             const targetSelector = button.dataset.copyTarget;
             const targetEl = document.querySelector(targetSelector);

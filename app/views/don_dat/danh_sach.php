@@ -118,26 +118,128 @@ $activeStatus = is_string($_GET['status'] ?? null) && isset($countsByStatus[$_GE
         <?php else: ?>
         <div class="order-list" id="order-cards-list">
             <?php foreach ($orders as $order): ?>
-            <article class="order-card" data-order-status="<?= $escape($order['trang_thai']) ?>" data-search-text="<?= strtolower($escape($order['ma_don'] . ' ' . $order['ten_tour'] . ' ' . $order['diem_khoi_hanh'])) ?>">
-                <div class="order-card-head">
-                    <div>
-                        <span class="order-code">Mã đơn <?= $escape($order['ma_don']) ?></span>
-                        <h2><?= $escape($order['ten_tour']) ?></h2>
-                        <p>Khởi hành <?= date('d/m/Y', strtotime($order['ngay_khoi_hanh'])) ?> · <?= $escape($order['diem_khoi_hanh']) ?></p>
+            <?php
+                $days = (int) ($order['so_ngay'] ?? 0);
+                if ($days > 0) {
+                    $nights = max(1, $days - 1);
+                    $durationText = $days . 'N' . $nights . 'Đ';
+                } else {
+                    $durationText = '2N1Đ';
+                }
+                $tourThumb = !empty($order['duong_dan_anh']) ? $order['duong_dan_anh'] : 'assets/images/tours/mb01.jpg';
+                $isPaid = (bool) $order['da_thanh_toan'];
+                $detailUrl = 'index.php?page=orders&amp;id=' . $escape(rawurlencode($order['ma_don']));
+            ?>
+            <article class="order-card order-media-card" data-order-status="<?= $escape($order['trang_thai']) ?>" data-search-text="<?= strtolower($escape($order['ma_don'] . ' ' . $order['ten_tour'] . ' ' . $order['diem_khoi_hanh'])) ?>">
+                <div class="order-card-inner">
+                    <!-- 1. Cột ảnh Thumbnail tour bên trái -->
+                    <div class="order-card-thumb-col">
+                        <a href="<?= $detailUrl ?>" class="order-card-thumb-link" tabindex="-1" aria-hidden="true">
+                            <img src="<?= $escape($tourThumb) ?>" alt="<?= $escape($order['ten_tour']) ?>" class="order-card-thumb-img" loading="lazy">
+                            <span class="order-card-duration-badge"><?= $escape($durationText) ?></span>
+                        </a>
                     </div>
-                    <span class="order-status <?= $statusClasses[$order['trang_thai']] ?? '' ?>"><?= $escape($order['trang_thai_nhan']) ?></span>
+
+                    <!-- 2. Cột nội dung trung tâm -->
+                    <div class="order-card-body-col">
+                        <!-- Hàng meta đầu: Mã đơn, Sao chép & Badge trạng thái -->
+                        <div class="order-card-meta-row">
+                            <div class="order-card-code-wrap">
+                                <span class="order-code-label">Mã đơn:</span>
+                                <strong class="order-code-val" id="code-<?= $escape($order['ma_don']) ?>"><?= $escape($order['ma_don']) ?></strong>
+                                <button type="button" class="order-card-copy-btn" data-copy-text="<?= $escape($order['ma_don']) ?>" title="Sao chép mã đơn" aria-label="Sao chép mã đơn">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    <span class="copy-tooltip">Đã chép!</span>
+                                </button>
+                            </div>
+
+                            <div class="order-card-badges-wrap">
+                                <!-- Badge trạng thái đơn -->
+                                <span class="order-status-badge status-<?= $escape($order['trang_thai']) ?>">
+                                    <span class="status-dot-pulse" aria-hidden="true"></span>
+                                    <?= $escape($order['trang_thai_nhan']) ?>
+                                </span>
+
+                                <!-- Badge thanh toán -->
+                                <?php if ($isPaid): ?>
+                                    <span class="order-pay-pill pay-paid" title="Đã hoàn tất thanh toán">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        Đã thanh toán
+                                    </span>
+                                <?php else: ?>
+                                    <span class="order-pay-pill pay-unpaid" title="Chưa thực hiện thanh toán">
+                                        Chưa thanh toán
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <!-- Tiêu đề Tour -->
+                        <h2 class="order-card-tour-title">
+                            <a href="<?= $detailUrl ?>"><?= $escape($order['ten_tour']) ?></a>
+                        </h2>
+
+                        <!-- Grid 4 thông số cốt lõi -->
+                        <div class="order-card-facts-grid">
+                            <!-- Ngày khởi hành -->
+                            <div class="card-fact-item">
+                                <span class="fact-item-icon">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                </span>
+                                <div class="fact-item-text">
+                                    <span class="fact-label">Khởi hành:</span>
+                                    <strong class="fact-val"><?= date('d/m/Y', strtotime($order['ngay_khoi_hanh'])) ?></strong>
+                                </div>
+                            </div>
+
+                            <!-- Điểm xuất phát -->
+                            <div class="card-fact-item">
+                                <span class="fact-item-icon">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                </span>
+                                <div class="fact-item-text">
+                                    <span class="fact-label">Nơi khởi hành:</span>
+                                    <strong class="fact-val"><?= $escape($order['diem_khoi_hanh']) ?></strong>
+                                </div>
+                            </div>
+
+                            <!-- Số khách -->
+                            <div class="card-fact-item">
+                                <span class="fact-item-icon">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                </span>
+                                <div class="fact-item-text">
+                                    <span class="fact-label">Hành khách:</span>
+                                    <strong class="fact-val"><?= (int) $order['so_nguoi_lon'] ?> người lớn<?= (int) $order['so_tre_em'] > 0 ? ', ' . (int) $order['so_tre_em'] . ' trẻ em' : '' ?></strong>
+                                </div>
+                            </div>
+
+                            <!-- Thời điểm đặt -->
+                            <div class="card-fact-item">
+                                <span class="fact-item-icon">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                </span>
+                                <div class="fact-item-text">
+                                    <span class="fact-label">Ngày đặt:</span>
+                                    <span class="fact-val"><?= date('d/m/Y H:i', strtotime($order['tao_luc'])) ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <dl class="order-card-facts">
-                    <div><dt>Số khách</dt><dd><?= (int) $order['so_nguoi_lon'] ?> người lớn<?= (int) $order['so_tre_em'] > 0 ? ', ' . (int) $order['so_tre_em'] . ' trẻ em' : '' ?></dd></div>
-                    <div><dt>Tổng thanh toán</dt><dd><strong><?= $money($order['tong_thanh_toan']) ?></strong></dd></div>
-                    <div><dt>Thanh toán</dt><dd><?= $order['da_thanh_toan'] ? 'Đã thanh toán (mô phỏng)' : 'Chưa thanh toán' ?></dd></div>
-                    <div><dt>Ngày đặt</dt><dd><?= date('d/m/Y H:i', strtotime($order['tao_luc'])) ?></dd></div>
-                </dl>
-                <div class="order-card-actions">
-                    <a class="button booking-secondary-button" href="index.php?page=orders&amp;id=<?= $escape(rawurlencode($order['ma_don'])) ?>">Xem chi tiết</a>
-                    <?php if (in_array($order['trang_thai'], ['da_xac_nhan', 'hoan_thanh'], true)): ?>
-                        <a class="button booking-secondary-button" href="index.php?page=tour-detail&amp;id=<?= $escape(rawurlencode($order['ma_tour'])) ?>#danh-gia">⭐ Đánh giá tour</a>
-                    <?php endif; ?>
+
+                <!-- Hàng chân thẻ (Giá tiền & Nút thao tác) -->
+                <div class="order-card-foot-row">
+                    <div class="order-card-price-col">
+                        <span class="price-col-label">Tổng thanh toán:</span>
+                        <strong class="price-col-amount"><?= $money($order['tong_thanh_toan']) ?></strong>
+                    </div>
+                    <div class="order-card-actions-col">
+                        <a class="button button-secondary order-action-btn" href="<?= $detailUrl ?>">Xem chi tiết</a>
+                        <?php if (in_array($order['trang_thai'], ['da_xac_nhan', 'hoan_thanh'], true)): ?>
+                            <a class="button button-secondary order-action-btn" href="index.php?page=tour-detail&amp;id=<?= $escape(rawurlencode($order['ma_tour'])) ?>#danh-gia">⭐ Đánh giá tour</a>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </article>
             <?php endforeach; ?>

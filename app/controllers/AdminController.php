@@ -8,6 +8,7 @@ require_once __DIR__ . '/DanhMucController.php';
 require_once __DIR__ . '/AdminTourController.php';
 require_once __DIR__ . '/LichKhoiHanhController.php';
 require_once __DIR__ . '/YeuCauTuVanController.php';
+require_once __DIR__ . '/ThongKeController.php';
 
 
 /** Đăng nhập, kiểm tra quyền và xử lý tài khoản của phiên quản trị. */
@@ -110,7 +111,7 @@ class AdminController
         $roleName = $account['vai_tro'] === 'admin' ? 'Quản trị viên' : 'Nhân viên';
         $csrfToken = $_SESSION['csrf_token'];
         $avatarUrl = self::avatarUrl($account['hinh_anh'] ?? null);
-        $adminSection = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders', 'danh_muc', 'tours', 'lich_khoi_hanh', 'yeu_cau_tu_van', 'danh_gia'], true) ? $section : 'dashboard';
+        $adminSection = in_array($section, ['profile', 'password', 'accounts', 'customers', 'orders', 'thong_ke', 'danh_muc', 'tours', 'lich_khoi_hanh', 'yeu_cau_tu_van', 'danh_gia'], true) ? $section : 'dashboard';
         if ($adminSection === 'tours') {
             (new AdminTourController())->index($account, $roleName, $csrfToken);
             return;
@@ -125,6 +126,10 @@ class AdminController
         }
         if ($adminSection === 'orders') {
             $this->donDat($account, $roleName, $csrfToken);
+            return;
+        }
+        if ($adminSection === 'thong_ke') {
+            (new ThongKeController())->index($account, $roleName, $csrfToken);
             return;
         }
         if ($adminSection === 'yeu_cau_tu_van') {

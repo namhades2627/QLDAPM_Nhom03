@@ -9,7 +9,7 @@
  */
 $adminSection = $adminSection ?? 'dashboard';
 $avatarUrl = $avatarUrl ?? '';
-$adminTitle = ['dashboard' => 'Bảng điều khiển', 'orders' => 'Quản lý đơn đặt', 'accounts' => 'Quản lý tài khoản', 'customers' => 'Quản lý khách hàng', 'danh_muc' => 'Quản lý danh mục', 'tours' => 'Quản lý tour', 'schedules' => 'Lịch khởi hành', 'yeu_cau_tu_van' => 'Yêu cầu tư vấn', 'danh_gia' => 'Quản lý bình luận', 'profile' => 'Hồ sơ cá nhân', 'password' => 'Đổi mật khẩu'][$adminSection] ?? 'Bảng điều khiển';
+$adminTitle = ['dashboard' => 'Bảng điều khiển', 'orders' => 'Quản lý đơn đặt', 'thong_ke' => 'Thống kê đặt tour', 'accounts' => 'Quản lý tài khoản', 'customers' => 'Quản lý khách hàng', 'danh_muc' => 'Quản lý danh mục', 'tours' => 'Quản lý tour', 'schedules' => 'Lịch khởi hành', 'yeu_cau_tu_van' => 'Yêu cầu tư vấn', 'danh_gia' => 'Quản lý bình luận', 'profile' => 'Hồ sơ cá nhân', 'password' => 'Đổi mật khẩu'][$adminSection] ?? 'Bảng điều khiển';
 $escape = static function ($value): string { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); };
 ?>
 <!doctype html>
@@ -47,6 +47,7 @@ $escape = static function ($value): string { return htmlspecialchars((string) $v
     <symbol id="a-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2m-8 3h2"/></symbol>
     <symbol id="a-tour" viewBox="0 0 24 24"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5Zm6-2v16m6-14v16"/></symbol>
     <symbol id="a-orders" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 10h6m-6 4h6m-6 4h4"/></symbol>
+    <symbol id="a-chart" viewBox="0 0 24 24"><path d="M4 20h16M7 16v-5m5 5V6m5 10v-8"/></symbol>
     <symbol id="a-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
     <symbol id="a-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></symbol>
 </svg>
@@ -69,6 +70,7 @@ $escape = static function ($value): string { return htmlspecialchars((string) $v
             <a class="admin-nav-link<?= $adminSection === 'tours' ? ' is-active' : '' ?>" href="index.php?action=tours" <?= $adminSection === 'tours' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-tour"/></svg><span>Quản lý tour</span></a>
             <a class="admin-nav-link<?= $adminSection === 'danh_muc' ? ' is-active' : '' ?>" href="index.php?action=danh_muc" <?= $adminSection === 'danh_muc' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-grid"/></svg><span>Quản lý danh mục</span></a>
             <a class="admin-nav-link<?= $adminSection === 'orders' ? ' is-active' : '' ?>" href="index.php?action=orders" <?= $adminSection === 'orders' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-orders"/></svg><span>Quản lý đơn đặt</span></a>
+            <a class="admin-nav-link<?= $adminSection === 'thong_ke' ? ' is-active' : '' ?>" href="index.php?action=thong_ke" <?= $adminSection === 'thong_ke' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-chart"/></svg><span>Thống kê đặt tour</span></a>
             <a class="admin-nav-link<?= $adminSection === 'yeu_cau_tu_van' ? ' is-active' : '' ?>" href="index.php?action=yeu_cau_tu_van" <?= $adminSection === 'yeu_cau_tu_van' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-message"/></svg><span>Yêu cầu tư vấn</span></a>
             <?php if ($account['vai_tro'] === 'admin'): ?>
             <a class="admin-nav-link<?= $adminSection === 'customers' ? ' is-active' : '' ?>" href="index.php?action=customers" <?= $adminSection === 'customers' ? 'aria-current="page"' : '' ?>><svg class="icon"><use href="#a-user"/></svg><span>Quản lý khách hàng</span></a>

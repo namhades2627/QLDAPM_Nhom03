@@ -23,8 +23,8 @@ $escape = static function ($value): string { return htmlspecialchars((string) $v
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="../public/assets/css/style.css?v=20261114-admin-chat">
-    <script src="../public/assets/js/script.js?v=20261114-admin-chat" defer></script>
+    <link rel="stylesheet" href="../public/assets/css/style.css?v=<?= filemtime(__DIR__ . '/../../../../public/assets/css/style.css') ?>">
+    <script src="../public/assets/js/script.js?v=<?= filemtime(__DIR__ . '/../../../../public/assets/js/script.js') ?>" defer></script>
 </head>
 <body class="admin-page admin-accounts-page">
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

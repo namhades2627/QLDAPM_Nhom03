@@ -371,6 +371,7 @@ class AdminController
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $maDon = trim($this->input('ma_don'));
+            $operation = $this->input('operation');
             $targetStatus = $this->input('trang_thai');
             if (!hash_equals($csrfToken, $this->input('csrf_token'))) {
                 http_response_code(403);
@@ -379,10 +380,16 @@ class AdminController
                 try {
                     $target = $maDon !== '' ? $model->findOrderByCode($maDon) : null;
                     if ($target === null) throw new DomainException('Không tìm thấy đơn đặt cần cập nhật.');
-                    if (!$model->updateStatus((int) $target['id_don_dat'], $targetStatus)) {
-                        throw new DomainException('Đơn đang ở trạng thái này rồi.');
+                    if ($operation === 'record_payment') {
+                        $method = trim($this->input('phuong_thuc'));
+                        $transactionCode = $model->recordAdminPayment((int) $target['id_don_dat'], $method);
+                        $_SESSION['admin_orders_message'] = 'Đã ghi nhận thanh toán mô phỏng cho đơn ' . $maDon . ' (Mã GD: ' . $transactionCode . ').';
+                    } else {
+                        if (!$model->updateStatus((int) $target['id_don_dat'], $targetStatus)) {
+                            throw new DomainException('Đơn đang ở trạng thái này rồi.');
+                        }
+                        $_SESSION['admin_orders_message'] = 'Đã chuyển đơn ' . $maDon . ' sang “' . ($statusLabels[$targetStatus] ?? $targetStatus) . '”.';
                     }
-                    $_SESSION['admin_orders_message'] = 'Đã chuyển đơn ' . $maDon . ' sang “' . ($statusLabels[$targetStatus] ?? $targetStatus) . '”.';
                     header('Location: index.php?action=orders&id=' . rawurlencode($maDon), true, 303);
                     return;
                 } catch (DomainException $exception) {
@@ -391,12 +398,12 @@ class AdminController
             }
         }
 
-        $maDon = $query('id');
-        if ($maDon !== '' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $maDon = $query('id') ?: ($_SERVER['REQUEST_METHOD'] === 'POST' ? trim($this->input('ma_don')) : '');
+        if ($maDon !== '') {
             $orderDetail = $model->findOrderByCode($maDon);
             if ($orderDetail === null) {
                 http_response_code(404);
-                $orderMessage = 'Không tìm thấy đơn đặt “' . $maDon . '”.';
+                $orderMessage = $orderMessage !== '' ? $orderMessage : 'Không tìm thấy đơn đặt “' . $maDon . '”.';
                 $orderSuccess = false;
             }
         }

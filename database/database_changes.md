@@ -4,6 +4,13 @@
 
 Mỗi lần sửa bảng, cột, khóa, ràng buộc hoặc dữ liệu cài đặt trong `ontrip.sql`, người/AI thực hiện phải cập nhật nhật ký này trong cùng lần sửa. Ghi rõ ngày, thay đổi, ảnh hưởng dữ liệu, vị trí khối SQL và cách áp dụng. Không ghi ở đây các thao tác sử dụng website thông thường như đổi mật khẩu hoặc sửa hồ sơ cá nhân.
 
+## 28/11/2026 — Đồng bộ phương thức thanh toán tại văn phòng (`tai_van_phong`)
+
+- Bổ sung giá trị `'tai_van_phong'` vào cột `thanh_toan.phuong_thuc` (`ENUM('chuyen_khoan', 'the', 'vi_dien_tu', 'tai_van_phong')`) để khớp với `DonDatModel::PAYMENT_METHODS`, giao diện chọn thanh toán của khách hàng và thao tác ghi nhận thanh toán bên quản trị.
+- Không làm thay đổi dữ liệu thanh toán hoặc đơn đặt đã có; an toàn khi chạy lại.
+- **Vị trí:** khối `BEGIN CAP_NHAT_2026_11_28_THANH_TOAN_TAI_VAN_PHONG` / `END CAP_NHAT_2026_11_28_THANH_TOAN_TAI_VAN_PHONG` ở cuối `ontrip.sql` (và cập nhật phần `CREATE TABLE IF NOT EXISTS thanh_toan`).
+- **Máy đã có database:** chọn `ontrip` trong phpMyAdmin → SQL → chạy khối trên.
+
 ## 09/11/2026 — Hiển thị số lượng khách đã đặt tour thành công trên thẻ tour
 
 - Cập nhật truy vấn tính tổng số lượng khách hàng đã đặt tour (`SUM(so_nguoi_lon + so_tre_em)`) theo tour trong `TourModel::getPublishedTours()`, chỉ tính các đơn đặt tour không bị hủy (`trang_thai <> 'da_huy'`).

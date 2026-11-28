@@ -24,6 +24,23 @@ class DonDatModel
         'tai_van_phong' => 'Thanh toán tại văn phòng OnTrip',
     ];
 
+    /** Các hình thức khách có thể chọn khi gửi yêu cầu đặt tour (gồm thanh toán sau). */
+    public const BOOKING_PAYMENT_METHODS = [
+        'thanh_toan_sau' => 'Thanh toán khi nhận xác nhận',
+        'chuyen_khoan'   => 'Chuyển khoản ngân hàng (VietQR)',
+        'vi_dien_tu'     => 'Ví điện tử (MoMo / ZaloPay)',
+        'the'            => 'Thẻ quốc tế (Visa / Mastercard)',
+        'tai_van_phong'  => 'Thanh toán tại văn phòng OnTrip',
+    ];
+
+    /** Nhãn hiển thị thống nhất cho mọi phương thức thanh toán lưu trong đơn hoặc giao dịch. */
+    public static function paymentMethodLabel(string $method): string
+    {
+        return self::PAYMENT_METHODS[$method]
+            ?? self::BOOKING_PAYMENT_METHODS[$method]
+            ?? $method;
+    }
+
     /** @var PDO Kết nối database được truyền từ Controller. */
     private $connection;
 
@@ -240,7 +257,7 @@ class DonDatModel
 
             $promoCode = trim((string) ($contact['ma_giam_gia'] ?? ''));
             $paymentMethod = (string) ($contact['phuong_thuc_thanh_toan'] ?? 'thanh_toan_sau');
-            if (!in_array($paymentMethod, ['thanh_toan_sau', 'chuyen_khoan', 'tai_van_phong'], true)) {
+            if (!isset(self::BOOKING_PAYMENT_METHODS[$paymentMethod])) {
                 $paymentMethod = 'thanh_toan_sau';
             }
 
@@ -429,14 +446,19 @@ class DonDatModel
                 'SELECT ho_ten, loai_khach, gioi_tinh, ngay_sinh, cccd, ghi_chu FROM chi_tiet_don_dat WHERE id_don_dat = ? ORDER BY thu_tu'
             );
             $statement->execute([$orderId]);
-            return $statement->fetchAll();
+            $rows = $statement->fetchAll();
         } catch (Throwable) {
             $statement = $this->connection->prepare(
                 'SELECT ho_ten, loai_khach, ngay_sinh, ghi_chu FROM chi_tiet_don_dat WHERE id_don_dat = ? ORDER BY thu_tu'
             );
             $statement->execute([$orderId]);
-            return $statement->fetchAll();
+            $rows = $statement->fetchAll();
         }
+        foreach ($rows as &$row) {
+            $row['ghi_chu'] = (string) ($row['ghi_chu'] ?? '');
+        }
+        unset($row);
+        return $rows;
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -461,9 +483,11 @@ class DonDatModel
         }
         $order['so_ngay'] = isset($order['so_ngay']) ? (int) $order['so_ngay'] : 0;
         $order['duong_dan_anh'] = (string) ($order['duong_dan_anh'] ?? '');
+        $order['dia_chi'] = (string) ($order['dia_chi'] ?? '');
+        $order['ghi_chu'] = (string) ($order['ghi_chu'] ?? '');
         $order['tien_giam_voucher'] = isset($order['tien_giam_voucher']) ? (int) $order['tien_giam_voucher'] : 0;
         $order['ma_giam_gia'] = (string) ($order['ma_giam_gia'] ?? '');
-        $order['phuong_thuc_thanh_toan'] = (string) ($order['phuong_thuc_thanh_toan'] ?? 'thanh_toan_sau');
+        $order['phuong_thuc_thanh_toan'] = (string) (($order['phuong_thuc_thanh_toan'] ?? '') !== '' ? $order['phuong_thuc_thanh_toan'] : 'thanh_toan_sau');
         $order['so_khach'] = $order['so_nguoi_lon'] + $order['so_tre_em'];
         $order['da_thanh_toan'] = $order['ma_giao_dich'] !== null;
         $order['trang_thai_nhan'] = self::STATUS_LABELS[$order['trang_thai']] ?? $order['trang_thai'];
@@ -537,10 +561,60 @@ class DonDatModel
         if (!isset(self::PAYMENT_METHODS[$method])) {
             throw new DomainException('Phương thức thanh toán không hợp lệ.');
         }
-        $statement = $this->connection->prepare(
-            "UPDATE don_dat_tour SET phuong_thuc_thanh_toan = ?, cap_nhat_luc = CURRENT_TIMESTAMP WHERE ma_don = ? AND id_tai_khoan = ?"
-        );
-        $statement->execute([$method, $maDon, $accountId]);
+        $this->connection->beginTransaction();
+        try {
+            $statement = $this->connection->prepare(
+                'SELECT id_don_dat, trang_thai FROM don_dat_tour WHERE ma_don = ? AND id_tai_khoan = ? FOR UPDATE'
+            );
+            $statement->execute([$maDon, $accountId]);
+            $order = $statement->fetch();
+            if (!$order) {
+                throw new DomainException('Không tìm thấy đơn đặt này.');
+            }
+            if (!in_array($order['trang_thai'], ['cho_xac_nhan', 'da_xac_nhan'], true)) {
+                throw new DomainException('Không thể thay đổi phương thức thanh toán cho đơn đã hoàn thành hoặc đã hủy.');
+            }
+            $paid = $this->connection->prepare("SELECT 1 FROM thanh_toan WHERE id_don_dat = ? AND trang_thai = 'thanh_cong'");
+            $paid->execute([(int) $order['id_don_dat']]);
+            if ($paid->fetchColumn()) {
+                throw new DomainException('Đơn này đã được thanh toán.');
+            }
+            $this->connection->prepare(
+                'UPDATE don_dat_tour SET phuong_thuc_thanh_toan = ?, cap_nhat_luc = CURRENT_TIMESTAMP WHERE id_don_dat = ?'
+            )->execute([$method, (int) $order['id_don_dat']]);
+            $this->connection->commit();
+        } catch (Throwable $exception) {
+            if ($this->connection->inTransaction()) {
+                $this->connection->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
+    /** Ghi nhận giao dịch thanh toán mô phỏng và tạo thông báo trong transaction đang mở. */
+    private function insertSimulatedPayment(int $orderId, string $method, int $amount): string
+    {
+        if ($amount <= 0) {
+            throw new DomainException('Số tiền thanh toán phải lớn hơn 0 ₫.');
+        }
+        $paid = $this->connection->prepare('SELECT 1 FROM thanh_toan WHERE id_don_dat = ?');
+        $paid->execute([$orderId]);
+        if ($paid->fetchColumn()) {
+            throw new DomainException('Đơn này đã được thanh toán.');
+        }
+        $maGiaoDich = 'TT' . strtoupper(bin2hex(random_bytes(5)));
+        $this->connection->prepare(
+            "INSERT INTO thanh_toan (id_don_dat, phuong_thuc, so_tien, ma_giao_dich, trang_thai)
+             VALUES (?, ?, ?, ?, 'thanh_cong')"
+        )->execute([$orderId, $method, $amount, $maGiaoDich]);
+
+        // Cập nhật phương thức thanh toán thực tế vào đơn
+        $this->connection->prepare(
+            'UPDATE don_dat_tour SET phuong_thuc_thanh_toan = ?, cap_nhat_luc = CURRENT_TIMESTAMP WHERE id_don_dat = ?'
+        )->execute([$method, $orderId]);
+
+        (new ThongBaoModel($this->connection))->createForOrder($orderId, 'thanh_toan');
+        return $maGiaoDich;
     }
 
     /** Thanh toán mô phỏng: ghi nhận giao dịch thành công cho đơn của chính khách hàng. */
@@ -565,26 +639,43 @@ class DonDatModel
             if ($order['trang_thai'] === 'hoan_thanh') {
                 throw new DomainException('Đơn đã hoàn thành nên không thể thanh toán.');
             }
-            $paid = $this->connection->prepare('SELECT 1 FROM thanh_toan WHERE id_don_dat = ?');
-            $paid->execute([(int) $order['id_don_dat']]);
-            if ($paid->fetchColumn()) {
-                throw new DomainException('Đơn này đã được thanh toán.');
+            if ($order['trang_thai'] !== 'da_xac_nhan') {
+                throw new DomainException('Đơn đặt cần được OnTrip xác nhận giữ chỗ trước khi thanh toán.');
             }
-            $maGiaoDich = 'TT' . strtoupper(bin2hex(random_bytes(5)));
-            $this->connection->prepare(
-                "INSERT INTO thanh_toan (id_don_dat, phuong_thuc, so_tien, ma_giao_dich, trang_thai)
-                 VALUES (?, ?, ?, ?, 'thanh_cong')"
-            )->execute([(int) $order['id_don_dat'], $method, (int) $order['tong_thanh_toan'], $maGiaoDich]);
-
-            // Cập nhật phương thức thanh toán thực tế vào đơn
-            $this->connection->prepare(
-                "UPDATE don_dat_tour SET phuong_thuc_thanh_toan = ?, cap_nhat_luc = CURRENT_TIMESTAMP WHERE id_don_dat = ?"
-            )->execute([$method, (int) $order['id_don_dat']]);
-
-            (new ThongBaoModel($this->connection))->createForOrder((int) $order['id_don_dat'], 'thanh_toan');
+            $maGiaoDich = $this->insertSimulatedPayment((int) $order['id_don_dat'], $method, (int) $order['tong_thanh_toan']);
             $this->connection->commit();
             return $maGiaoDich;
-            (new ThongBaoModel($this->connection))->createForOrder((int) $order['id_don_dat'], 'thanh_toan');
+        } catch (Throwable $exception) {
+            if ($this->connection->inTransaction()) {
+                $this->connection->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
+    /** Quản trị ghi nhận thanh toán mô phỏng cho đơn đã xác nhận (hoặc đơn hoàn thành chưa thu tiền). */
+    public function recordAdminPayment(int $orderId, string $method): string
+    {
+        if (!isset(self::PAYMENT_METHODS[$method])) {
+            throw new DomainException('Phương thức thanh toán không hợp lệ.');
+        }
+        $this->connection->beginTransaction();
+        try {
+            $statement = $this->connection->prepare(
+                'SELECT id_don_dat, trang_thai, tong_thanh_toan FROM don_dat_tour WHERE id_don_dat = ? FOR UPDATE'
+            );
+            $statement->execute([$orderId]);
+            $order = $statement->fetch();
+            if (!$order) {
+                throw new DomainException('Không tìm thấy đơn đặt này.');
+            }
+            if ($order['trang_thai'] === 'da_huy') {
+                throw new DomainException('Đơn đã hủy nên không thể ghi nhận thanh toán.');
+            }
+            if ($order['trang_thai'] === 'cho_xac_nhan') {
+                throw new DomainException('Vui lòng xác nhận đơn trước khi ghi nhận thanh toán.');
+            }
+            $maGiaoDich = $this->insertSimulatedPayment((int) $order['id_don_dat'], $method, (int) $order['tong_thanh_toan']);
             $this->connection->commit();
             return $maGiaoDich;
         } catch (Throwable $exception) {
@@ -628,6 +719,13 @@ class DonDatModel
                     'Không thể chuyển đơn từ “' . (self::STATUS_LABELS[$current] ?? $current)
                     . '” sang “' . self::STATUS_LABELS[$status] . '”.'
                 );
+            }
+            if ($status === 'hoan_thanh') {
+                $paid = $this->connection->prepare("SELECT 1 FROM thanh_toan WHERE id_don_dat = ? AND trang_thai = 'thanh_cong'");
+                $paid->execute([$orderId]);
+                if (!$paid->fetchColumn()) {
+                    throw new DomainException('Vui lòng ghi nhận thanh toán trước khi chuyển đơn sang “Hoàn thành”.');
+                }
             }
             $this->connection->prepare('UPDATE don_dat_tour SET trang_thai = ? WHERE id_don_dat = ?')
                 ->execute([$status, $orderId]);

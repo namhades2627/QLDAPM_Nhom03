@@ -67,11 +67,15 @@ $orderStats = [
                 <div><dt>Đơn giá</dt><dd><?= $money($orderDetail['gia_nguoi_lon']) ?> / người lớn · <?= $money($orderDetail['gia_tre_em']) ?> / trẻ em</dd></div>
                 <div><dt>Tổng gốc</dt><dd><?= $money($orderDetail['tong_goc']) ?></dd></div>
                 <div><dt>Ưu đãi nhóm</dt><dd><?= (int) $orderDetail['muc_giam'] ?>% (−<?= $money($orderDetail['tien_giam']) ?>)</dd></div>
+                <?php if (($orderDetail['ma_giam_gia'] ?? '') !== '' || (int) ($orderDetail['tien_giam_voucher'] ?? 0) > 0): ?>
+                <div><dt>Mã giảm giá</dt><dd><?= $escape($orderDetail['ma_giam_gia'] ?: 'Voucher') ?> (−<?= $money($orderDetail['tien_giam_voucher']) ?>)</dd></div>
+                <?php endif; ?>
                 <div><dt>Tổng thanh toán</dt><dd><strong><?= $money($orderDetail['tong_thanh_toan']) ?></strong></dd></div>
+                <div><dt>Hình thức chọn</dt><dd><?= $escape(DonDatModel::paymentMethodLabel((string) ($orderDetail['phuong_thuc_thanh_toan'] ?? 'thanh_toan_sau'))) ?></dd></div>
                 <div><dt>Liên hệ</dt><dd><?= $escape($orderDetail['ho_ten']) ?> · <?= $escape($orderDetail['email']) ?> · <?= $escape($orderDetail['so_dien_thoai']) ?></dd></div>
-                <div><dt>Địa chỉ</dt><dd><?= $orderDetail['dia_chi'] !== '' ? $escape($orderDetail['dia_chi']) : '—' ?></dd></div>
+                <div><dt>Địa chỉ</dt><dd><?= trim((string) ($orderDetail['dia_chi'] ?? '')) !== '' ? $escape($orderDetail['dia_chi']) : '—' ?></dd></div>
             </dl>
-            <?php if ($orderDetail['ghi_chu'] !== ''): ?>
+            <?php if (trim((string) ($orderDetail['ghi_chu'] ?? '')) !== ''): ?>
             <p class="order-note"><strong>Ghi chú của khách:</strong> <?= $escape($orderDetail['ghi_chu']) ?></p>
             <?php endif; ?>
         </div>
@@ -87,7 +91,7 @@ $orderStats = [
                         <span><?= ($participant['gioi_tinh'] ?? 'nam') === 'nu' ? 'Nữ' : 'Nam' ?></span>
                         <span><?= $participant['ngay_sinh'] ? 'Sinh ' . date('d/m/Y', strtotime($participant['ngay_sinh'])) : 'Chưa cung cấp ngày sinh' ?></span>
                         <?php if (!empty($participant['cccd'])): ?><span>CCCD: <?= $escape($participant['cccd']) ?></span><?php endif; ?>
-                        <?php if ($participant['ghi_chu'] !== ''): ?><em><?= $escape($participant['ghi_chu']) ?></em><?php endif; ?>
+                        <?php if (trim((string) ($participant['ghi_chu'] ?? '')) !== ''): ?><em><?= $escape($participant['ghi_chu']) ?></em><?php endif; ?>
                     </li>
                     <?php endforeach; ?>
                 </ul>
@@ -98,21 +102,54 @@ $orderStats = [
                 <ul class="order-participants">
                     <li><span class="order-participant-type">Mô phỏng</span><strong><?= $money($orderDetail['so_tien_da_tra']) ?></strong><span><?= $escape($paymentMethods[$orderDetail['phuong_thuc']] ?? $orderDetail['phuong_thuc']) ?></span><em>Mã giao dịch <?= $escape($orderDetail['ma_giao_dich']) ?></em><?php if (!empty($orderDetail['thanh_toan_luc'])): ?><span><?= date('d/m/Y H:i', strtotime($orderDetail['thanh_toan_luc'])) ?></span><?php endif; ?></li>
                 </ul>
+                <?php if ($status === 'da_huy'): ?>
+                <p class="admin-order-empty">Đơn đã hủy — cần đối soát / hoàn tiền cho giao dịch đã ghi nhận ở trên.</p>
+                <?php endif; ?>
+                <?php elseif ($status === 'da_huy'): ?>
+                <p class="admin-order-empty">Đơn đã hủy nên không phát sinh thanh toán.</p>
                 <?php else: ?>
-                <p class="admin-order-empty">Khách chưa thanh toán đơn này.</p>
+                <p class="admin-order-empty">Khách chưa thanh toán đơn này. Hình thức dự kiến: <strong><?= $escape(DonDatModel::paymentMethodLabel((string) ($orderDetail['phuong_thuc_thanh_toan'] ?? 'thanh_toan_sau'))) ?></strong>.</p>
+                <?php if (in_array($status, ['da_xac_nhan', 'hoan_thanh'], true)): ?>
+                <?php
+                    $defaultAdminMethod = isset($paymentMethods[$orderDetail['phuong_thuc_thanh_toan'] ?? ''])
+                        ? $orderDetail['phuong_thuc_thanh_toan']
+                        : 'chuyen_khoan';
+                ?>
+                <form class="admin-order-payment-form" method="post" action="index.php?action=orders&amp;id=<?= $escape(rawurlencode($orderDetail['ma_don'])) ?>" data-account-confirm="Ghi nhận đã thu <?= $escape($money($orderDetail['tong_thanh_toan'])) ?> cho đơn <?= $escape($orderDetail['ma_don']) ?>?">
+                    <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
+                    <input type="hidden" name="operation" value="record_payment">
+                    <input type="hidden" name="ma_don" value="<?= $escape($orderDetail['ma_don']) ?>">
+                    <label>
+                        <span>Ghi nhận thanh toán</span>
+                        <select name="phuong_thuc" required>
+                            <?php foreach ($paymentMethods as $methodCode => $methodLabel): ?>
+                            <option value="<?= $escape($methodCode) ?>" <?= $defaultAdminMethod === $methodCode ? 'selected' : '' ?>><?= $escape($methodLabel) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
+                    <button class="button button-primary" type="submit">Xác nhận đã thanh toán</button>
+                </form>
+                <?php else: ?>
+                <p class="admin-order-empty">Cần chuyển đơn sang “Đã xác nhận” trước khi khách thanh toán hoặc ghi nhận thanh toán.</p>
+                <?php endif; ?>
                 <?php endif; ?>
                 <h3>Cập nhật trạng thái</h3>
                 <?php if ($nextStatuses): ?>
                 <div class="admin-order-transitions">
                     <?php foreach ($nextStatuses as $nextStatus): ?>
-                    <form method="post" action="index.php?action=orders" data-account-confirm="Chuyển đơn <?= $escape($orderDetail['ma_don']) ?> sang “<?= $escape($statusLabels[$nextStatus]) ?>”?">
+                    <?php $blockedComplete = ($nextStatus === 'hoan_thanh' && !$orderDetail['da_thanh_toan']); ?>
+                    <form method="post" action="index.php?action=orders&amp;id=<?= $escape(rawurlencode($orderDetail['ma_don'])) ?>" data-account-confirm="Chuyển đơn <?= $escape($orderDetail['ma_don']) ?> sang “<?= $escape($statusLabels[$nextStatus]) ?>”?">
                         <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
+                        <input type="hidden" name="operation" value="status">
                         <input type="hidden" name="ma_don" value="<?= $escape($orderDetail['ma_don']) ?>">
                         <input type="hidden" name="trang_thai" value="<?= $escape($nextStatus) ?>">
-                        <button class="button<?= $nextStatus === 'da_huy' ? ' admin-delete-submit' : ' button-primary' ?>" type="submit"><?= $nextStatus === 'da_huy' ? 'Hủy đơn' : 'Chuyển sang ' . $escape($statusLabels[$nextStatus]) ?></button>
+                        <button class="button<?= $nextStatus === 'da_huy' ? ' admin-delete-submit' : ' button-primary' ?>" type="submit" <?= $blockedComplete ? 'disabled title="Cần ghi nhận thanh toán trước khi hoàn thành đơn"' : '' ?>><?= $nextStatus === 'da_huy' ? 'Hủy đơn' : 'Chuyển sang ' . $escape($statusLabels[$nextStatus]) ?></button>
                     </form>
                     <?php endforeach; ?>
                 </div>
+                <?php if (in_array('hoan_thanh', $nextStatuses, true) && !$orderDetail['da_thanh_toan']): ?>
+                <p class="admin-order-empty">Cần ghi nhận thanh toán trước khi chuyển đơn sang “Hoàn thành”.</p>
+                <?php endif; ?>
                 <?php else: ?>
                 <p class="admin-order-empty">Đơn đã ở trạng thái kết thúc nên không thể chuyển tiếp.</p>
                 <?php endif; ?>
@@ -139,7 +176,7 @@ $orderStats = [
                         <td><?= $escape($row['ten_tour']) ?><small class="admin-contact-phone"><?= $escape($row['ma_tour']) ?></small></td>
                         <td><?= $escape($row['ho_ten']) ?><small class="admin-contact-phone"><?= $escape($row['so_dien_thoai']) ?></small></td>
                         <td><?= date('d/m/Y', strtotime($row['ngay_khoi_hanh'])) ?><small class="admin-contact-phone"><?= (int) $row['so_nguoi_lon'] ?> NL · <?= (int) $row['so_tre_em'] ?> TE</small></td>
-                        <td><strong><?= $money($row['tong_thanh_toan']) ?></strong><small class="admin-contact-phone"><?= $row['da_thanh_toan'] ? 'Đã thanh toán' : 'Chưa thanh toán' ?></small></td>
+                        <td><strong><?= $money($row['tong_thanh_toan']) ?></strong><small class="admin-contact-phone"><?= $row['da_thanh_toan'] ? 'Đã thanh toán' : 'Chưa thanh toán' ?> · <?= $escape(DonDatModel::paymentMethodLabel((string) ($row['da_thanh_toan'] ? ($row['phuong_thuc'] ?? '') : ($row['phuong_thuc_thanh_toan'] ?? 'thanh_toan_sau')))) ?></small></td>
                         <td><span class="order-status <?= $statusClasses[$row['trang_thai']] ?? '' ?>"><?= $escape($row['trang_thai_nhan']) ?></span></td>
                         <td><div class="admin-row-actions"><a class="admin-row-button" href="<?= 'index.php?action=orders&amp;id=' . $escape(rawurlencode($row['ma_don'])) ?>" aria-label="Xem đơn <?= $escape($row['ma_don']) ?>" title="Xem chi tiết"><svg class="icon"><use href="#a-search"/></svg><span>Xem</span></a></div></td>
                     </tr>

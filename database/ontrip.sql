@@ -313,7 +313,7 @@ CREATE TABLE IF NOT EXISTS `chi_tiet_don_dat` (
 CREATE TABLE IF NOT EXISTS `thanh_toan` (
     `id_thanh_toan` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     `id_don_dat` BIGINT UNSIGNED NOT NULL,
-    `phuong_thuc` ENUM('chuyen_khoan', 'the', 'vi_dien_tu') NOT NULL DEFAULT 'chuyen_khoan',
+    `phuong_thuc` ENUM('chuyen_khoan', 'the', 'vi_dien_tu', 'tai_van_phong') NOT NULL DEFAULT 'chuyen_khoan',
     `so_tien` DECIMAL(14,0) NOT NULL,
     `ma_giao_dich` VARCHAR(32) NOT NULL,
     `trang_thai` ENUM('thanh_cong', 'that_bai') NOT NULL DEFAULT 'thanh_cong',
@@ -1296,3 +1296,25 @@ DELIMITER ;
 CALL sp_upgrade_don_dat_tour_voucher();
 DROP PROCEDURE IF EXISTS sp_upgrade_don_dat_tour_voucher;
 -- END CAP_NHAT_2026_11_15_THANH_TOAN_VOUCHER
+
+-- BEGIN CAP_NHAT_2026_11_28_THANH_TOAN_TAI_VAN_PHONG
+-- Bổ sung phương thức 'tai_van_phong' vào ENUM thanh_toan.phuong_thuc để đồng bộ với đặt tour và thanh toán
+DROP PROCEDURE IF EXISTS sp_upgrade_thanh_toan_phuong_thuc;
+DELIMITER $$
+CREATE PROCEDURE sp_upgrade_thanh_toan_phuong_thuc()
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'thanh_toan'
+          AND COLUMN_NAME = 'phuong_thuc'
+          AND COLUMN_TYPE NOT LIKE '%tai_van_phong%'
+    ) THEN
+        ALTER TABLE `thanh_toan`
+            MODIFY COLUMN `phuong_thuc` ENUM('chuyen_khoan', 'the', 'vi_dien_tu', 'tai_van_phong') NOT NULL DEFAULT 'chuyen_khoan';
+    END IF;
+END $$
+DELIMITER ;
+CALL sp_upgrade_thanh_toan_phuong_thuc();
+DROP PROCEDURE IF EXISTS sp_upgrade_thanh_toan_phuong_thuc;
+-- END CAP_NHAT_2026_11_28_THANH_TOAN_TAI_VAN_PHONG

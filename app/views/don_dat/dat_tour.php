@@ -40,8 +40,8 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="assets/css/style.css?v=20261113-booking">
-    <script src="assets/js/script.js?v=20261113-booking" defer></script>
+    <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/style.css') ?>">
+    <script src="assets/js/script.js?v=<?= filemtime(__DIR__ . '/../../../public/assets/js/script.js') ?>" defer></script>
 </head>
 <body class="booking-page">
 <?php require __DIR__ . '/../partials/header.php'; ?>
@@ -254,6 +254,32 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
                                         <strong>Chuyển khoản ngân hàng (VietQR)</strong>
                                     </div>
                                     <p>Quét mã VietQR hoặc chuyển khoản vào tài khoản ngân hàng chính thức của OnTrip kèm nội dung mã đơn hàng để được xác nhận tự động.</p>
+                                </div>
+                            </label>
+
+                            <label class="booking-payment-option <?= ($selectedPaymentMethod ?? '') === 'vi_dien_tu' ? 'is-selected' : '' ?>">
+                                <input type="radio" name="phuong_thuc_thanh_toan" value="vi_dien_tu" <?= ($selectedPaymentMethod ?? '') === 'vi_dien_tu' ? 'checked' : '' ?>>
+                                <div class="booking-payment-content">
+                                    <div class="booking-payment-header">
+                                        <span class="booking-payment-icon" aria-hidden="true">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg>
+                                        </span>
+                                        <strong>Ví điện tử (MoMo / ZaloPay)</strong>
+                                    </div>
+                                    <p>Thanh toán nhanh chóng và tiện lợi qua ví điện tử MoMo hoặc ZaloPay sau khi OnTrip xác nhận giữ chỗ thành công.</p>
+                                </div>
+                            </label>
+
+                            <label class="booking-payment-option <?= ($selectedPaymentMethod ?? '') === 'the' ? 'is-selected' : '' ?>">
+                                <input type="radio" name="phuong_thuc_thanh_toan" value="the" <?= ($selectedPaymentMethod ?? '') === 'the' ? 'checked' : '' ?>>
+                                <div class="booking-payment-content">
+                                    <div class="booking-payment-header">
+                                        <span class="booking-payment-icon" aria-hidden="true">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line><line x1="5" y1="15" x2="9" y2="15"></line></svg>
+                                        </span>
+                                        <strong>Thẻ quốc tế (Visa / Mastercard)</strong>
+                                    </div>
+                                    <p>Thanh toán trực tuyến bằng thẻ tín dụng hoặc thẻ ghi nợ quốc tế Visa/Mastercard sau khi đơn được xác nhận.</p>
                                 </div>
                             </label>
 

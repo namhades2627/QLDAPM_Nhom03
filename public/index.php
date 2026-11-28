@@ -9,7 +9,7 @@ session_start([
 if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 // Điều hướng trang chủ và các trang tour qua Controller tương ứng.
 $requestedPage = $_GET['page'] ?? '';
-$page = in_array($requestedPage, ['tours', 'tour-detail', 'booking', 'orders', 'thong_bao', 'tu_van', 'lien_he', 'contact', 'login', 'register', 'logout', 'admin'], true) ? $requestedPage : 'home';
+$page = in_array($requestedPage, ['tours', 'tour-detail', 'booking', 'orders', 'profile', 'thong_bao', 'tu_van', 'lien_he', 'contact', 'login', 'register', 'logout', 'admin'], true) ? $requestedPage : 'home';
 if ($page === 'contact') $page = 'lien_he';
 if ($page === 'admin') {
     header('Location: ../admin/', true, 303);
@@ -74,11 +74,22 @@ if ($page === 'lien_he') {
     return;
 }
 // Các yêu cầu tài khoản được xử lý qua TaiKhoanController.
-if (in_array($page, ['login', 'register', 'logout'], true)) {
+if (in_array($page, ['login', 'register', 'logout', 'profile'], true)) {
     require_once __DIR__ . '/../app/controllers/TaiKhoanController.php';
     $authController = new TaiKhoanController();
-    if ($page === 'logout') $authController->logout();
-    else $authController->form($page);
+    if ($page === 'logout') {
+        $authController->logout();
+    } elseif ($page === 'profile') {
+        try {
+            $authController->profile();
+        } catch (PDOException $exception) {
+            error_log('OnTrip profile database error: ' . $exception->getMessage());
+            http_response_code(503);
+            require __DIR__ . '/../app/views/errors/database.php';
+        }
+    } else {
+        $authController->form($page);
+    }
     return;
 }
 // Các trang đặt tour và đơn đặt được xử lý qua DonDatController.

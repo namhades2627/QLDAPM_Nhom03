@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/partials/header.php';
 $topics = YeuCauTuVanModel::TOPICS;
+$statuses = YeuCauTuVanModel::STATUSES;
 ?>
 <div class="admin-accounts admin-chat-page">
     <div class="admin-page-heading"><div><h1>Trò chuyện tư vấn</h1><p>Xem tin nhắn và phản hồi khách hàng.</p></div></div>
@@ -17,7 +18,10 @@ $topics = YeuCauTuVanModel::TOPICS;
                 <?php if (!$requests['items']): ?><p class="admin-chat-empty">Chưa có cuộc trò chuyện phù hợp.</p><?php endif; ?>
                 <?php foreach ($requests['items'] as $request): $selected = $detail && (int) $detail['id_yeu_cau'] === (int) $request['id_yeu_cau']; ?>
                 <a class="admin-chat-thread<?= $selected ? ' is-active' : '' ?>" href="<?= $escape($listUrl(['view' => (int) $request['id_yeu_cau']])) ?>" <?= $selected ? 'aria-current="true"' : '' ?>>
-                    <strong><?= $escape($request['ho_ten']) ?></strong>
+                    <div class="admin-chat-thread-top">
+                        <strong><?= $escape($request['ho_ten']) ?></strong>
+                        <span class="admin-chat-status status-<?= $escape($request['trang_thai']) ?>"><?= $escape($statuses[$request['trang_thai']] ?? $request['trang_thai']) ?></span>
+                    </div>
                     <span><?= $escape($topics[$request['chu_de']] ?? $request['chu_de']) ?></span>
                     <p><?= $escape(mb_strimwidth($request['noi_dung'], 0, 95, '…', 'UTF-8')) ?></p>
                     <time><?= date('d/m/Y H:i', strtotime($request['cap_nhat_luc'])) ?></time>
@@ -32,7 +36,14 @@ $topics = YeuCauTuVanModel::TOPICS;
         </aside>
         <section class="admin-panel admin-chat-conversation" aria-label="Phản hồi khách hàng">
             <?php if ($detail): ?>
-                <header class="admin-chat-customer"><h2><?= $escape($detail['ho_ten']) ?></h2><p><?= $escape($topics[$detail['chu_de']] ?? $detail['chu_de']) ?></p><span><?= $escape($detail['email']) ?> · <?= $escape($detail['so_dien_thoai']) ?></span></header>
+                <header class="admin-chat-customer">
+                    <div class="admin-chat-customer-top">
+                        <h2><?= $escape($detail['ho_ten']) ?></h2>
+                        <span class="admin-chat-status status-<?= $escape($detail['trang_thai']) ?>" data-chat-current-status><?= $escape($statuses[$detail['trang_thai']] ?? $detail['trang_thai']) ?></span>
+                    </div>
+                    <p><?= $escape($topics[$detail['chu_de']] ?? $detail['chu_de']) ?><?= !empty($detail['nguoi_phu_trach']) ? ' · Phụ trách: ' . $escape($detail['nguoi_phu_trach']) : '' ?></p>
+                    <span><?= $escape($detail['email']) ?> · <?= $escape($detail['so_dien_thoai']) ?></span>
+                </header>
                 <?php if ($detail['id_tai_khoan']):
                     $chatThread = $detail;
                     $chatRole = 'staff';

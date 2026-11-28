@@ -35,8 +35,8 @@ $statusNotes = [
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="assets/css/style.css?v=20261113-booking">
-    <script src="assets/js/script.js?v=20261113-booking" defer></script>
+    <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/style.css') ?>">
+    <script src="assets/js/script.js?v=<?= filemtime(__DIR__ . '/../../../public/assets/js/script.js') ?>" defer></script>
 </head>
 <body class="booking-page">
 <?php require __DIR__ . '/../partials/header.php'; ?>
@@ -102,14 +102,15 @@ $statusNotes = [
             } elseif ($status === 'hoan_thanh') {
                 $step2Class = 'is-completed';
                 $step2Desc = 'Chỗ đã được giữ';
-                $step3Class = 'is-completed';
-                $step3Desc = 'Đã thanh toán';
+                $step3Class = $paid ? 'is-completed' : 'is-upcoming';
+                $step3Desc = $paid ? 'Đã thanh toán' : 'Chưa ghi nhận trực tuyến';
                 $step4Class = 'is-completed';
                 $step4Desc = 'Hoàn tất chuyến đi';
             } elseif ($status === 'da_huy') {
                 $step2Class = 'is-cancelled';
                 $step2Desc = 'Đã hủy đơn';
-                $step3Desc = 'Không áp dụng';
+                $step3Class = $paid ? 'is-completed' : 'is-upcoming';
+                $step3Desc = $paid ? 'Đã thanh toán (cần đối soát)' : 'Không áp dụng';
                 $step4Desc = 'Không áp dụng';
             }
         ?>
@@ -584,7 +585,31 @@ $statusNotes = [
                     </div>
 
                     <!-- KHỐI B: PHƯƠNG THỨC THANH TOÁN (PAYMENT METHOD) -->
-                    <?php if ($paid): ?>
+                    <?php if ($status === 'da_huy'): ?>
+                        <div class="order-sidebar-section payment-cancelled-section">
+                            <div class="cancelled-notice-badge">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                                <span>Đơn đặt đã bị hủy</span>
+                            </div>
+                            <p class="cancelled-notice-desc"><?= $paid ? 'Đơn tour này đã hủy. Vui lòng liên hệ OnTrip để đối soát giao dịch đã thanh toán.' : 'Đơn tour này đã hủy nên không thể thực hiện giao dịch thanh toán.' ?></p>
+                            <?php if ($paid): ?>
+                            <div class="payment-receipt-details" style="margin-top:12px;">
+                                <div class="receipt-row">
+                                    <span>Phương thức:</span>
+                                    <strong><?= $escape($paymentMethods[$order['phuong_thuc']] ?? $order['phuong_thuc']) ?></strong>
+                                </div>
+                                <div class="receipt-row">
+                                    <span>Mã giao dịch:</span>
+                                    <code><?= $escape($order['ma_giao_dich']) ?></code>
+                                </div>
+                                <div class="receipt-row">
+                                    <span>Số tiền đã trả:</span>
+                                    <strong class="receipt-paid-amount"><?= $money($order['so_tien_da_tra']) ?></strong>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php elseif ($paid): ?>
                         <!-- ĐÃ THANH TOÁN: BIÊN LAI XÁC NHẬN -->
                         <div class="order-sidebar-section payment-receipt-section">
                             <div class="payment-receipt-badge">
@@ -612,13 +637,9 @@ $statusNotes = [
                                 <?php endif; ?>
                             </div>
                         </div>
-                    <?php elseif ($status === 'da_huy'): ?>
+                    <?php elseif ($status === 'hoan_thanh'): ?>
                         <div class="order-sidebar-section payment-cancelled-section">
-                            <div class="cancelled-notice-badge">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                                <span>Đơn đặt đã bị hủy</span>
-                            </div>
-                            <p class="cancelled-notice-desc">Đơn tour này đã hủy nên không thể thực hiện giao dịch thanh toán.</p>
+                            <p class="cancelled-notice-desc">Chuyến đi đã hoàn thành. Chưa ghi nhận giao dịch thanh toán trực tuyến cho đơn này trên hệ thống.</p>
                         </div>
                     <?php else: ?>
                         <!-- FORM CHỌN PHƯƠNG THỨC & SUBMIT -->
@@ -632,7 +653,13 @@ $statusNotes = [
                                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
                                     Phương thức thanh toán
                                 </h3>
-                                <p class="payment-section-desc">Chọn hình thức thanh toán thuận tiện nhất cho bạn:</p>
+                                <p class="payment-section-desc">
+                                    <?php if (!empty($order['phuong_thuc_thanh_toan'])): ?>
+                                        Đã chọn lúc đặt: <strong><?= $escape(DonDatModel::paymentMethodLabel($order['phuong_thuc_thanh_toan'])) ?></strong>.
+                                    <?php else: ?>
+                                        Chọn hình thức thanh toán thuận tiện nhất cho bạn:
+                                    <?php endif; ?>
+                                </p>
 
                                 <!-- Radio Cards trực quan -->
                                 <div class="payment-radio-cards" role="radiogroup" aria-label="Chọn phương thức thanh toán">
@@ -860,7 +887,7 @@ $statusNotes = [
                         <p class="modal-form-intro">Nhập các yêu cầu hoặc lưu ý riêng cho đoàn của bạn (ví dụ: ăn chay trường, dị ứng thức ăn, xếp phòng gần nhau, đón tại điểm hẹn...).</p>
                         <div class="form-group-note">
                             <label for="order-edit-note-textarea" class="modal-input-label">Nội dung ghi chú:</label>
-                            <textarea id="order-edit-note-textarea" name="ghi_chu" rows="4" class="modal-textarea" placeholder="Ví dụ: Có 1 khách ăn chay; xin vui lòng sắp xếp phòng giường đôi liền kề..."><?= $escape($order['ghi_chu']) ?></textarea>
+                            <textarea id="order-edit-note-textarea" name="ghi_chu" rows="4" maxlength="500" class="modal-textarea" placeholder="Ví dụ: Có 1 khách ăn chay; xin vui lòng sắp xếp phòng giường đôi liền kề..."><?= $escape($order['ghi_chu']) ?></textarea>
                         </div>
                     </div>
                     <div class="order-modal-footer">

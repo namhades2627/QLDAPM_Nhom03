@@ -32,8 +32,8 @@ $contactBanners = [
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="assets/css/style.css?v=20261114-chat-widget">
-    <script src="assets/js/script.js?v=20261114-chat-widget" defer></script>
+    <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/../../public/assets/css/style.css') ?>">
+    <script src="assets/js/script.js?v=<?= filemtime(__DIR__ . '/../../public/assets/js/script.js') ?>" defer></script>
 </head>
 <body class="contact-page">
 
@@ -344,7 +344,7 @@ $contactBanners = [
                         <svg class="faq-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
                     </summary>
                     <div class="faq-answer">
-                        <p>OnTrip tự động áp dụng ưu đãi nhóm trên cùng một đơn đặt: nhóm từ 5–9 khách được giảm <strong>5%</strong> trên tổng tiền tour; nhóm từ 10 khách trở lên được giảm <strong>8%</strong>. Mức giảm được máy chủ tính toán tự động và hiển thị rõ ràng tại bước đặt tour.</p>
+                        <p>OnTrip tự động áp dụng ưu đãi nhóm trên cùng một đơn đặt: nhóm từ 5–9 khách được giảm <strong>5%</strong> trên tổng tiền tour; nhóm từ 10 khách trở lên được giảm <strong>10%</strong>. Mức giảm được máy chủ tính toán tự động và hiển thị rõ ràng tại bước đặt tour.</p>
                     </div>
                 </details>
 

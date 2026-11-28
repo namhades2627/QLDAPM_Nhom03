@@ -43,6 +43,7 @@ class LienHeModel
         $guidesConfig = [
             'nam@gmail.com' => [
                 'name' => 'Tống Nhựt Nam',
+                'avatar' => 'assets/images/users/user1.jpg',
                 'role' => 'Trưởng nhóm Hướng dẫn viên · Tuyến Tây Bắc & Đông Bắc',
                 'badge' => 'Hướng dẫn viên',
                 'experience' => '8 năm kinh nghiệm',
@@ -52,6 +53,7 @@ class LienHeModel
             ],
             'khoa@gmail.com' => [
                 'name' => 'Trần Đăng Khoa',
+                'avatar' => 'assets/images/users/user4.jpg',
                 'role' => 'Điều phối viên Tour Quốc tế · Tuyến Châu Á & Đông Nam Á',
                 'badge' => 'Hướng dẫn viên',
                 'experience' => '6 năm kinh nghiệm',
@@ -61,6 +63,7 @@ class LienHeModel
             ],
             'quan@gmail.com' => [
                 'name' => 'Tạ Hồng Quân',
+                'avatar' => 'assets/images/users/user2.jpg',
                 'role' => 'Hướng dẫn viên Di sản · Tuyến Miền Trung & Tây Nguyên',
                 'badge' => 'Hướng dẫn viên',
                 'experience' => '7 năm kinh nghiệm',
@@ -70,6 +73,7 @@ class LienHeModel
             ],
             'khanh@gmail.com' => [
                 'name' => 'Nguyễn Quang Khanh',
+                'avatar' => 'assets/images/users/user3.webp',
                 'role' => 'Chuyên viên Tư vấn Lịch trình & Chăm sóc Khách hàng',
                 'badge' => 'Hướng dẫn viên',
                 'experience' => '5 năm kinh nghiệm',
@@ -84,15 +88,20 @@ class LienHeModel
             $account = $map[$email] ?? null;
             $avatarUrl = '';
 
-            // Nếu nhân viên có hình ảnh và file thực sự tồn tại trong thư mục public
+            // Ưu tiên ảnh đại diện đã tải lên trong bảng tai_khoan nếu file tồn tại
             if ($account && !empty($account['hinh_anh'])) {
                 $avatarPath = (string) $account['hinh_anh'];
-                if (preg_match('~^assets/images/users/[a-f0-9]{32}\.(jpg|png|gif|webp)$~D', $avatarPath) === 1) {
+                if (preg_match('~^assets/images/users/[a-zA-Z0-9_-]+\.(jpg|png|gif|webp)$~D', $avatarPath) === 1) {
                     $physicalFile = __DIR__ . '/../../public/' . $avatarPath;
                     if (is_file($physicalFile)) {
                         $avatarUrl = $avatarPath;
                     }
                 }
+            }
+
+            // Nếu tài khoản chưa có ảnh riêng, dùng ảnh mặc định tương ứng trong public/assets/images/users/
+            if ($avatarUrl === '' && !empty($cfg['avatar']) && is_file(__DIR__ . '/../../public/' . $cfg['avatar'])) {
+                $avatarUrl = $cfg['avatar'];
             }
 
             $guides[] = [

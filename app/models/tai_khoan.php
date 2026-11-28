@@ -45,6 +45,25 @@ class TaiKhoanModel
         return $query->rowCount() === 1;
     }
 
+    public function updateAccountProfile(int $id, string $name, string $email, string $phone, ?string $avatar = null): void
+    {
+        // Chỉ cập nhật thông tin cá nhân và ảnh đại diện, không đổi vai trò, trạng thái hay mật khẩu.
+        $query = $this->connection->prepare(
+            'UPDATE tai_khoan SET ho_ten = ?, email = ?, so_dien_thoai = ?, hinh_anh = COALESCE(?, hinh_anh)
+             WHERE id_tai_khoan = ? AND dang_hoat_dong = 1'
+        );
+        $query->execute([$name, $email, $phone, $avatar, $id]);
+    }
+
+    public function updateAccountPassword(int $id, string $oldHash, string $newHash): bool
+    {
+        $query = $this->connection->prepare(
+            'UPDATE tai_khoan SET mat_khau = ? WHERE id_tai_khoan = ? AND mat_khau = ? AND dang_hoat_dong = 1'
+        );
+        $query->execute([$newHash, $id, $oldHash]);
+        return $query->rowCount() === 1;
+    }
+
     public function createCustomer(string $name, string $email, string $phone, string $passwordHash): void
     {
         // Vai trò và trạng thái do máy chủ quyết định, không lấy từ form đăng ký.

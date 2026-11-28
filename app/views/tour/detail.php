@@ -394,7 +394,7 @@ if (!empty($itineraryWeather)) {
                         <div class="detail-quantity-row" data-quantity="adult"><div><strong>Người lớn</strong><small><span data-unit-price><?= number_format($adultPrice, 0, ',', '.') ?> ₫</span> / khách</small></div><div class="detail-stepper"><button type="button" data-step="-1" aria-label="Giảm số người lớn">−</button><output data-count>1</output><button type="button" data-step="1" aria-label="Tăng số người lớn">+</button></div></div>
                         <div class="detail-quantity-row" data-quantity="child"><div><strong>Trẻ em</strong><small><span data-unit-price><?= number_format($childPrice, 0, ',', '.') ?> ₫</span> / khách</small></div><div class="detail-stepper"><button type="button" data-step="-1" aria-label="Giảm số trẻ em">−</button><output data-count>0</output><button type="button" data-step="1" aria-label="Tăng số trẻ em">+</button></div></div>
                         <div class="detail-booking-divider"></div>
-                        <div class="detail-discount"><strong>Ưu đãi theo nhóm</strong><p>5–9 khách: giảm 5% · Từ 10 khách: giảm 8%</p><small>Áp dụng cho cùng một đơn đặt và lịch đi.</small></div>
+                        <div class="detail-discount"><strong>Ưu đãi theo nhóm</strong><p>5–9 khách: giảm 5% · Từ 10 khách: giảm 10%</p><small>Áp dụng cho cùng một đơn đặt và lịch đi.</small></div>
                         <div class="detail-estimate" aria-live="polite">
                             <div><span>Người lớn × <span data-adult-count>1</span></span><strong data-adult-total><?= number_format($adultPrice, 0, ',', '.') ?> ₫</strong></div>
                             <div data-child-line hidden><span>Trẻ em × <span data-child-count>0</span></span><strong data-child-total>0 ₫</strong></div>

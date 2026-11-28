@@ -119,7 +119,7 @@ $visibleCodes = array_column(array_slice($matchedTours, 0, $pageSize), 'id');
         <div class="catalog-main">
         <aside class="catalog-group-offer" aria-label="Ưu đãi nhóm">
             <span class="catalog-offer-heading">ĐI CÙNG NHAU, ƯU ĐÃI HƠN</span>
-            <p>Nhóm 5–9 khách <strong>giảm 5%</strong><span aria-hidden="true">·</span> Từ 10 khách <strong>giảm 8%</strong></p>
+            <p>Nhóm 5–9 khách <strong>giảm 5%</strong><span aria-hidden="true">·</span> Từ 10 khách <strong>giảm 10%</strong></p>
             <span class="catalog-offer-condition">Trong cùng một đơn và lịch đi</span>
         </aside>
 

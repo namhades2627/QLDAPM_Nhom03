@@ -206,7 +206,7 @@ class DonDatController
                     $errors['ghi_chu'] = 'Ghi chú tối đa 500 ký tự.';
                 }
 
-                if (!in_array($paymentMethod, ['thanh_toan_sau', 'chuyen_khoan', 'tai_van_phong'], true)) {
+                if (!isset(DonDatModel::BOOKING_PAYMENT_METHODS[$paymentMethod])) {
                     $errors['phuong_thuc_thanh_toan'] = 'Vui lòng chọn phương thức thanh toán hợp lệ.';
                 }
                 if (!$agreeTerms) {

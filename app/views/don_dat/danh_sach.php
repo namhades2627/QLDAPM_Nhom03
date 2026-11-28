@@ -340,14 +340,16 @@ $cssVersion = (string) @filemtime(__DIR__ . '/../../../public/assets/css/style.c
                         <div class="action-col-price-block">
                             <span class="price-title">Tổng thanh toán:</span>
                             <strong class="price-number"><?= $money($order['tong_thanh_toan']) ?></strong>
-                            <?php if ($isPaid): ?>
+                            <?php if ($order['trang_thai'] === 'da_huy'): ?>
+                                <span class="price-status-tag tag-cancelled"><?= $isPaid ? 'Đã hủy (đã thanh toán)' : 'Đã hủy đơn' ?></span>
+                            <?php elseif ($isPaid): ?>
                                 <span class="price-status-tag tag-paid">✓ Đã thanh toán</span>
                             <?php elseif ($order['trang_thai'] === 'da_xac_nhan'): ?>
                                 <span class="price-status-tag tag-waiting">Chờ thanh toán</span>
                             <?php elseif ($order['trang_thai'] === 'cho_xac_nhan'): ?>
                                 <span class="price-status-tag tag-pending">Chờ xác nhận</span>
-                            <?php elseif ($order['trang_thai'] === 'da_huy'): ?>
-                                <span class="price-status-tag tag-cancelled">Đã hủy đơn</span>
+                            <?php elseif ($order['trang_thai'] === 'hoan_thanh'): ?>
+                                <span class="price-status-tag tag-pending">Chưa thanh toán</span>
                             <?php endif; ?>
                         </div>
 

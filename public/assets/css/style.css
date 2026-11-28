@@ -6723,9 +6723,9 @@ select {
 
 .booking-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-columns: minmax(0, 1fr) 360px;
     align-items: start;
-    gap: 34px;
+    gap: 32px;
 }
 
 .booking-form {
@@ -6749,17 +6749,18 @@ select {
 }
 
 .booking-card-heading h2 {
+    margin: 0;
     font-size: 17px;
     font-weight: 600;
-    line-height: 1.6;
+    line-height: 1.5;
     letter-spacing: -.3px;
 }
 
 .booking-card-heading p {
     color: var(--muted);
     font-size: 12px;
-    line-height: 1.8;
-    margin-top: 4px;
+    line-height: 1.7;
+    margin: 4px 0 0;
 }
 
 .booking-step {
@@ -6770,29 +6771,6 @@ select {
     height: 30px;
     border-radius: 50%;
     background: var(--orange-light);
-    color: var(--orange-dark);
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.booking-guests {
-    display: grid;
-    gap: 12px;
-}
-
-.booking-guest {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) minmax(0, 1fr) auto;
-    align-items: end;
-    gap: 14px;
-    padding: 18px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--surface);
-}
-
-.booking-guest-label {
-    grid-column: 1/-1;
     color: var(--orange-dark);
     font-size: 12px;
     font-weight: 600;
@@ -6835,26 +6813,28 @@ select {
 
 .booking-guest-grid {
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 12px 14px;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 14px 16px;
+    align-items: start;
+}
+
+.booking-guest-grid .booking-field:nth-child(1) {
+    grid-column: span 5;
 }
 
 .booking-guest-grid .booking-field:nth-child(2) {
-    grid-column: span 5;
-}
-
-.booking-guest-grid .booking-field:nth-child(3) {
     grid-column: span 3;
 }
 
-.booking-guest-grid .booking-field:nth-child(4) {
+.booking-guest-grid .booking-field:nth-child(3) {
     grid-column: span 4;
 }
 
-.booking-guest-grid .booking-field:nth-child(5) {
+.booking-guest-grid .booking-field:nth-child(4) {
     grid-column: span 5;
 }
 
+.booking-guest-grid .booking-field:nth-child(5),
 .booking-guest-grid .booking-field.booking-field-full {
     grid-column: span 7;
 }
@@ -6878,6 +6858,7 @@ select {
 .booking-field {
     display: grid;
     min-width: 0;
+    align-content: start;
     gap: 7px;
 }
 
@@ -6885,6 +6866,7 @@ select {
     color: #465360;
     font-size: 12px;
     font-weight: 500;
+    line-height: 1.45;
 }
 
 .booking-field>span b {
@@ -6896,7 +6878,8 @@ select {
 .booking-field textarea {
     width: 100%;
     min-width: 0;
-    padding: 12px;
+    box-sizing: border-box;
+    padding: 10px 12px;
     border: 1px solid #d8dee4;
     border-radius: 7px;
     background: var(--panel-bg);
@@ -6907,20 +6890,9 @@ select {
     transition: border-color .18s, box-shadow .18s;
 }
 
-.booking-field input,
-.booking-field select,
-.booking-field textarea {
-    width: 100%;
-    min-width: 0;
-    padding: 10px 12px;
-    border: 1px solid #d8dee4;
-    border-radius: 7px;
-    background: var(--panel-bg);
-    color: var(--ink);
-    font: inherit;
-    font-size: 13px;
-    line-height: 1.5;
-    transition: border-color .18s, box-shadow .18s;
+.booking-field input:not([type="checkbox"]):not([type="radio"]),
+.booking-field select {
+    height: 42px;
 }
 
 .booking-field input::placeholder,
@@ -7154,8 +7126,9 @@ select {
 .booking-consent {
     color: var(--muted);
     font-size: 12px;
-    line-height: 1.8;
+    line-height: 1.75;
     max-width: 420px;
+    margin: 0;
 }
 
 .booking-submit {
@@ -7186,8 +7159,9 @@ select {
 .booking-summary-meta {
     color: var(--muted);
     font-size: 12px;
-    line-height: 1.8;
+    line-height: 1.7;
     min-height: 18px;
+    margin: 0;
 }
 
 .booking-summary-row {
@@ -7317,6 +7291,7 @@ select {
 .booking-payment-header {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 6px;
 }
@@ -7582,29 +7557,32 @@ select {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 8px 12px;
     margin-top: 18px;
-    padding: 16px 18px;
+    padding: 14px 16px;
     background: linear-gradient(135deg, #fff7f2 0%, #ffeedf 100%);
     border: 1.5px solid #f5cfbe;
     border-radius: 10px;
 }
 
 .booking-summary-total-label {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     color: #3b2820;
     text-transform: uppercase;
-    letter-spacing: .4px;
+    letter-spacing: .3px;
+    white-space: nowrap;
 }
 
 .booking-summary-total-val {
-    font-size: 24px;
+    font-size: 21px;
     font-weight: 800;
     color: #b84417;
-    letter-spacing: -.6px;
+    letter-spacing: -.5px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+    margin-left: auto;
 }
 
 .booking-empty {
@@ -14984,3 +14962,36 @@ a.touchpoint-item:hover {
 .customer-form-actions .button { min-height:42px; padding:10px 20px; font-size:13px; border-radius:8px; }
 @media (max-width:900px) { .customer-profile-layout { grid-template-columns:minmax(0,1fr); } }
 @media (max-width:600px) { .customer-form-grid { grid-template-columns:minmax(0,1fr); } .customer-panel-heading, .customer-profile-form { padding:20px; } }
+
+/* ===== MÃ QR VIETCOMBANK (VIETQR) & VISA MÔ PHỎNG KHI THANH TOÁN ===== */
+.vietqr-box { margin-top:18px; display:flex; justify-content:center; }
+.vietqr-box[hidden] { display:none; }
+.vietqr-card { width:100%; max-width:348px; padding:20px 22px 18px; background:#ffffff; border:1px solid #dce4ef; border-radius:16px; box-shadow:0 12px 30px rgba(15,23,42,.08); text-align:center; }
+.vietqr-card[hidden] { display:none; }
+.vietqr-brand-top { display:flex; align-items:center; justify-content:center; margin-bottom:12px; min-height:36px; }
+.vietqr-wordmark-svg { width:156px; height:36px; display:block; }
+.vietqr-card-brands { gap:10px; }
+.visa-wordmark-svg { width:72px; height:24px; display:block; }
+.mc-mark-svg { width:36px; height:22px; display:block; }
+.vietqr-emv-pill { padding:3px 7px; border-radius:5px; background:#eef2ff; color:#1e3a8a; font-size:10px; font-weight:800; letter-spacing:.4px; }
+.vietqr-frame { display:inline-block; padding:6px; border:1.5px solid #2b4c7e; background:#ffffff; border-radius:4px; }
+.vietqr-frame.is-visa-frame { border-color:#1a1f71; }
+.vietqr-matrix-svg { width:212px; height:212px; display:block; }
+.vietqr-partners { display:flex; align-items:center; justify-content:center; gap:14px; margin:14px 0 12px; }
+.vietqr-napas { display:inline-flex; align-items:baseline; gap:2px; font-family:var(--font-sans); font-weight:800; font-style:italic; }
+.napas-text { color:#164e97; font-size:15px; letter-spacing:-.4px; }
+.napas-247 { color:#10a37f; font-size:12px; }
+.vietqr-partner-divider { width:1.5px; height:20px; background:#cbd5e1; }
+.vietqr-vcb { display:inline-flex; align-items:center; gap:5px; font-size:14px; font-weight:800; color:#006837; letter-spacing:-.2px; }
+.vietqr-recipient-summary { display:grid; gap:3px; font-size:13px; color:#1e293b; line-height:1.5; }
+.vietqr-recipient-name { font-size:13.5px; font-weight:800; color:#0f172a; letter-spacing:.3px; text-transform:uppercase; }
+.vietqr-account-no { font-size:13px; font-weight:600; color:#334155; font-variant-numeric:tabular-nums; letter-spacing:.3px; }
+.vietqr-amount-row { font-size:13px; color:#334155; font-variant-numeric:tabular-nums; }
+.vietqr-amount-row strong { color:#0f172a; font-weight:700; }
+.vietqr-memo-row { margin-top:4px; font-size:11.5px; color:#64748b; }
+.vietqr-memo-row code { padding:2px 6px; border-radius:4px; background:#f1f5f9; color:#0f172a; font-size:11.5px; font-weight:700; }
+.vietqr-sim-warning { margin:14px 0 0; font-size:11.5px; font-weight:700; color:#b91c1c; letter-spacing:.5px; text-transform:uppercase; }
+.vietqr-box.is-compact { margin-top:14px; }
+.vietqr-box.is-compact .vietqr-card { max-width:100%; padding:16px 14px 14px; border-radius:14px; box-shadow:0 6px 18px rgba(15,23,42,.06); }
+.vietqr-box.is-compact .vietqr-matrix-svg { width:196px; height:196px; }
+@media (max-width:480px) { .vietqr-card { padding:16px 14px; } .vietqr-matrix-svg { width:188px; height:188px; } }

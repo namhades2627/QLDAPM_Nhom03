@@ -2144,13 +2144,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Xử lý chuyển đổi giao diện khi chọn phương thức thanh toán
         const paymentRadios = form.querySelectorAll('input[name="phuong_thuc_thanh_toan"]');
+        const syncBookingQr = () => {
+            const checked = form.querySelector('input[name="phuong_thuc_thanh_toan"]:checked');
+            const method = checked ? checked.value : '';
+            const qrPanel = form.querySelector('[data-vietqr-panel]');
+            if (!qrPanel) return;
+            const showQr = method === 'chuyen_khoan' || method === 'the';
+            qrPanel.hidden = !showQr;
+            qrPanel.querySelectorAll('[data-vietqr-mode]').forEach(card => {
+                card.hidden = card.getAttribute('data-vietqr-mode') !== method;
+            });
+        };
         paymentRadios.forEach(radio => {
             radio.addEventListener('change', () => {
                 form.querySelectorAll('.booking-payment-option').forEach(opt => {
                     opt.classList.toggle('is-selected', opt.contains(radio) && radio.checked);
                 });
+                syncBookingQr();
             });
         });
+        form.addEventListener('booking:summary-updated', event => {
+            if (!event.detail || typeof event.detail.totalPayment !== 'number') return;
+            const vndText = `${Number(event.detail.totalPayment).toLocaleString('vi-VN')} VND`;
+            form.querySelectorAll('[data-vietqr-amount]').forEach(el => {
+                el.textContent = vndText;
+            });
+        });
+        syncBookingQr();
 
         // Validate toàn bộ form trước khi submit về máy chủ PHP
         form.addEventListener('submit', event => {
@@ -2603,6 +2623,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const radioCards = document.querySelectorAll('.payment-radio-card');
     if (!radioCards.length) return;
 
+    const syncDetailQr = (method) => {
+        const qrPanel = document.querySelector('#order-payment-sidebar-form [data-vietqr-panel]');
+        if (!qrPanel) return;
+        const showQr = method === 'chuyen_khoan' || method === 'the';
+        qrPanel.hidden = !showQr;
+        qrPanel.querySelectorAll('[data-vietqr-mode]').forEach(card => {
+            card.hidden = card.getAttribute('data-vietqr-mode') !== method;
+        });
+    };
+
     radioCards.forEach(card => {
         const input = card.querySelector('input[type="radio"][name="phuong_thuc"]');
         if (!input) return;
@@ -2611,6 +2641,7 @@ document.addEventListener('DOMContentLoaded', () => {
             radioCards.forEach(c => c.classList.remove('is-selected'));
             if (input.checked) {
                 card.classList.add('is-selected');
+                syncDetailQr(input.value);
             }
         });
 
@@ -2621,6 +2652,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    const initialChecked = document.querySelector('.payment-radio-card input[type="radio"][name="phuong_thuc"]:checked');
+    if (initialChecked) {
+        syncDetailQr(initialChecked.value);
+    }
 });
 
 

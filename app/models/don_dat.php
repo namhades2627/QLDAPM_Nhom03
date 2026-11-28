@@ -19,7 +19,6 @@ class DonDatModel
     /** Phương thức thanh toán mô phỏng. */
     public const PAYMENT_METHODS = [
         'chuyen_khoan'  => 'Chuyển khoản ngân hàng (VietQR - Tự động xác nhận)',
-        'vi_dien_tu'    => 'Ví điện tử (MoMo / ZaloPay)',
         'the'           => 'Thẻ quốc tế (Visa / Mastercard)',
         'tai_van_phong' => 'Thanh toán tại văn phòng OnTrip',
     ];
@@ -28,7 +27,6 @@ class DonDatModel
     public const BOOKING_PAYMENT_METHODS = [
         'thanh_toan_sau' => 'Thanh toán khi nhận xác nhận',
         'chuyen_khoan'   => 'Chuyển khoản ngân hàng (VietQR)',
-        'vi_dien_tu'     => 'Ví điện tử (MoMo / ZaloPay)',
         'the'            => 'Thẻ quốc tế (Visa / Mastercard)',
         'tai_van_phong'  => 'Thanh toán tại văn phòng OnTrip',
     ];
@@ -36,6 +34,10 @@ class DonDatModel
     /** Nhãn hiển thị thống nhất cho mọi phương thức thanh toán lưu trong đơn hoặc giao dịch. */
     public static function paymentMethodLabel(string $method): string
     {
+        if ($method === 'vi_dien_tu') {
+            return 'Ví điện tử (MoMo / ZaloPay)';
+        }
+
         return self::PAYMENT_METHODS[$method]
             ?? self::BOOKING_PAYMENT_METHODS[$method]
             ?? $method;
@@ -47,6 +49,16 @@ class DonDatModel
     public function __construct(PDO $connection)
     {
         $this->connection = $connection;
+    }
+
+    /** Lấy tên quản trị viên đang hoạt động để làm tên người nhận trên mã QR mô phỏng. */
+    public function getPrimaryAdminName(): string
+    {
+        $name = $this->connection->query(
+            "SELECT ho_ten FROM tai_khoan WHERE vai_tro = 'admin' AND dang_hoat_dong = 1 ORDER BY id_tai_khoan ASC LIMIT 1"
+        )->fetchColumn();
+        $clean = is_string($name) ? trim($name) : '';
+        return $clean !== '' ? mb_strtoupper($clean, 'UTF-8') : 'QUẢN TRỊ VIÊN ONTRIP';
     }
 
     /** Ưu đãi nhóm: 5–9 khách giảm 5%, từ 10 khách giảm 10%, chỉ áp dụng mức cao nhất. */

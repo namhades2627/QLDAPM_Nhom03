@@ -253,20 +253,7 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
                                         </span>
                                         <strong>Chuyển khoản ngân hàng (VietQR)</strong>
                                     </div>
-                                    <p>Quét mã VietQR hoặc chuyển khoản vào tài khoản ngân hàng chính thức của OnTrip kèm nội dung mã đơn hàng để được xác nhận tự động.</p>
-                                </div>
-                            </label>
-
-                            <label class="booking-payment-option <?= ($selectedPaymentMethod ?? '') === 'vi_dien_tu' ? 'is-selected' : '' ?>">
-                                <input type="radio" name="phuong_thuc_thanh_toan" value="vi_dien_tu" <?= ($selectedPaymentMethod ?? '') === 'vi_dien_tu' ? 'checked' : '' ?>>
-                                <div class="booking-payment-content">
-                                    <div class="booking-payment-header">
-                                        <span class="booking-payment-icon" aria-hidden="true">
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg>
-                                        </span>
-                                        <strong>Ví điện tử (MoMo / ZaloPay)</strong>
-                                    </div>
-                                    <p>Thanh toán nhanh chóng và tiện lợi qua ví điện tử MoMo hoặc ZaloPay sau khi OnTrip xác nhận giữ chỗ thành công.</p>
+                                    <p>Quét mã VietQR Vietcombank để chuyển khoản mô phỏng kèm nội dung mã đơn hàng để được xác nhận tự động.</p>
                                 </div>
                             </label>
 
@@ -279,7 +266,7 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
                                         </span>
                                         <strong>Thẻ quốc tế (Visa / Mastercard)</strong>
                                     </div>
-                                    <p>Thanh toán trực tuyến bằng thẻ tín dụng hoặc thẻ ghi nợ quốc tế Visa/Mastercard sau khi đơn được xác nhận.</p>
+                                    <p>Thanh toán mô phỏng bằng thẻ Visa/Mastercard hoặc quét mã QR Vietcombank (VietQR) sau khi đơn được xác nhận.</p>
                                 </div>
                             </label>
 
@@ -296,6 +283,17 @@ $guestLabels = ['nguoi_lon' => 0, 'tre_em' => 0];
                                 </div>
                             </label>
                         </div>
+
+                        <?php
+                            $vietqrMethod = (string) ($selectedPaymentMethod ?? 'thanh_toan_sau');
+                            $vietqrVisible = in_array($vietqrMethod, ['chuyen_khoan', 'the'], true);
+                            $vietqrAmountText = number_format((float) $totals['tong_thanh_toan'], 0, ',', '.') . ' VND';
+                            $vietqrTransferNote = 'ONTRIP [Mã đơn sau khi gửi]';
+                            $vietqrRecipientName = (string) ($adminRecipientName ?? 'QUẢN TRỊ VIÊN ONTRIP');
+                            $vietqrSeed = 'VCB|ONTRIP|' . $code . '|' . (int) $totals['tong_thanh_toan'];
+                            $vietqrCompact = false;
+                            require __DIR__ . '/../partials/vietqr_box.php';
+                        ?>
                     </div>
 
                     <div class="booking-terms-box">

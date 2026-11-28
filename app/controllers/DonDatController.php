@@ -325,6 +325,7 @@ class DonDatController
         $totals = DonDatModel::calculateTotals($adultCount, $childCount, $adultPrice, $childPrice, $promoCode);
         $selectedPaymentMethod = $paymentMethod;
         $selectedAgreeTerms = $agreeTerms;
+        $adminRecipientName = $this->model->getPrimaryAdminName();
         require __DIR__ . '/../views/don_dat/dat_tour.php';
     }
 
@@ -382,6 +383,7 @@ class DonDatController
         $paymentMethods = DonDatModel::PAYMENT_METHODS;
         if ($maDon !== '') {
             $order = $this->model->findAccountOrder($accountId, $maDon);
+            $adminRecipientName = $this->model->getPrimaryAdminName();
             if ($order === null) {
                 http_response_code(404);
             } elseif (!empty($_GET['created'])) {

@@ -57,7 +57,7 @@ $statusNotes = [
             $canPay = !$paid && in_array($status, ['cho_xac_nhan', 'da_xac_nhan'], true);
             $canCancel = $status === 'cho_xac_nhan';
             $currentMethod = !empty($order['phuong_thuc']) ? $order['phuong_thuc'] : (!empty($order['phuong_thuc_thanh_toan']) ? $order['phuong_thuc_thanh_toan'] : 'chuyen_khoan');
-            if ($currentMethod === 'thanh_toan_sau') {
+            if ($currentMethod === 'thanh_toan_sau' || $currentMethod === 'vi_dien_tu') {
                 $currentMethod = 'chuyen_khoan';
             }
 
@@ -596,7 +596,7 @@ $statusNotes = [
                             <div class="payment-receipt-details" style="margin-top:12px;">
                                 <div class="receipt-row">
                                     <span>Phương thức:</span>
-                                    <strong><?= $escape($paymentMethods[$order['phuong_thuc']] ?? $order['phuong_thuc']) ?></strong>
+                                    <strong><?= $escape(DonDatModel::paymentMethodLabel((string) $order['phuong_thuc'])) ?></strong>
                                 </div>
                                 <div class="receipt-row">
                                     <span>Mã giao dịch:</span>
@@ -619,7 +619,7 @@ $statusNotes = [
                             <div class="payment-receipt-details">
                                 <div class="receipt-row">
                                     <span>Phương thức:</span>
-                                    <strong><?= $escape($paymentMethods[$order['phuong_thuc']] ?? $order['phuong_thuc']) ?></strong>
+                                    <strong><?= $escape(DonDatModel::paymentMethodLabel((string) $order['phuong_thuc'])) ?></strong>
                                 </div>
                                 <div class="receipt-row">
                                     <span>Mã giao dịch:</span>
@@ -672,24 +672,11 @@ $statusNotes = [
                                         </div>
                                         <div class="payment-method-details">
                                             <span class="method-title">Chuyển khoản ngân hàng</span>
-                                            <span class="method-subtitle">VietQR - Tự động xác nhận 24/7</span>
+                                            <span class="method-subtitle">VietQR (Vietcombank) - Tự động xác nhận 24/7</span>
                                         </div>
                                     </label>
 
-                                    <!-- 2. Ví điện tử (MoMo / ZaloPay) -->
-                                    <label class="payment-radio-card <?= $currentMethod === 'vi_dien_tu' ? 'is-selected' : '' ?>">
-                                        <input type="radio" name="phuong_thuc" value="vi_dien_tu" <?= $currentMethod === 'vi_dien_tu' ? 'checked' : '' ?> class="payment-radio-input">
-                                        <div class="payment-radio-custom" aria-hidden="true"></div>
-                                        <div class="payment-method-icon icon-ewallet">
-                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg>
-                                        </div>
-                                        <div class="payment-method-details">
-                                            <span class="method-title">Ví điện tử</span>
-                                            <span class="method-subtitle">MoMo / ZaloPay</span>
-                                        </div>
-                                    </label>
-
-                                    <!-- 3. Thẻ quốc tế (Visa / Mastercard) -->
+                                    <!-- 2. Thẻ quốc tế (Visa / Mastercard) -->
                                     <label class="payment-radio-card <?= $currentMethod === 'the' ? 'is-selected' : '' ?>">
                                         <input type="radio" name="phuong_thuc" value="the" <?= $currentMethod === 'the' ? 'checked' : '' ?> class="payment-radio-input">
                                         <div class="payment-radio-custom" aria-hidden="true"></div>
@@ -698,11 +685,11 @@ $statusNotes = [
                                         </div>
                                         <div class="payment-method-details">
                                             <span class="method-title">Thẻ quốc tế</span>
-                                            <span class="method-subtitle">Visa / Mastercard</span>
+                                            <span class="method-subtitle">Visa / Mastercard (kèm VietQR mô phỏng)</span>
                                         </div>
                                     </label>
 
-                                    <!-- 4. Thanh toán tại văn phòng OnTrip -->
+                                    <!-- 3. Thanh toán tại văn phòng OnTrip -->
                                     <label class="payment-radio-card <?= $currentMethod === 'tai_van_phong' ? 'is-selected' : '' ?>">
                                         <input type="radio" name="phuong_thuc" value="tai_van_phong" <?= $currentMethod === 'tai_van_phong' ? 'checked' : '' ?> class="payment-radio-input">
                                         <div class="payment-radio-custom" aria-hidden="true"></div>
@@ -715,6 +702,17 @@ $statusNotes = [
                                         </div>
                                     </label>
                                 </div>
+
+                                <?php
+                                    $vietqrMethod = $currentMethod;
+                                    $vietqrVisible = in_array($currentMethod, ['chuyen_khoan', 'the'], true);
+                                    $vietqrAmountText = number_format((float) $order['tong_thanh_toan'], 0, ',', '.') . ' VND';
+                                    $vietqrTransferNote = 'ONTRIP ' . $order['ma_don'];
+                                    $vietqrRecipientName = (string) ($adminRecipientName ?? 'QUẢN TRỊ VIÊN ONTRIP');
+                                    $vietqrSeed = 'VCB|ONTRIP|' . $order['ma_don'] . '|' . (int) $order['tong_thanh_toan'];
+                                    $vietqrCompact = true;
+                                    require __DIR__ . '/../partials/vietqr_box.php';
+                                ?>
                             </div>
 
                             <!-- KHỐI C: CỤM NÚT HÀNH ĐỘNG (ACTION BUTTONS) -->

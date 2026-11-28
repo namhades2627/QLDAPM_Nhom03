@@ -14995,3 +14995,53 @@ a.touchpoint-item:hover {
 .vietqr-box.is-compact .vietqr-card { max-width:100%; padding:16px 14px 14px; border-radius:14px; box-shadow:0 6px 18px rgba(15,23,42,.06); }
 .vietqr-box.is-compact .vietqr-matrix-svg { width:196px; height:196px; }
 @media (max-width:480px) { .vietqr-card { padding:16px 14px; } .vietqr-matrix-svg { width:188px; height:188px; } }
+
+/* ===== QUẢN TRỊ: THỐNG KÊ ĐẶT TOUR & DOANH THU ===== */
+.admin-report-head-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.admin-report-filters { padding:18px 22px; margin-bottom:22px; }
+.admin-report-presets { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--line); font-size:12px; color:var(--muted); }
+.admin-preset-pill { display:inline-flex; align-items:center; padding:5px 12px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:#536174; font-size:12px; font-weight:500; text-decoration:none; transition:all .15s ease; }
+.admin-preset-pill:hover { border-color:var(--orange); color:var(--orange-dark); background:#fff8f4; }
+.admin-preset-pill.is-active { border-color:#e5b39b; background:var(--orange-light); color:var(--orange-dark); font-weight:700; }
+.admin-report-filter-form { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)) auto; gap:14px; align-items:end; }
+.admin-report-filter-form label { display:grid; gap:6px; min-width:0; }
+.admin-report-filter-form label > span { font-size:11.5px; font-weight:600; color:#536174; }
+.admin-report-filter-form input,
+.admin-report-filter-form select { width:100%; height:40px; padding:0 12px; border:1px solid #d9dfe6; border-radius:7px; background:var(--panel-bg); color:var(--ink); font-size:12.5px; }
+.admin-report-filter-buttons { display:flex; gap:8px; align-items:center; }
+.admin-report-filter-buttons .button { min-height:40px; padding:8px 16px; font-size:12px; border-radius:7px; white-space:nowrap; }
+.admin-report-filter-buttons .admin-secondary-button { min-height:40px; padding:8px 14px; white-space:nowrap; }
+.admin-stat strong.admin-stat-money { font-size:24px; letter-spacing:-.6px; }
+.admin-report-grid { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(300px,1fr); gap:22px; align-items:start; margin-bottom:22px; }
+.admin-report-bars { padding:20px 24px; display:grid; gap:14px; }
+.admin-bar-row { display:grid; grid-template-columns:128px minmax(0,1fr) 150px; gap:14px; align-items:center; }
+.admin-bar-label strong { display:block; font-size:12.5px; color:var(--ink); }
+.admin-bar-label small { display:block; font-size:11px; color:var(--muted); margin-top:2px; }
+.admin-bar-track { position:relative; height:14px; border-radius:999px; background:#f1f4f8; overflow:hidden; }
+.admin-bar-expected { position:absolute; inset:0 auto 0 0; background:#ffd8c2; border-radius:999px; }
+.admin-bar-collected { position:absolute; inset:0 auto 0 0; background:linear-gradient(90deg,#397757,#4fa276); border-radius:999px; }
+.admin-bar-values { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.admin-bar-values strong { display:block; font-size:12.5px; color:#2b6447; font-weight:700; }
+.admin-bar-values small { display:block; font-size:11px; color:var(--muted); }
+.admin-bar-legend { display:flex; align-items:center; flex-wrap:wrap; gap:16px; padding-top:14px; margin-top:4px; border-top:1px solid var(--line); font-size:11.5px; color:#536174; }
+.admin-bar-legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
+.admin-bar-legend .dot-collected { background:#397757; }
+.admin-bar-legend .dot-expected { background:#ffd8c2; }
+.admin-bar-discount-note { margin-left:auto; }
+.admin-report-breakdown { padding:18px 24px 22px; display:grid; gap:14px; }
+.admin-breakdown-item { display:grid; gap:7px; }
+.admin-breakdown-top { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:12px; color:#3d4b5d; }
+.admin-breakdown-top strong { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.admin-breakdown-top strong small { font-weight:400; color:var(--muted); }
+.admin-progress-rail { height:8px; border-radius:999px; background:#f1f4f8; overflow:hidden; }
+.admin-progress-fill { display:block; height:100%; border-radius:999px; background:var(--orange); }
+.admin-progress-fill.is-completed { background:#397757; }
+.admin-progress-fill.is-confirmed { background:#3b6eb5; }
+.admin-progress-fill.is-pending { background:#d4882a; }
+.admin-progress-fill.is-cancelled { background:#c04c3d; }
+.admin-progress-fill.is-payment { background:linear-gradient(90deg,#cc5b2d,#e07b4f); }
+.admin-report-section { margin-bottom:22px; }
+.admin-report-table td:first-child { width:auto; }
+.admin-report-empty { padding:26px 24px; margin:0; font-size:12.5px; color:var(--muted); text-align:center; }
+@media (max-width:1100px) { .admin-report-filter-form { grid-template-columns:repeat(2,minmax(0,1fr)); } .admin-report-filter-buttons { grid-column:1 / -1; justify-content:flex-end; } .admin-report-grid { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:680px) { .admin-report-filter-form { grid-template-columns:minmax(0,1fr); } .admin-bar-row { grid-template-columns:minmax(0,1fr); gap:6px; } .admin-bar-values { text-align:left; } .admin-bar-discount-note { margin-left:0; } }
